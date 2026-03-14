@@ -1,0 +1,1064 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>DBCooker Demo</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+
+<style>
+  /* 颜色变量 - 程序员/深色和谐主题 (Charcoal/Amber) */
+  :root {
+    --bg: #282c34;       /* 主背景：深炭灰 */
+    --card: #20242b;     /* 卡片背景：略深灰 */
+    --accent: #d19a66;   /* 强调色：柔和琥珀/金 */
+    --muted: #abb2bf;    /* 柔和白/灰文本 */
+    --good: #98c379;     /* 成功色：平静绿 */
+    --bad: #e06c75;      /* 错误色：柔和红 */
+    --border: #3e4451;   /* 边框：中深灰 */
+    --tab-bg: #282c34;   /* 侧边栏与主背景一致 */
+    --code-bg: #1e222a;  /* 代码块背景：深蓝灰 */
+    --text: #ffffff;     /* 主文本颜色 */
+    --light-blue-bg: #353b47; /* 次要背景色 */
+  }
+  
+  html, body {
+    height: 100%; 
+  }
+  body { 
+    margin:0; font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+    background:var(--bg); color:var(--text); 
+    display:flex; 
+    min-height:100vh;
+  }
+  #app {
+    width: 100%; 
+    height: 100%;
+    display: flex; 
+    flex-direction: column;
+  }
+  
+  /* Main Layout: Sidebar + Content */
+  .container-flex { 
+    display:flex; 
+    width: 98%; 
+    max-width: 2560px; 
+    margin: 10px auto; 
+    box-shadow: 0 0 20px rgba(0,0,0,0.5); 
+    border: 1px solid var(--border);
+    min-height: calc(100vh - 20px); 
+  }
+  
+  /* Sidebar/Tabs */
+  .sidebar {
+    width: 250px; 
+    background: var(--tab-bg);
+    padding: 30px 0;
+    flex-shrink: 0;
+    border-right: 1px solid var(--border);
+  }
+  .tab-btn {
+    display: block;
+    width: 100%;
+    padding: 18px 25px;
+    text-align: left;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--muted);
+    transition: all 0.2s;
+    border-left: 5px solid transparent;
+  }
+  .tab-btn:hover {
+    background: var(--light-blue-bg);
+    color: var(--text);
+  }
+  .tab-btn.active {
+    background: var(--card);
+    color: var(--accent);
+    border-left: 5px solid var(--accent);
+    font-weight: 600;
+  }
+  
+  /* Main Content Area */
+  .content-area {
+    flex-grow: 1; 
+    padding: 40px;
+    background: var(--bg);
+  }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* 通用组件样式 */
+  .box { 
+    background:var(--card); 
+    border:1px solid var(--border); 
+    border-radius:10px;
+    padding:25px; 
+    margin-bottom:25px; 
+    box-shadow:0 5px 15px rgba(0,0,0,0.2);
+  }
+  .section-title { display:flex; align-items:center; gap:10px; margin-bottom:20px; }
+  .section-title h2 { margin:0; font-size:20px; color:var(--accent);}
+  
+  /* 按钮 */
+  .btn { 
+    padding:10px 18px; border-radius:6px; border:1px solid var(--accent);
+    background:transparent; cursor:pointer; transition:all 0.2s; font-size:14px; 
+    color: var(--accent);
+  }
+  .btn:hover { background: rgba(209, 154, 102, 0.1); }
+  .btn.primary { background:var(--accent); color:var(--code-bg); border-color:var(--accent); font-weight: 600;}
+  .btn.primary:hover { background:#bf8d5a; }
+  .btn.danger { background:var(--bad); color:var(--text); border-color:var(--bad); font-weight: 600;}
+  .btn.danger:hover { background:#c65b64; }
+
+  /* 输入框 */
+  input, select, textarea { 
+    width:100%; 
+    padding:10px; border-radius:5px;
+    border:1px solid var(--border); background:var(--light-blue-bg); 
+    color: var(--text); box-sizing:border-box; 
+    font-size:14px;
+  }
+  textarea { 
+    font-family:'Consolas', 'Monaco', monospace; 
+    resize:vertical; 
+    min-height:80px; 
+  }
+  
+  #inputJsonText, #outputJsonText {
+    min-height: 300px;
+  }
+
+  .row { 
+    display:grid; 
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); 
+    gap:20px; 
+  }
+  .col { flex:1; }
+  .small { font-size:13px; color:var(--muted); }
+
+  /* spinner */
+  .spinner {
+    border:4px solid var(--border);
+    border-top:4px solid var(--accent);
+    border-radius:50%;
+    width:35px; height:35px;
+    animation:spin 0.8s linear infinite;
+    margin:30px auto;
+  }
+  @keyframes spin { 100% { transform: rotate(360deg); } }
+
+  /* 依赖树 */
+  .tree-container { 
+    position:relative; overflow:auto; padding:30px;
+    border:1px solid var(--border); background:var(--light-blue-bg); 
+    border-radius:8px; 
+    min-height:350px;
+  }
+  .tree-columns { 
+    display:flex; gap:60px; align-items:flex-start;
+    padding-bottom: 20px; 
+  }
+  .tree-column { 
+    display:flex; 
+    flex-direction:column; 
+    gap:25px; 
+  }
+  .node-card { 
+    background:var(--card); border:1px solid var(--accent); padding:12px 18px;
+    border-radius:6px; min-width:200px; box-shadow:0 0 10px rgba(0,0,0,0.1); 
+    font-size:14px; font-weight:500; color:var(--text);
+    text-align: center;
+  }
+  .svg-lines { 
+    position:absolute; left:0; top:0; pointer-events:none; 
+    overflow:visible; 
+  }
+
+  /* 代码块 (通用) */
+  .code-box { 
+    background:var(--code-bg); color:var(--muted); border-radius:6px; padding:15px;
+    font-family:'Consolas', 'Monaco', monospace; white-space:pre-wrap; overflow:auto; 
+    min-height:100px; font-size:14px;
+    resize:vertical;
+    border: 1px solid var(--border);
+  }
+  .code-box[contenteditable] { 
+    outline:none; border:1px dashed var(--accent); 
+    cursor:text;
+  }
+
+  .code-box.language-cpp .token.keyword { color: #c678dd; }
+  .code-box.language-cpp .token.string { color: #98c379; }
+  .code-box.language-cpp .token.number { color: #d19a66; }
+  .code-box.language-cpp .token.comment { color: #5c6370; font-style: italic; }
+  .code-box.language-cpp .token.function { color: #61afef; }
+  .code-box.language-cpp .token.punctuation { color: #abb2bf; }
+
+  /* 尝试 */
+  .attempt { 
+    border:1px solid var(--border); padding:20px; border-radius:10px;
+    margin-bottom:20px; background:var(--light-blue-bg); display:flex; gap:30px; 
+  }
+  .attempt-left { min-width:200px; }
+  .status-item { display:flex; gap:10px; align-items:center; font-size:14px;}
+  .status-dot { width:12px; height:12px; border-radius:50%; box-shadow: 0 0 5px currentColor;}
+  .file-btn { 
+    padding:8px 12px; border:1px solid var(--muted); border-radius:5px;
+    background:var(--card); cursor:pointer; margin-right:10px; font-size:13px;
+    color: var(--text);
+  }
+  .file-btn:hover { background: var(--light-blue-bg); }
+
+  /* 结果 */
+  .result-card { 
+    display:flex; gap:20px; border:1px solid var(--border);
+    padding:20px; border-radius:10px; background:var(--card); margin-bottom:20px;
+  }
+  .result-col { flex:1; }
+  .code-frame { 
+    background:var(--light-blue-bg); border-radius:5px; padding:12px;
+    font-family:'Consolas', 'Monaco', monospace; white-space:pre-wrap; min-height:80px; 
+    font-size:13px; border:1px solid var(--border); color:var(--muted);
+  }
+
+  /* Log */
+  .log-box { 
+    background:var(--code-bg); border:1px solid var(--border); padding:15px;
+    border-radius:6px; max-height:300px; overflow:auto; font-family:'Consolas', 'Monaco', monospace; 
+    white-space: pre-line; font-size:13px; color: var(--muted);
+  }
+
+  /* Modal Styles */
+  .modal-backdrop { 
+    position:fixed; left:0; top:0; width:100%; height:100%;
+    background:rgba(0,0,0,0.9); display:flex; justify-content:center;
+    align-items:center; z-index:9999;
+  }
+  .modal { 
+    background:var(--card); width:90%; max-width:1000px; max-height:90%;
+    overflow:auto; padding:25px; border-radius:10px;
+    border: 2px solid var(--accent);
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+  }
+  .modal h3 { color: var(--accent); margin:0;}
+
+  /* Workflow Steps */
+  .workflow-steps {
+    display: flex;
+    gap: 0;
+    margin-bottom: 20px;
+    overflow-x: auto;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    background: transparent;
+    padding-left: 15px; 
+  }
+  .workflow-step-btn-container {
+      position: relative;
+      flex-shrink: 0; 
+  }
+  .workflow-step-btn-container:not(:last-child) .workflow-step-btn {
+      margin-right: -15px; 
+      border-right: none; 
+  }
+  .workflow-step-btn {
+      padding: 10px 25px; 
+      border-radius: 0; 
+      transform: none; 
+      position: relative;
+      z-index: 10; 
+      min-width: 150px;
+      text-align: center;
+      font-weight: 500;
+      background: var(--card); 
+      color: var(--muted); 
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: all 0.2s;
+      --chevron-size: 15px; 
+      clip-path: polygon(
+          0% 0%, 
+          calc(100% - var(--chevron-size)) 0%, 
+          100% 50%, 
+          calc(100% - var(--chevron-size)) 100%, 
+          0% 100%
+      );
+  }
+  .workflow-step-btn:hover { 
+      background: var(--light-blue-bg); 
+      color: var(--text); 
+  }
+  .workflow-step-btn.active { 
+      background:var(--accent); 
+      color:var(--code-bg); 
+      border-color:var(--accent);
+      font-weight: 600;
+      z-index: 11;
+      border: 1px solid var(--accent); 
+      margin-right: -15px; 
+      border-right: none;
+  }
+  .workflow-step-btn.active:hover { background:var(--accent); } 
+
+  .workflow-step-btn-container:last-child .workflow-step-btn {
+      margin-right: 0;
+      border-right: 1px solid var(--border); 
+      clip-path: none; 
+      border-radius: 0 6px 6px 0; 
+  }
+  .workflow-step-btn-container:last-child .workflow-step-btn.active {
+      border-right: 1px solid var(--accent); 
+  }
+
+  @media (max-width:992px){
+    body { display:block; }
+    #app { height: auto; } 
+    .container-flex { 
+      display:block; 
+      width: 100%; 
+      margin: 0; 
+      box-shadow:none;
+      border: none; 
+      min-height: auto; 
+    }
+    .sidebar { display:none; }
+    .content-area { padding: 15px; }
+    .row { grid-template-columns: 1fr; } 
+    .attempt { flex-direction:column; }
+    .result-card { flex-direction:column; }
+    .tree-columns { flex-direction:column; gap:20px;}
+    #mobileTabs { display:flex; gap:8px; margin-bottom:15px; overflow-x:auto; padding-bottom:10px; border-bottom:1px solid var(--border);}
+    .mobile-tab-btn {
+        padding: 8px 15px; border-radius: 5px; border: 1px solid var(--border);
+        background: var(--card); cursor: pointer; font-size: 14px; white-space: nowrap;
+        color: var(--text);
+    }
+    .mobile-tab-btn.active { background:var(--accent); color:var(--code-bg); border-color:var(--accent);}
+  }
+  @media (min-width:993px) {
+    #mobileTabs { display:none; }
+  }
+</style>
+</head>
+
+<body>
+
+<div id="app">
+<div class="container-flex">
+
+  <div class="sidebar">
+    <button v-for="tab in tabData" 
+            :key="tab.id" 
+            class="tab-btn" 
+            :class="{ active: activeTab === tab.id }"
+            @click="switchTab(tab.id)">
+      {{ tab.title }}
+    </button>
+  </div>
+
+  <div class="content-area">
+    
+    <div id="mobileTabs">
+      <button v-for="tab in tabData" 
+              :key="tab.id" 
+              class="mobile-tab-btn" 
+              :class="{ active: activeTab === tab.id }"
+              @click="switchTab(tab.id)">
+        {{ tab.title }}
+      </button>
+    </div>
+
+    <div class="tab-content" :class="{ active: activeTab === 'input' }">
+      <div class="box">
+        <div class="section-title">
+          <h2>1. Requirement Input</h2>
+          <span class="small" id="loadStatus_input">(loaded)</span>
+        </div>
+
+        <div class="box">
+          <div id="inputUI">
+            <div class="row" style="margin-top:15px;">
+              <div class="col">
+                <label class="small">Database</label>
+                <select v-model="input.database">
+                  <option>PostgreSQL</option>
+                  <option>SQLite</option>
+                  <option>DuckDB</option>
+                </select>
+              </div>
+              <div class="col">
+                <label class="small">Database Path</label>
+                <input v-model="input.databasePath" placeholder="/path/to/database" />
+              </div>
+              <div class="col">
+                <label class="small">Function Name</label>
+                <input v-model="input.funcName" />
+              </div>
+              <div class="col">
+                <label class="small">Category</label>
+                <input v-model="input.category" />
+              </div>
+            </div>
+
+            <div style="margin-top:15px;">
+              <label class="small">Description</label>
+              <textarea v-model="input.desc"></textarea>
+            </div>
+
+            <div style="margin-top:15px;">
+              <label class="small">Testcases (SQL / Expected Output)</label>
+              <div id="testcaseContainer">
+                <div v-for="(t, i) in input.testcases" :key="i"
+                     style="display:flex; gap:10px; margin-bottom:10px;">
+                  <textarea style="flex:1;" v-model="t.sql" placeholder="SQL/Input Command"></textarea>
+                  <textarea style="flex:1;" v-model="t.expected" placeholder="Expected Output"></textarea>
+                  <button class="btn danger" style="width:60px; align-self:flex-start;" @click="removeTestcase(i)">DEL</button>
+                </div>
+              </div>
+              <div style="display:flex; gap:10px;">
+                <button class="btn" @click="addTestcase">Add Testcase</button>
+                <button class="btn primary" @click="saveInputUI">Save from UI</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="box">
+          <h3 style="margin:0;">Input JSON (to be sent to backend)</h3>
+          <div class="small">Edit → Parse to update UI</div>
+
+          <div style="margin:10px 0; display:flex; gap:10px;">
+            <button class="btn" @click="loadSampleInput">Load Sample Input JSON</button>
+            <button class="btn primary" @click="parseInputJson">Parse Input JSON</button>
+          </div>
+
+          <textarea id="inputJsonText" v-model="inputJsonText"></textarea>
+        </div>
+
+        <div class="box">
+          <h3 style="margin:0;">Output JSON (received from Python backend)</h3>
+          <div class="small">Output of pipeline → Parse to update UI</div>
+
+          <div style="margin:10px 0; display:flex; gap:10px;">
+            <button class="btn primary" @click="parseOutputJson">Parse Output JSON</button>
+            <button class="btn primary" @click="runPipeline">Run Pipeline (Call Python)</button>
+          </div>
+
+          <textarea id="outputJsonText" v-model="outputJsonText"></textarea>
+        </div>
+      </div>
+    </div>
+    
+    <div class="tab-content" :class="{ active: activeTab === 'analysis' }">
+      <div class="box">
+        <div class="section-title">
+          <h2>2. Database Code Analysis</h2>
+          <span class="small" v-if="output.analysis.loaded">(Code Analysis Loaded)</span>
+          <span class="small" v-else>(loading...)</span>
+        </div>
+
+        <div v-if="!output.analysis.loaded"><div class="spinner"></div></div>
+        
+        <div v-else>
+          <div class="box">
+            <h3 style="margin:0;">Overall Database Code Overview </h3>
+            <p class="small">To be implemented</p>
+            <div style="height: 400px; background-color: #5c6370; border-radius: 8px; margin-top: 15px; display: flex; align-items: center; justify-content: center; color: var(--text); font-size: 20px; font-weight: bold;">
+                PLACEHOLDER
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <div class="tab-content" :class="{ active: activeTab === 'workflow' }">
+      <div class="box">
+        <div class="section-title">
+          <h2>3. Workflow Steps</h2>
+          <span class="small" id="loadStatus_workflow" v-if="output.workflow.loaded">({{ output.workflow.items.length }} Steps Loaded)</span>
+          <span class="small" id="loadStatus_workflow" v-else>(loading...)</span>
+        </div>
+
+        <div v-if="!output.workflow.loaded"><div class="spinner"></div></div>
+
+        <div v-else id="workflowUI">
+          
+          <div class="workflow-steps">
+            <div v-for="(item, index) in output.workflow.items" :key="item.id"
+                    class="workflow-step-btn-container">
+                <button 
+                        class="workflow-step-btn" 
+                        :class="{ active: activeWorkflowIndex === index }"
+                        @click="setActiveWorkflowIndex(index)">
+                  {{ capitalize(item.type) }}
+                </button>
+            </div>
+          </div>
+          
+          <div v-if="activeWorkflowItem" :key="activeWorkflowItem.id">
+
+            <div v-if="activeWorkflowItem.type === 'characterization'">
+              <div class="box">
+                <div class="section-title">
+                  <h2>Function Characterization (Dependency Tree)</h2>
+                </div>
+                <div class="tree-container" ref="treeContainer" @scroll="drawLines(treeEdges, nodeMap, $refs.treeSvg)">
+                  <div id="treeColumns" class="tree-columns" ref="treeColumns">
+                    <div v-for="(col, depth) in treeColumnsData" :key="depth" class="tree-column" :style="{ minWidth: col.minWidth }">
+                      <div v-for="node in col.nodes" :key="node.id" :id="node.id" class="node-card" :ref="el => nodeMap[node.id] = el">
+                        {{ node.name }}
+                      </div>
+                    </div>
+                  </div>
+                  <svg id="treeSvg" class="svg-lines" ref="treeSvg"></svg>
+                </div>
+              </div>
+            </div>
+
+            <div v-else-if="activeWorkflowItem.type === 'pseudo'">
+              <div class="box">
+                <div class="section-title">
+                  <h2>Pseudo-Code (Editable)</h2>
+                </div>
+                <div v-for="(p, key) in activeWorkflowItem.data.items" :key="key" class="box" style="padding:15px;">
+                  <strong style="color:var(--accent); font-size:15px;">{{ p.title }}</strong>
+                  <div class="code-box" contenteditable="true" @input="updateWorkflowPseudo(key, $event.target.textContent)" v-text="p.code"></div>
+                </div>
+              </div>
+            </div>
+
+            <div v-else-if="activeWorkflowItem.type === 'codeAttempt'">
+              <div class="box">
+                <div v-for="(a, key) in activeWorkflowItem.data" :key="key">
+                    <div class="section-title">
+                      <h2>Code Generation & Validation ({{ capitalize(key) }})</h2>
+                    </div>
+                    
+                    <div class="attempt" 
+                        :style="{ borderColor: a.semanticOK ? 'var(--good)' : 'var(--border)', boxShadow: a.semanticOK ? '0 0 10px rgba(152, 195, 121, 0.2)' : 'none' }">
+                      
+                      <div class="attempt-left">
+                        <h4 style="margin:0; color:var(--text);">Attempt Mode: {{ a.mode }}</h4>
+                        
+                        <div v-for="(s, i) in [
+                          {label:'Syntax Check', val:a.syntaxOK},
+                          {label:'Compile Check', val:a.compileOK},
+                          {label:'Semantic Check', val:a.semanticOK}
+                        ]" :key="i" class="status-item">
+                          <div class="status-dot" :style="{ background: s.val ? 'var(--good)' : 'var(--bad)' }"></div>
+                          <div>
+                            {{ s.label }}: 
+                            <strong :style="{ color: s.val ? 'var(--good)' : 'var(--bad)' }">{{ s.val ? 'OK' : 'FAIL' }}</strong>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="right" style="flex:1;">
+                        <div v-if="a.error && a.error.trim() !== ''">
+                          <div class="small">Error/Feedback:</div>
+                          <div class="code-frame" style="background:#422a2a; border:1px solid var(--bad); color:var(--bad);" v-html="escapeHtml(a.error)"></div>
+                        </div>
+
+                        <div class="small" :style="{ marginTop: (a.error && a.error.trim() !== '') ? '15px' : '0' }">Generated Files:</div>
+                        <div>
+                          <button v-for="f in a.generatedFiles" :key="f.filename" 
+                                  class="file-btn" @click="openModal(f.filename, f.content)">
+                            {{ f.filename }}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                </div>
+              </div>
+            </div>
+
+            <div v-else-if="activeWorkflowItem.type === 'results'">
+              <div class="box">
+                <div class="section-title">
+                  <h2>Result Comparison</h2>
+                </div>
+                <div v-for="(r, key) in activeWorkflowItem.data.items" :key="key" 
+                    class="result-card" 
+                    :style="getResultCardStyle(r)">
+                  
+                  <div class="result-col">
+                    <div class="small" style="color:var(--text)">Testcase (SQL)</div>
+                    <div class="code-frame" style="color:var(--accent);" v-html="escapeHtml(r.testcase)"></div>
+                  </div>
+
+                  <div class="result-col">
+                    <div class="small" style="color:var(--text)">Expected Output</div>
+                    <div class="code-frame" style="color:var(--good);" v-html="escapeHtml(r.expected)"></div>
+                  </div>
+
+                  <div class="result-col">
+                    <div class="small" style="color:var(--text)">Actual Output</div>
+                    <div class="code-frame" 
+                        :style="{ borderColor: r.actual.trim() === r.expected.trim() ? 'var(--good)' : 'var(--bad)', 
+                                  color: r.actual.trim() === r.expected.trim() ? 'var(--good)' : 'var(--bad)' }"
+                        v-html="escapeHtml(r.actual)"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div v-else>
+              <p class="small" style="text-align:center;">Unknown workflow item type: {{ activeWorkflowItem.type }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <div class="tab-content" :class="{ active: activeTab === 'log' }">
+      <div class="box">
+        <h2>4. Execution Log History ({{ output.logs.items.length }} Logs)</h2>
+        
+        <div v-for="(logGroup, index) in output.logs.items" :key="index" class="box" style="padding:15px;">
+            <strong style="color:var(--accent); font-size:15px;">Log Group #{{ index + 1 }} ({{ logGroup.timestamp }})</strong>
+            <div class="log-box" :ref="el => setLogBoxRef(el, index)" v-text="logGroup.messages.join('\n')"></div>
+        </div>
+      </div>
+    </div>
+
+  </div> 
+
+  <div v-if="modal.show" class="modal-backdrop" @click.self="modal.show = false">
+    <div class="modal">
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:10px; margin-bottom:15px;">
+        <h3 style="margin:0;">[Code Viewer] {{ modal.filename }}</h3>
+        <button class="btn" @click="modal.show = false">Close</button>
+      </div>
+      <pre class="code-box language-cpp" style="background:var(--code-bg); max-height:70vh; min-height:100px; padding:15px;" v-html="highlightedModalContent"></pre>
+    </div>
+  </div>
+
+</div> 
+<script>
+// Acquire VS Code API
+const vscode = acquireVsCodeApi();
+const { createApp, nextTick } = Vue;
+
+const app = createApp({
+  data() {
+    return {
+      activeTab: 'input',
+      tabData: [
+        {id: "input", title: "1. Requirement Input"},
+        {id: "analysis", title: "2. Database Code Analysis"}, 
+        {id: "workflow", title: "3. Workflow"},
+        {id: "log", title: "4. Execution Log"},
+      ],
+
+      activeWorkflowIndex: 0, 
+
+      input: {
+        database: "PostgreSQL",
+        databasePath: "", 
+        funcName: "",
+        category: "",
+        desc: "",
+        testcases: [
+          { sql:"", expected:"" } 
+        ]
+      },
+      inputJsonText: '',
+      outputJsonText: '',
+
+      output: {
+        analysis: { loaded: false },
+        workflow: { items: [], loaded: false },
+        logs: { items: [], loaded: false }
+      },
+      
+      treeColumnsData: [],
+      nodeMap: {}, 
+      treeEdges: [],
+      logBoxRefs: [], 
+
+      modal: {
+        show: false,
+        filename: '',
+        content: ''
+      }
+    };
+  },
+
+  computed: {
+    highlightedModalContent() {
+      return this.simulateCppSyntax(this.modal.content);
+    },
+    activeWorkflowItem() {
+      if (this.output.workflow.loaded && this.output.workflow.items.length > this.activeWorkflowIndex) {
+        return this.output.workflow.items[this.activeWorkflowIndex];
+      }
+      return null;
+    }
+  },
+
+  watch: {
+    'output.logs.items': {
+        handler() {
+            nextTick(() => {
+                const latestIndex = this.output.logs.items.length - 1;
+                const latestBox = this.logBoxRefs[latestIndex];
+                if (latestBox) {
+                    latestBox.scrollTop = latestBox.scrollHeight;
+                }
+            });
+        },
+        deep: true
+    },
+    input: {
+        handler(newVal) {
+            this.inputJsonText = JSON.stringify(newVal, null, 2);
+        },
+        deep: true,
+        immediate: true 
+    },
+    activeWorkflowItem(newItem) {
+        if (this.activeTab === 'workflow' && newItem && newItem.type === 'characterization') {
+            nextTick(this.renderTree);
+        }
+    }
+  },
+
+  mounted() {
+    this.outputJsonText = JSON.stringify(this.output, null, 2);
+    this.loadSampleInput(); 
+
+    // Listen for messages from the extension (Python result)
+    window.addEventListener('message', event => {
+        const message = event.data;
+        if (message.type === 'result') {
+            this.outputJsonText = JSON.stringify(message.data, null, 2);
+            this.parseOutputJson();
+            this.log("Received response from Python backend.");
+            // Switch to log tab to show progress, or stay where user is?
+            // Let's stay, but user can see 'Loaded' status.
+        } else if (message.type === 'error') {
+            this.log("Python Error: " + message.message);
+            alert("Error: " + message.message);
+        }
+    });
+  },
+
+  methods: {
+    capitalize(value) {
+      if (!value) return ''
+      const parts = value.split(/(?=[A-Z])|_/) 
+      return parts.map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+    },
+    
+    log(msg){
+      let activeLog = this.output.logs.items.find(item => item.isActive);
+
+      if (!activeLog) {
+          activeLog = {
+              timestamp: new Date().toLocaleTimeString(),
+              messages: [],
+              isActive: true
+          };
+          this.output.logs.items.push(activeLog);
+          this.output.logs.loaded = true;
+      }
+      
+      activeLog.messages.push(`[${new Date().toLocaleTimeString()}] ${msg}`);
+    },
+
+    setLogBoxRef(el, index) {
+        if (el) {
+            this.logBoxRefs[index] = el;
+        }
+    },
+
+    escapeHtml(s){
+      return (s || "").replace(/[<>&]/g, c=>({"<":"&lt;",">":"&gt;","&":"&amp;"}[c]));
+    },
+
+    getResultCardStyle(r) {
+      const isMatch = r.expected.trim() === r.actual.trim();
+      return {
+        borderColor: isMatch ? 'var(--good)' : 'var(--bad)',
+        background: isMatch ? '#28362d' : '#4d2828',
+        boxShadow: isMatch ? '0 0 10px rgba(152, 195, 121, 0.2)' : '0 0 10px rgba(224, 108, 117, 0.2)'
+      };
+    },
+
+    switchTab(targetId) {
+      this.activeTab = targetId;
+      if (targetId === 'workflow' && this.output.workflow.loaded && this.activeWorkflowItem && this.activeWorkflowItem.type === 'characterization') {
+        nextTick(this.renderTree); 
+      }
+    },
+
+    openModal(filename, content){
+      this.modal.filename = filename;
+      this.modal.content = content;
+      this.modal.show = true;
+    },
+
+    setActiveWorkflowIndex(index) {
+        this.activeWorkflowIndex = index;
+    },
+    
+    updateWorkflowPseudo(key, content) {
+        if (this.activeWorkflowItem && this.activeWorkflowItem.type === 'pseudo') {
+            this.activeWorkflowItem.data.items[key].code = content;
+            this.log(`Updated Pseudo-Code step: ${this.activeWorkflowItem.id} - ${key}`);
+        }
+    },
+
+    addTestcase() {
+      this.input.testcases.push({ sql: "", expected: "" });
+    },
+    removeTestcase(index) {
+      this.input.testcases.splice(index, 1);
+    },
+    saveInputUI() {
+      this.log("Saved Requirement Input from UI (JSON synced automatically).");
+    },
+    loadSampleInput() {
+      const sample = {
+        database: "PostgreSQL",
+        databasePath: "/var/lib/pgsql/data/db_v1.0.sql", 
+        funcName: "date_trunc",
+        category: "Date/Time",
+        desc: "Truncate timestamp to specified precision",
+        testcases: [
+          { sql:"SELECT date_trunc('hour', '2001-02-16 20:38:40'::timestamp)", expected:"2001-02-16 20:00:00" },
+          { sql:"SELECT date_trunc('day', '2023-10-27 15:00:00'::timestamp)", expected:"2023-10-27 00:00:00" }
+        ]
+      };
+      this.inputJsonText = JSON.stringify(sample, null, 2); 
+      this.log("Loaded sample Input JSON.");
+      this.parseInputJson();
+    },
+    parseInputJson() {
+      try {
+        const parsed = JSON.parse(this.inputJsonText);
+        this.input = JSON.parse(JSON.stringify(parsed));
+        this.log("Parsed Input JSON → updated UI.");
+      } catch (e) {
+        this.log("Input JSON parse error: " + e.message);
+        alert("Invalid Input JSON:\n" + e.message);
+      }
+    },
+    
+    parseOutputJson() {
+      try {
+        const parsed = JSON.parse(this.outputJsonText);
+
+        this.output.analysis.loaded = parsed.analysis?.loaded === true;
+        this.output.workflow.items = parsed.workflow?.items || [];
+        this.output.workflow.loaded = parsed.workflow?.loaded === true;
+        this.output.logs.items = parsed.logs?.items || [];
+        this.output.logs.loaded = parsed.logs?.loaded === true;
+        
+        if (this.output.workflow.items.length > 0) {
+             this.activeWorkflowIndex = 0;
+        }
+
+        this.log("Parsed Output JSON → updated all output blocks.");
+
+        if (this.activeWorkflowItem && this.activeWorkflowItem.type === 'characterization') {
+          nextTick(this.renderTree);
+        }
+
+      } catch (e) {
+        alert("Invalid Output JSON:\n" + e.message);
+        this.log("Output JSON parse error: " + e.message);
+      }
+    },
+
+    runPipeline() {
+      // Close previous log group
+      const lastLog = this.output.logs.items.find(item => item.isActive);
+      if (lastLog) {
+          lastLog.isActive = false;
+      }
+
+      // Reset loading states
+      this.output.analysis.loaded = false;
+      this.output.workflow.loaded = false;
+
+      this.log("Sending request to Python backend...");
+
+      // Deep copy to remove Vue Proxies and ensure clean JSON
+      const payload = JSON.parse(JSON.stringify(this.input));
+      console.log("Sending payload:", payload);
+
+      // Send message to VS Code extension
+      vscode.postMessage({
+          type: 'executeScript',
+          data: payload
+      });
+    },
+
+    simulateCppSyntax(code) {
+      let escaped = this.escapeHtml(code);
+      const keywords = /\b(if|else|for|while|do|return|break|continue|switch|case|default|goto|typedef|enum|union|struct|class|private|public|protected|virtual|override|new|delete|try|catch|throw|const|static|extern|auto|volatile|register|friend|namespace|using|template|typename|export|inline|constexpr|explicit|operator|this|sizeof|alignof|decltype|noexcept|thread_local|#include|#define|#ifdef|#ifndef|#endif)\b/g;
+      const types = /\b(int|void|char|short|long|float|double|bool|string|std::string|vector|std::vector|map|std::map|size_t|unsigned|signed|const\s+char|const\s+int|text|Datum|TimestampTz)\b/g;
+      const functions = /\b([a-zA-Z_][a-zA-Z0-9_]*)(?=\s*\()/g;
+
+      escaped = escaped.replace(keywords, '<span class="token keyword">$&</span>');
+      escaped = escaped.replace(types, '<span class="token keyword">$&</span>'); 
+      
+      const comments = /(\/\/.*)/g;
+      escaped = escaped.replace(comments, '<span class="token comment">$&</span>');
+      
+      const strings = /(".*?")/g;
+      escaped = escaped.replace(strings, '<span class="token string">$&</span>');
+
+      const numbers = /\b(\d+(\.\d*)?([eE][+-]?\d+)?)\b/g;
+      escaped = escaped.replace(numbers, '<span class="token number">$&</span>');
+
+      escaped = escaped.replace(functions, '<span class="token function">$1</span>(');
+
+      return escaped;
+    },
+
+    renderTree() {
+      if (!this.activeWorkflowItem || this.activeWorkflowItem.type !== 'characterization') return;
+
+      const root = this.activeWorkflowItem.data;
+      const columns = {};
+      const nodesById = {};
+      const edges = [];
+      let idCounter = 0;
+      const newId = () => "n" + (idCounter++);
+      
+      idCounter = 0; 
+      this.nodeMap = {}; 
+
+      const rootId = newId();
+      nodesById[rootId] = { id: rootId, name: root.name, raw: root, depth: 0 };
+      columns[0] = { nodes: [nodesById[rootId]], minWidth: '200px' }; 
+
+      function addNode(n, depth, parentId) {
+        const nid = newId();
+        nodesById[nid] = { id: nid, name: n.name, raw: n, depth };
+        columns[depth] = columns[depth] || { nodes: [], minWidth: '200px' };
+        columns[depth].nodes.push(nodesById[nid]);
+        if (parentId) edges.push({ from: parentId, to: nid });
+        (n.deps || []).forEach(ch => addNode(ch, depth + 1, nid));
+      }
+
+      (root.components || []).forEach(c => {
+        const cid = newId();
+        nodesById[cid] = { id: cid, name: c.name, raw: c, depth: 1 };
+        columns[1] = columns[1] || { nodes: [], minWidth: '200px' };
+        columns[1].nodes.push(nodesById[cid]);
+        edges.push({ from: rootId, to: cid });
+        (c.deps || []).forEach(ch => addNode(ch, 2, cid));
+      });
+
+      this.treeColumnsData = Object.keys(columns).map(key => columns[key]);
+      this.treeEdges = edges;
+
+      nextTick(() => {
+        this.measureAndSetTreeWidths(columns);
+      });
+    },
+    
+    measureAndSetTreeWidths(columns) {
+      const depths = Object.keys(columns).map(x => +x).sort((a, b) => a - b);
+      const measuredWidths = {};
+      
+      depths.forEach(d => {
+        let maxW = 0;
+        columns[d].nodes.forEach(node => {
+          const nodeDom = this.nodeMap[node.id];
+          const element = Array.isArray(nodeDom) ? nodeDom[0] : nodeDom;
+          if (element) {
+             maxW = Math.max(maxW, element.offsetWidth);
+          }
+        });
+        measuredWidths[d] = maxW;
+      });
+
+      this.treeColumnsData.forEach((col, d) => {
+          const finalWidth = Math.max(200, measuredWidths[d] + 20); 
+          col.minWidth = finalWidth + 'px';
+      });
+
+      nextTick(() => {
+          this.drawLines(this.treeEdges, this.nodeMap, this.$refs.treeSvg);
+      });
+    },
+
+    drawLines(edges, rawDomMap, svg){
+      const container = this.$refs.treeContainer;
+      const colContainer = this.$refs.treeColumns;
+      if(!container || !colContainer || !svg) return;
+
+      const r = container.getBoundingClientRect();
+      
+      const contentWidth = colContainer.scrollWidth + 60; 
+      const contentHeight = colContainer.scrollHeight + 40; 
+
+      svg.setAttribute("width", contentWidth);
+      svg.setAttribute("height", contentHeight);
+      svg.style.width = contentWidth + 'px';
+      svg.style.height = contentHeight + 'px';
+
+      svg.innerHTML = svg.querySelector('defs') ? svg.querySelector('defs').outerHTML : '';
+
+      const domMap = {};
+      for(const id in rawDomMap) {
+          if (Array.isArray(rawDomMap[id]) && rawDomMap[id].length > 0) {
+              domMap[id] = rawDomMap[id][0];
+          } else if (!Array.isArray(rawDomMap[id])) {
+              domMap[id] = rawDomMap[id];
+          }
+      }
+
+      edges.forEach(e=>{
+        const f = domMap[e.from];
+        const t = domMap[e.to];
+        if(!f||!t) return;
+
+        const fb = f.getBoundingClientRect();
+        const tb = t.getBoundingClientRect();
+
+        const fx = fb.right - r.left + container.scrollLeft;
+        const fy = fb.top + fb.height/2 - r.top + container.scrollTop;
+        const tx = tb.left - r.left + container.scrollLeft;
+        const ty = tb.top + tb.height/2 - r.top + container.scrollTop;
+
+        const dx = Math.max(30,(tx-fx)/2);
+        const d = `M${fx},${fy} C${fx+dx},${fy} ${tx-dx},${ty} ${tx},${ty}`;
+
+        const p = document.createElementNS("http://www.w3.org/2000/svg","path");
+        p.setAttribute("d", d);
+        p.setAttribute("stroke", "var(--accent)");
+        p.setAttribute("stroke-width","2");
+        p.setAttribute("fill","none");
+        p.setAttribute("marker-end", "url(#arrowhead)");
+        svg.appendChild(p);
+      });
+      
+      if(!svg.querySelector('defs')){
+          const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+          defs.innerHTML = `
+              <marker id="arrowhead" markerWidth="8" markerHeight="5" 
+                      refX="8" refY="2.5" orient="auto">
+                  <polygon points="0 0, 8 2.5, 0 5" fill="var(--accent)" />
+              </marker>`;
+          svg.prepend(defs);
+      }
+    }
+  }
+});
+
+app.mount('#app');
+</script>
+</body>
+</html>
