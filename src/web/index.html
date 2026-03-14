@@ -1,1064 +1,926 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<title>DBCooker Demo</title>
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-
-<style>
-  /* 颜色变量 - 程序员/深色和谐主题 (Charcoal/Amber) */
-  :root {
-    --bg: #282c34;       /* 主背景：深炭灰 */
-    --card: #20242b;     /* 卡片背景：略深灰 */
-    --accent: #d19a66;   /* 强调色：柔和琥珀/金 */
-    --muted: #abb2bf;    /* 柔和白/灰文本 */
-    --good: #98c379;     /* 成功色：平静绿 */
-    --bad: #e06c75;      /* 错误色：柔和红 */
-    --border: #3e4451;   /* 边框：中深灰 */
-    --tab-bg: #282c34;   /* 侧边栏与主背景一致 */
-    --code-bg: #1e222a;  /* 代码块背景：深蓝灰 */
-    --text: #ffffff;     /* 主文本颜色 */
-    --light-blue-bg: #353b47; /* 次要背景色 */
-  }
-  
-  html, body {
-    height: 100%; 
-  }
-  body { 
-    margin:0; font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-    background:var(--bg); color:var(--text); 
-    display:flex; 
-    min-height:100vh;
-  }
-  #app {
-    width: 100%; 
-    height: 100%;
-    display: flex; 
-    flex-direction: column;
-  }
-  
-  /* Main Layout: Sidebar + Content */
-  .container-flex { 
-    display:flex; 
-    width: 98%; 
-    max-width: 2560px; 
-    margin: 10px auto; 
-    box-shadow: 0 0 20px rgba(0,0,0,0.5); 
-    border: 1px solid var(--border);
-    min-height: calc(100vh - 20px); 
-  }
-  
-  /* Sidebar/Tabs */
-  .sidebar {
-    width: 250px; 
-    background: var(--tab-bg);
-    padding: 30px 0;
-    flex-shrink: 0;
-    border-right: 1px solid var(--border);
-  }
-  .tab-btn {
-    display: block;
-    width: 100%;
-    padding: 18px 25px;
-    text-align: left;
-    border: none;
-    background: transparent;
-    cursor: pointer;
-    font-size: 16px;
-    font-weight: 500;
-    color: var(--muted);
-    transition: all 0.2s;
-    border-left: 5px solid transparent;
-  }
-  .tab-btn:hover {
-    background: var(--light-blue-bg);
-    color: var(--text);
-  }
-  .tab-btn.active {
-    background: var(--card);
-    color: var(--accent);
-    border-left: 5px solid var(--accent);
-    font-weight: 600;
-  }
-  
-  /* Main Content Area */
-  .content-area {
-    flex-grow: 1; 
-    padding: 40px;
-    background: var(--bg);
-  }
-  .tab-content { display: none; }
-  .tab-content.active { display: block; }
-
-  /* 通用组件样式 */
-  .box { 
-    background:var(--card); 
-    border:1px solid var(--border); 
-    border-radius:10px;
-    padding:25px; 
-    margin-bottom:25px; 
-    box-shadow:0 5px 15px rgba(0,0,0,0.2);
-  }
-  .section-title { display:flex; align-items:center; gap:10px; margin-bottom:20px; }
-  .section-title h2 { margin:0; font-size:20px; color:var(--accent);}
-  
-  /* 按钮 */
-  .btn { 
-    padding:10px 18px; border-radius:6px; border:1px solid var(--accent);
-    background:transparent; cursor:pointer; transition:all 0.2s; font-size:14px; 
-    color: var(--accent);
-  }
-  .btn:hover { background: rgba(209, 154, 102, 0.1); }
-  .btn.primary { background:var(--accent); color:var(--code-bg); border-color:var(--accent); font-weight: 600;}
-  .btn.primary:hover { background:#bf8d5a; }
-  .btn.danger { background:var(--bad); color:var(--text); border-color:var(--bad); font-weight: 600;}
-  .btn.danger:hover { background:#c65b64; }
-
-  /* 输入框 */
-  input, select, textarea { 
-    width:100%; 
-    padding:10px; border-radius:5px;
-    border:1px solid var(--border); background:var(--light-blue-bg); 
-    color: var(--text); box-sizing:border-box; 
-    font-size:14px;
-  }
-  textarea { 
-    font-family:'Consolas', 'Monaco', monospace; 
-    resize:vertical; 
-    min-height:80px; 
-  }
-  
-  #inputJsonText, #outputJsonText {
-    min-height: 300px;
-  }
-
-  .row { 
-    display:grid; 
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); 
-    gap:20px; 
-  }
-  .col { flex:1; }
-  .small { font-size:13px; color:var(--muted); }
-
-  /* spinner */
-  .spinner {
-    border:4px solid var(--border);
-    border-top:4px solid var(--accent);
-    border-radius:50%;
-    width:35px; height:35px;
-    animation:spin 0.8s linear infinite;
-    margin:30px auto;
-  }
-  @keyframes spin { 100% { transform: rotate(360deg); } }
-
-  /* 依赖树 */
-  .tree-container { 
-    position:relative; overflow:auto; padding:30px;
-    border:1px solid var(--border); background:var(--light-blue-bg); 
-    border-radius:8px; 
-    min-height:350px;
-  }
-  .tree-columns { 
-    display:flex; gap:60px; align-items:flex-start;
-    padding-bottom: 20px; 
-  }
-  .tree-column { 
-    display:flex; 
-    flex-direction:column; 
-    gap:25px; 
-  }
-  .node-card { 
-    background:var(--card); border:1px solid var(--accent); padding:12px 18px;
-    border-radius:6px; min-width:200px; box-shadow:0 0 10px rgba(0,0,0,0.1); 
-    font-size:14px; font-weight:500; color:var(--text);
-    text-align: center;
-  }
-  .svg-lines { 
-    position:absolute; left:0; top:0; pointer-events:none; 
-    overflow:visible; 
-  }
-
-  /* 代码块 (通用) */
-  .code-box { 
-    background:var(--code-bg); color:var(--muted); border-radius:6px; padding:15px;
-    font-family:'Consolas', 'Monaco', monospace; white-space:pre-wrap; overflow:auto; 
-    min-height:100px; font-size:14px;
-    resize:vertical;
-    border: 1px solid var(--border);
-  }
-  .code-box[contenteditable] { 
-    outline:none; border:1px dashed var(--accent); 
-    cursor:text;
-  }
-
-  .code-box.language-cpp .token.keyword { color: #c678dd; }
-  .code-box.language-cpp .token.string { color: #98c379; }
-  .code-box.language-cpp .token.number { color: #d19a66; }
-  .code-box.language-cpp .token.comment { color: #5c6370; font-style: italic; }
-  .code-box.language-cpp .token.function { color: #61afef; }
-  .code-box.language-cpp .token.punctuation { color: #abb2bf; }
-
-  /* 尝试 */
-  .attempt { 
-    border:1px solid var(--border); padding:20px; border-radius:10px;
-    margin-bottom:20px; background:var(--light-blue-bg); display:flex; gap:30px; 
-  }
-  .attempt-left { min-width:200px; }
-  .status-item { display:flex; gap:10px; align-items:center; font-size:14px;}
-  .status-dot { width:12px; height:12px; border-radius:50%; box-shadow: 0 0 5px currentColor;}
-  .file-btn { 
-    padding:8px 12px; border:1px solid var(--muted); border-radius:5px;
-    background:var(--card); cursor:pointer; margin-right:10px; font-size:13px;
-    color: var(--text);
-  }
-  .file-btn:hover { background: var(--light-blue-bg); }
-
-  /* 结果 */
-  .result-card { 
-    display:flex; gap:20px; border:1px solid var(--border);
-    padding:20px; border-radius:10px; background:var(--card); margin-bottom:20px;
-  }
-  .result-col { flex:1; }
-  .code-frame { 
-    background:var(--light-blue-bg); border-radius:5px; padding:12px;
-    font-family:'Consolas', 'Monaco', monospace; white-space:pre-wrap; min-height:80px; 
-    font-size:13px; border:1px solid var(--border); color:var(--muted);
-  }
-
-  /* Log */
-  .log-box { 
-    background:var(--code-bg); border:1px solid var(--border); padding:15px;
-    border-radius:6px; max-height:300px; overflow:auto; font-family:'Consolas', 'Monaco', monospace; 
-    white-space: pre-line; font-size:13px; color: var(--muted);
-  }
-
-  /* Modal Styles */
-  .modal-backdrop { 
-    position:fixed; left:0; top:0; width:100%; height:100%;
-    background:rgba(0,0,0,0.9); display:flex; justify-content:center;
-    align-items:center; z-index:9999;
-  }
-  .modal { 
-    background:var(--card); width:90%; max-width:1000px; max-height:90%;
-    overflow:auto; padding:25px; border-radius:10px;
-    border: 2px solid var(--accent);
-    box-shadow: 0 0 20px rgba(0,0,0,0.5);
-  }
-  .modal h3 { color: var(--accent); margin:0;}
-
-  /* Workflow Steps */
-  .workflow-steps {
-    display: flex;
-    gap: 0;
-    margin-bottom: 20px;
-    overflow-x: auto;
-    padding: 10px 0;
-    border-bottom: 1px solid var(--border);
-    background: transparent;
-    padding-left: 15px; 
-  }
-  .workflow-step-btn-container {
-      position: relative;
-      flex-shrink: 0; 
-  }
-  .workflow-step-btn-container:not(:last-child) .workflow-step-btn {
-      margin-right: -15px; 
-      border-right: none; 
-  }
-  .workflow-step-btn {
-      padding: 10px 25px; 
-      border-radius: 0; 
-      transform: none; 
-      position: relative;
-      z-index: 10; 
-      min-width: 150px;
-      text-align: center;
-      font-weight: 500;
-      background: var(--card); 
-      color: var(--muted); 
-      border: 1px solid var(--border);
-      cursor: pointer;
-      transition: all 0.2s;
-      --chevron-size: 15px; 
-      clip-path: polygon(
-          0% 0%, 
-          calc(100% - var(--chevron-size)) 0%, 
-          100% 50%, 
-          calc(100% - var(--chevron-size)) 100%, 
-          0% 100%
-      );
-  }
-  .workflow-step-btn:hover { 
-      background: var(--light-blue-bg); 
-      color: var(--text); 
-  }
-  .workflow-step-btn.active { 
-      background:var(--accent); 
-      color:var(--code-bg); 
-      border-color:var(--accent);
-      font-weight: 600;
-      z-index: 11;
-      border: 1px solid var(--accent); 
-      margin-right: -15px; 
-      border-right: none;
-  }
-  .workflow-step-btn.active:hover { background:var(--accent); } 
-
-  .workflow-step-btn-container:last-child .workflow-step-btn {
-      margin-right: 0;
-      border-right: 1px solid var(--border); 
-      clip-path: none; 
-      border-radius: 0 6px 6px 0; 
-  }
-  .workflow-step-btn-container:last-child .workflow-step-btn.active {
-      border-right: 1px solid var(--accent); 
-  }
-
-  @media (max-width:992px){
-    body { display:block; }
-    #app { height: auto; } 
-    .container-flex { 
-      display:block; 
-      width: 100%; 
-      margin: 0; 
-      box-shadow:none;
-      border: none; 
-      min-height: auto; 
-    }
-    .sidebar { display:none; }
-    .content-area { padding: 15px; }
-    .row { grid-template-columns: 1fr; } 
-    .attempt { flex-direction:column; }
-    .result-card { flex-direction:column; }
-    .tree-columns { flex-direction:column; gap:20px;}
-    #mobileTabs { display:flex; gap:8px; margin-bottom:15px; overflow-x:auto; padding-bottom:10px; border-bottom:1px solid var(--border);}
-    .mobile-tab-btn {
-        padding: 8px 15px; border-radius: 5px; border: 1px solid var(--border);
-        background: var(--card); cursor: pointer; font-size: 14px; white-space: nowrap;
-        color: var(--text);
-    }
-    .mobile-tab-btn.active { background:var(--accent); color:var(--code-bg); border-color:var(--accent);}
-  }
-  @media (min-width:993px) {
-    #mobileTabs { display:none; }
-  }
-</style>
-</head>
-
-<body>
-
-<div id="app">
-<div class="container-flex">
-
-  <div class="sidebar">
-    <button v-for="tab in tabData" 
-            :key="tab.id" 
-            class="tab-btn" 
-            :class="{ active: activeTab === tab.id }"
-            @click="switchTab(tab.id)">
-      {{ tab.title }}
-    </button>
-  </div>
-
-  <div class="content-area">
-    
-    <div id="mobileTabs">
-      <button v-for="tab in tabData" 
-              :key="tab.id" 
-              class="mobile-tab-btn" 
-              :class="{ active: activeTab === tab.id }"
-              @click="switchTab(tab.id)">
-        {{ tab.title }}
-      </button>
-    </div>
-
-    <div class="tab-content" :class="{ active: activeTab === 'input' }">
-      <div class="box">
-        <div class="section-title">
-          <h2>1. Requirement Input</h2>
-          <span class="small" id="loadStatus_input">(loaded)</span>
-        </div>
-
-        <div class="box">
-          <div id="inputUI">
-            <div class="row" style="margin-top:15px;">
-              <div class="col">
-                <label class="small">Database</label>
-                <select v-model="input.database">
-                  <option>PostgreSQL</option>
-                  <option>SQLite</option>
-                  <option>DuckDB</option>
-                </select>
-              </div>
-              <div class="col">
-                <label class="small">Database Path</label>
-                <input v-model="input.databasePath" placeholder="/path/to/database" />
-              </div>
-              <div class="col">
-                <label class="small">Function Name</label>
-                <input v-model="input.funcName" />
-              </div>
-              <div class="col">
-                <label class="small">Category</label>
-                <input v-model="input.category" />
-              </div>
-            </div>
-
-            <div style="margin-top:15px;">
-              <label class="small">Description</label>
-              <textarea v-model="input.desc"></textarea>
-            </div>
-
-            <div style="margin-top:15px;">
-              <label class="small">Testcases (SQL / Expected Output)</label>
-              <div id="testcaseContainer">
-                <div v-for="(t, i) in input.testcases" :key="i"
-                     style="display:flex; gap:10px; margin-bottom:10px;">
-                  <textarea style="flex:1;" v-model="t.sql" placeholder="SQL/Input Command"></textarea>
-                  <textarea style="flex:1;" v-model="t.expected" placeholder="Expected Output"></textarea>
-                  <button class="btn danger" style="width:60px; align-self:flex-start;" @click="removeTestcase(i)">DEL</button>
-                </div>
-              </div>
-              <div style="display:flex; gap:10px;">
-                <button class="btn" @click="addTestcase">Add Testcase</button>
-                <button class="btn primary" @click="saveInputUI">Save from UI</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="box">
-          <h3 style="margin:0;">Input JSON (to be sent to backend)</h3>
-          <div class="small">Edit → Parse to update UI</div>
-
-          <div style="margin:10px 0; display:flex; gap:10px;">
-            <button class="btn" @click="loadSampleInput">Load Sample Input JSON</button>
-            <button class="btn primary" @click="parseInputJson">Parse Input JSON</button>
-          </div>
-
-          <textarea id="inputJsonText" v-model="inputJsonText"></textarea>
-        </div>
-
-        <div class="box">
-          <h3 style="margin:0;">Output JSON (received from Python backend)</h3>
-          <div class="small">Output of pipeline → Parse to update UI</div>
-
-          <div style="margin:10px 0; display:flex; gap:10px;">
-            <button class="btn primary" @click="parseOutputJson">Parse Output JSON</button>
-            <button class="btn primary" @click="runPipeline">Run Pipeline (Call Python)</button>
-          </div>
-
-          <textarea id="outputJsonText" v-model="outputJsonText"></textarea>
-        </div>
-      </div>
-    </div>
-    
-    <div class="tab-content" :class="{ active: activeTab === 'analysis' }">
-      <div class="box">
-        <div class="section-title">
-          <h2>2. Database Code Analysis</h2>
-          <span class="small" v-if="output.analysis.loaded">(Code Analysis Loaded)</span>
-          <span class="small" v-else>(loading...)</span>
-        </div>
-
-        <div v-if="!output.analysis.loaded"><div class="spinner"></div></div>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DBCooker Chat</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+    <style>
+        body {
+            font-family: var(--vscode-font-family);
+            font-size: var(--vscode-font-size);
+            color: var(--vscode-foreground);
+            background-color: var(--vscode-sideBar-background);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+        #app {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        .header {
+            padding: 10px;
+            border-bottom: 1px solid var(--vscode-panel-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--vscode-sideBar-background);
+            z-index: 10;
+        }
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--vscode-panel-border);
+            background: var(--vscode-sideBar-background);
+        }
+        .tab {
+            flex: 1;
+            padding: 8px;
+            text-align: center;
+            cursor: pointer;
+            opacity: 0.7;
+            font-size: 0.9em;
+        }
+        .tab.active {
+            opacity: 1;
+            border-bottom: 2px solid var(--vscode-button-background);
+            font-weight: bold;
+        }
+        .view-container {
+            flex: 1;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        .message-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        /* Modified Files Panel */
+        .modified-files-panel {
+            background: var(--vscode-editor-background);
+            border-top: 2px solid var(--vscode-button-background);
+            max-height: 150px;
+            overflow-y: auto;
+            padding: 8px;
+            z-index: 5;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.2);
+        }
+        .modified-file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 10px;
+            border: 1px solid var(--vscode-panel-border);
+            border-radius: 4px;
+            margin-bottom: 6px;
+            font-size: 0.85em;
+            background: var(--vscode-sideBar-background);
+        }
+        .file-path {
+            color: var(--vscode-textLink-foreground);
+            text-decoration: underline;
+            cursor: pointer;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-right: 10px;
+            flex: 1;
+        }
+        .file-path:hover {
+            color: var(--vscode-textLink-activeForeground);
+        }
+        .file-actions {
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+        .action-link {
+            cursor: pointer;
+            opacity: 0.8;
+            font-weight: bold;
+        }
+        .action-link:hover {
+            opacity: 1;
+            text-decoration: underline;
+        }
+        .action-confirm { color: var(--vscode-gitDecoration-addedResourceForeground); }
+        .action-discard { color: var(--vscode-gitDecoration-deletedResourceForeground); }
         
-        <div v-else>
-          <div class="box">
-            <h3 style="margin:0;">Overall Database Code Overview </h3>
-            <p class="small">To be implemented</p>
-            <div style="height: 400px; background-color: #5c6370; border-radius: 8px; margin-top: 15px; display: flex; align-items: center; justify-content: center; color: var(--text); font-size: 20px; font-weight: bold;">
-                PLACEHOLDER
-            </div>
-          </div>
+        .message {
+            max-width: 90%;
+            padding: 8px 12px;
+            border-radius: 8px;
+            line-height: 1.4;
+            word-wrap: break-word;
+            font-size: 0.95em;
+        }
+        .message.user {
+            align-self: flex-end;
+            background-color: var(--vscode-button-background);
+            color: var(--vscode-button-foreground);
+        }
+        .message.agent {
+            align-self: flex-start;
+            background-color: var(--vscode-editor-background);
+            border: 1px solid var(--vscode-panel-border);
+            white-space: pre-wrap;
+            font-family: var(--vscode-editor-font-family);
+            position: relative;
+            width: 100%;
+            overflow: visible;
+        }
+        .diff-actions {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px dashed var(--vscode-panel-border);
+            display: flex;
+            gap: 10px;
+            font-size: 0.85em;
+        }
+        .diff-link {
+            color: var(--vscode-textLink-foreground);
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .diff-link:hover {
+            text-decoration: underline;
+        }
+        .input-area {
+            padding: 10px;
+            border-top: 1px solid var(--vscode-panel-border);
+            background: var(--vscode-sideBar-background);
+            flex-shrink: 0;
+        }
+        .requirement-form {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 250px;
+            overflow-y: auto;
+            padding-bottom: 5px;
+            margin-bottom: 8px;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .form-group label {
+            font-size: 0.8em;
+            opacity: 0.8;
+            font-weight: bold;
+        }
+        input, select, textarea {
+            width: 100%;
+            background-color: var(--vscode-input-background);
+            color: var(--vscode-input-foreground);
+            border: 1px solid var(--vscode-input-border);
+            padding: 6px;
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 0.9em;
+        }
+        .testcase-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            padding: 6px;
+            border: 1px solid var(--vscode-panel-border);
+            border-radius: 4px;
+            margin-bottom: 4px;
+            position: relative;
+        }
+        .remove-btn {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            padding: 2px 6px;
+            font-size: 0.7em;
+            background: var(--vscode-errorForeground);
+            color: white;
+            border: none;
+            border-radius: 2px;
+            cursor: pointer;
+        }
+        .controls {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+        button {
+            background-color: var(--vscode-button-background);
+            color: var(--vscode-button-foreground);
+            border: none;
+            padding: 6px 12px;
+            cursor: pointer;
+            border-radius: 2px;
+            font-size: 0.9em;
+        }
+        button:hover {
+            background-color: var(--vscode-button-hoverBackground);
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        button.secondary {
+            background-color: var(--vscode-button-secondaryBackground);
+            color: var(--vscode-button-secondaryForeground);
+        }
+        .history-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+        .history-item {
+            padding: 10px;
+            border: 1px solid var(--vscode-panel-border);
+            border-radius: 4px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .history-item:hover {
+            background: var(--vscode-list-hoverBackground);
+        }
+        .history-item.active {
+            border-color: var(--vscode-button-background);
+            background: var(--vscode-list-activeSelectionBackground);
+        }
+        .history-meta {
+            font-size: 0.8em;
+            opacity: 0.7;
+            margin-bottom: 4px;
+        }
+        .history-title {
+            font-weight: bold;
+            font-size: 0.9em;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .resizer:hover {
+            background: var(--vscode-button-background) !important;
+        }
+        /* JSON 卡片美化，参考 rich.table 风格 */
+        .json-card {
+            border: 1px solid var(--vscode-panel-border);
+            border-radius: 4px;
+            margin: 8px 0;
+            background: var(--vscode-editor-background);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .json-header {
+            padding: 6px 10px;
+            background: var(--vscode-button-background);
+            color: var(--vscode-button-foreground);
+            font-weight: bold;
+            font-size: 0.9em;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .json-body {
+            padding: 0;
+        }
+        .step-info-row {
+            display: flex;
+            border-bottom: 1px solid var(--vscode-panel-border);
+            font-size: 0.9em;
+        }
+        .step-info-row:last-child { border-bottom: none; }
+        .step-label {
+            width: 100px;
+            padding: 6px 10px;
+            background: rgba(128, 128, 128, 0.1);
+            font-weight: bold;
+            flex-shrink: 0;
+            border-right: 1px solid var(--vscode-panel-border);
+        }
+        .step-value {
+            padding: 6px 10px;
+            flex: 1;
+            word-break: break-all;
+        }
+        
+        /* 折叠详情样式 */
+        details {
+            border-top: 1px solid var(--vscode-panel-border);
+            margin-top: 5px;
+        }
+        summary {
+            padding: 4px 10px;
+            font-size: 0.85em;
+            cursor: pointer;
+            opacity: 0.8;
+            outline: none;
+            background: rgba(128, 128, 128, 0.05);
+            font-weight: bold;
+        }
+        summary:hover {
+            opacity: 1;
+            background: rgba(128, 128, 128, 0.1);
+            color: var(--vscode-textLink-foreground);
+        }
+        
+        .inner-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85em;
+            background: var(--vscode-sideBar-background);
+            table-layout: fixed;
+        }
+        .inner-table td {
+            padding: 4px 8px;
+            border: 1px solid var(--vscode-panel-border);
+            word-wrap: break-word;
+            overflow-x: auto;
+        }
+        
+        .expandable-details {
+            max-height: 15em; /* Approximately 10 lines */
+            overflow: hidden;
+            position: relative;
+            transition: max-height 0.3s ease-out;
+        }
+        .expandable-details.expanded {
+            max-height: none;
+        }
+        .expand-btn {
+            background: none;
+            color: var(--vscode-textLink-foreground);
+            border: none;
+            padding: 2px 0;
+            font-size: 0.85em;
+            cursor: pointer;
+            margin-top: 4px;
+            display: block;
+            width: fit-content;
+            opacity: 0.8;
+            text-decoration: underline;
+        }
+        .expand-btn:hover {
+            opacity: 1;
+            color: var(--vscode-textLink-activeForeground);
+        }
+        .horizontal-scroll {
+            overflow-x: auto;
+            max-width: 100%;
+        }
+        .tool-name-header {
+            background: var(--vscode-badge-background);
+            color: var(--vscode-badge-foreground);
+            font-weight: bold;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.9em;
+        }
+        .log-info { color: var(--vscode-debugConsole-infoForeground); }
+        .log-error { color: var(--vscode-errorForeground); font-weight: bold; }
+        /* 5 种状态的颜色定义 */
+        .state-thinking { border-left: 4px solid #3794ff; }
+        .state-calling_tool { border-left: 4px solid #cca700; }
+        .state-reflecting { border-left: 4px solid #b267e6; }
+        .state-completed { border-left: 4px solid #89d185; }
+        .state-error { border-left: 4px solid #f48771; }
+
+        .json-header.thinking { background: #3794ff; }
+        .json-header.calling_tool { background: #cca700; }
+        .json-header.reflecting { background: #b267e6; }
+        .json-header.completed { background: #89d185; }
+        .json-header.error { background: #f48771; }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="header">
+            <span>DBCooker</span>
+            <button class="secondary" style="padding: 2px 8px; font-size: 0.8em;" @click="clearChat" :disabled="isRunning">Clear Chat</button>
         </div>
-      </div>
-    </div>
 
-
-    <div class="tab-content" :class="{ active: activeTab === 'workflow' }">
-      <div class="box">
-        <div class="section-title">
-          <h2>3. Workflow Steps</h2>
-          <span class="small" id="loadStatus_workflow" v-if="output.workflow.loaded">({{ output.workflow.items.length }} Steps Loaded)</span>
-          <span class="small" id="loadStatus_workflow" v-else>(loading...)</span>
+        <div class="tabs">
+            <div class="tab" :class="{active: activeTab === 'chat'}" @click="setTab('chat')">Chat</div>
+            <div class="tab" :class="{active: activeTab === 'history'}" @click="setTab('history')">History</div>
         </div>
+        
+        <div v-show="activeTab === 'chat'" class="view-container">
+            <div class="message-list" ref="messageList">
+                <div v-for="(msg, index) in messages" :key="index" v-if="shouldShowMessage(msg)" :class="['message', msg.role]">
+                    <div v-if="msg.role === 'system'">{{ msg.content }}</div>
+                    <div v-else>
+                        <!-- JSON 渲染逻辑 -->
+                        <div v-if="isJson(msg.content)">
+                            <div v-for="item in parseJsonMessages(msg.content)" :key="item.id" v-if="shouldShowItem(item)">
+                                <!-- Task Category -->
+                                <div v-if="item.category === 'task'" class="json-card">
+                                    <details>
+                                        <summary>📋 TASK DETAILS</summary>
+                                        <div class="json-body" style="padding: 8px;">
+                                            <div style="font-weight: bold; color: var(--vscode-textLink-foreground); margin-bottom: 5px;">{{ item.data.title }}</div>
+                                            <div v-for="(val, key) in item.data.details" :key="key" style="font-size: 0.85em;">
+                                                <span style="opacity: 0.7;">{{ key }}:</span> {{ val }}
+                                            </div>
+                                        </div>
+                                    </details>
+                                </div>
+                                <!-- Step Category (参考原始 generate_agent_step_table 格式) -->
+                                <div v-else-if="item.category === 'step'" class="json-card" :class="'state-' + item.data.state">
+                                    <div class="json-header" :class="item.data.state">
+                                        <span>{{ item.data.emoji }} STEP {{ item.data.step_number }}</span>
+                                        <span style="text-transform: uppercase; font-size: 0.8em;">{{ item.data.state.replace('_', ' ') }}</span>
+                                    </div>
+                                    <div class="json-body">
+                                        <!-- 核心信息：状态与工具摘要 -->
+                                        <div class="step-info-row">
+                                            <div class="step-label">Status</div>
+                                            <div class="step-value" :style="{color: item.data.color}">{{ item.data.state.toUpperCase() }}</div>
+                                        </div>
+                                        <div v-if="item.data.tools && item.data.tools.length" class="step-info-row">
+                                            <div class="step-label">Tools</div>
+                                            <div class="step-value">
+                                                <span v-for="t in item.data.tools" class="tool-name-header" style="margin-right: 5px;">{{ t.name }}</span>
+                                            </div>
+                                        </div>
 
-        <div v-if="!output.workflow.loaded"><div class="spinner"></div></div>
+                                        <!-- Show all details with folding and scrolling -->
+                                        <div style="padding: 0; border-top: 1px solid var(--vscode-panel-border);">
+                                            <!-- LLM Response / Thought - Always visible if exists -->
+                                            <div v-if="item.data.content" style="padding: 8px;">
+                                                <div style="font-weight: bold; font-size: 0.85em; margin-bottom: 2px; opacity: 0.7;">💬 LLM Response</div>
+                                                <div class="horizontal-scroll" style="font-size: 0.9em; padding: 5px; background: rgba(128,128,128,0.05); border-radius: 4px;">{{ item.data.content }}</div>
+                                            </div>
 
-        <div v-else id="workflowUI">
-          
-          <div class="workflow-steps">
-            <div v-for="(item, index) in output.workflow.items" :key="item.id"
-                    class="workflow-step-btn-container">
-                <button 
-                        class="workflow-step-btn" 
-                        :class="{ active: activeWorkflowIndex === index }"
-                        @click="setActiveWorkflowIndex(index)">
-                  {{ capitalize(item.type) }}
-                </button>
-            </div>
-          </div>
-          
-          <div v-if="activeWorkflowItem" :key="activeWorkflowItem.id">
+                                            <!-- Tool Details Table - Native Folding -->
+                                            <div v-if="item.data.tools && item.data.tools.length">
+                                                <details>
+                                                    <summary>🔧 Tool Executions</summary>
+                                                    <div class="horizontal-scroll" style="padding: 8px;">
+                                                        <table class="inner-table">
+                                                            <tr v-for="tool in item.data.tools">
+                                                                <td style="width: 30%; font-weight: bold;">{{ tool.name }}</td>
+                                                                <td>
+                                                                    <div style="color: #89d185; font-family: var(--vscode-editor-font-family); font-size: 0.9em;">Args: {{ JSON.stringify(tool.args) }}</div>
+                                                                    <div v-if="tool.result" style="margin-top: 4px; border-top: 1px solid var(--vscode-panel-border); padding-top: 2px; opacity: 0.9;">
+                                                                        Result: {{ tool.result }}
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        </table>
+                                                    </div>
+                                                </details>
+                                            </div>
 
-            <div v-if="activeWorkflowItem.type === 'characterization'">
-              <div class="box">
-                <div class="section-title">
-                  <h2>Function Characterization (Dependency Tree)</h2>
-                </div>
-                <div class="tree-container" ref="treeContainer" @scroll="drawLines(treeEdges, nodeMap, $refs.treeSvg)">
-                  <div id="treeColumns" class="tree-columns" ref="treeColumns">
-                    <div v-for="(col, depth) in treeColumnsData" :key="depth" class="tree-column" :style="{ minWidth: col.minWidth }">
-                      <div v-for="node in col.nodes" :key="node.id" :id="node.id" class="node-card" :ref="el => nodeMap[node.id] = el">
-                        {{ node.name }}
-                      </div>
+                                            <!-- Reflection & Error -->
+                                            <div v-if="item.data.reflection" style="padding: 8px; border-top: 1px solid var(--vscode-panel-border);">
+                                                <span style="font-weight: bold; font-size: 0.85em; opacity: 0.7;">💭 Reflection:</span>
+                                                <span style="font-style: italic; font-size: 0.9em;">{{ item.data.reflection }}</span>
+                                            </div>
+                                            <div v-if="item.data.error" style="padding: 8px; color: var(--vscode-errorForeground); border-top: 1px solid var(--vscode-panel-border);">
+                                                <span style="font-weight: bold; font-size: 0.85em;">❌ Error:</span>
+                                                <span style="font-size: 0.9em;">{{ item.data.error }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Log Category -->
+                                <div v-else-if="item.category === 'log'" :class="'log-' + (item.data.level || 'info')" style="font-size: 0.85em; padding: 2px 0;">
+                                    <span v-if="item.data.level === 'error'">❌</span>
+                                    <span v-else>🔹</span>
+                                    {{ item.data.message }}
+                                </div>
+                            </div>
+                        </div>
+                        <!-- 普通文本渲染 -->
+                        <div v-else>
+                            <div v-html="formatMessage(msg.content)"></div>
+                        </div>
                     </div>
-                  </div>
-                  <svg id="treeSvg" class="svg-lines" ref="treeSvg"></svg>
                 </div>
-              </div>
             </div>
 
-            <div v-else-if="activeWorkflowItem.type === 'pseudo'">
-              <div class="box">
-                <div class="section-title">
-                  <h2>Pseudo-Code (Editable)</h2>
+            <!-- Modified Files Floating Panel -->
+            <div v-if="modifiedFiles.length > 0" class="modified-files-panel">
+                <div style="font-size: 0.8em; font-weight: bold; opacity: 0.7; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+                    <span>MODIFIED FILES ({{ modifiedFiles.length }})</span>
+                    <span style="cursor: pointer;" @click="modifiedFiles = []; saveState();">Clear</span>
                 </div>
-                <div v-for="(p, key) in activeWorkflowItem.data.items" :key="key" class="box" style="padding:15px;">
-                  <strong style="color:var(--accent); font-size:15px;">{{ p.title }}</strong>
-                  <div class="code-box" contenteditable="true" @input="updateWorkflowPseudo(key, $event.target.textContent)" v-text="p.code"></div>
+                <div v-for="file in modifiedFiles" :key="file" class="modified-file-item">
+                    <div class="file-path" @click="openFile(file)" :title="file">{{ file.split('/').pop() }} ({{ file }})</div>
+                    <div class="file-actions">
+                        <span class="action-link action-confirm" @click="confirmDiff(file)">[✅ Accept]</span>
+                        <span class="action-link action-discard" @click="discardDiff(file)">[❌ Discard]</span>
+                    </div>
                 </div>
-              </div>
             </div>
 
-            <div v-else-if="activeWorkflowItem.type === 'codeAttempt'">
-              <div class="box">
-                <div v-for="(a, key) in activeWorkflowItem.data" :key="key">
-                    <div class="section-title">
-                      <h2>Code Generation & Validation ({{ capitalize(key) }})</h2>
+            <div class="input-area">
+                <div class="requirement-form">
+                    <div class="form-group">
+                        <label>Requirement Description</label>
+                        <textarea v-model="input.desc" rows="2" placeholder="Describe your changes..." :disabled="isRunning" @input="saveState"></textarea>
                     </div>
                     
-                    <div class="attempt" 
-                        :style="{ borderColor: a.semanticOK ? 'var(--good)' : 'var(--border)', boxShadow: a.semanticOK ? '0 0 10px rgba(152, 195, 121, 0.2)' : 'none' }">
-                      
-                      <div class="attempt-left">
-                        <h4 style="margin:0; color:var(--text);">Attempt Mode: {{ a.mode }}</h4>
-                        
-                        <div v-for="(s, i) in [
-                          {label:'Syntax Check', val:a.syntaxOK},
-                          {label:'Compile Check', val:a.compileOK},
-                          {label:'Semantic Check', val:a.semanticOK}
-                        ]" :key="i" class="status-item">
-                          <div class="status-dot" :style="{ background: s.val ? 'var(--good)' : 'var(--bad)' }"></div>
-                          <div>
-                            {{ s.label }}: 
-                            <strong :style="{ color: s.val ? 'var(--good)' : 'var(--bad)' }">{{ s.val ? 'OK' : 'FAIL' }}</strong>
-                          </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                        <div class="form-group">
+                            <label>Database</label>
+                            <select v-model="input.database" :disabled="isRunning" @change="saveState">
+                                <option>PostgreSQL</option>
+                                <option>SQLite</option>
+                                <option>DuckDB</option>
+                            </select>
                         </div>
-                      </div>
+                        <div class="form-group">
+                            <label>Category</label>
+                            <input v-model="input.category" placeholder="e.g. Query" :disabled="isRunning" @input="saveState">
+                        </div>
+                    </div>
 
-                      <div class="right" style="flex:1;">
-                        <div v-if="a.error && a.error.trim() !== ''">
-                          <div class="small">Error/Feedback:</div>
-                          <div class="code-frame" style="background:#422a2a; border:1px solid var(--bad); color:var(--bad);" v-html="escapeHtml(a.error)"></div>
-                        </div>
+                    <div class="form-group">
+                        <label>Database Path</label>
+                        <input v-model="input.databasePath" placeholder="/path/to/db" :disabled="isRunning" @input="saveState">
+                    </div>
 
-                        <div class="small" :style="{ marginTop: (a.error && a.error.trim() !== '') ? '15px' : '0' }">Generated Files:</div>
-                        <div>
-                          <button v-for="f in a.generatedFiles" :key="f.filename" 
-                                  class="file-btn" @click="openModal(f.filename, f.content)">
-                            {{ f.filename }}
-                          </button>
+                    <div class="form-group">
+                        <label>Function Name</label>
+                        <input v-model="input.funcName" placeholder="e.g. get_users" :disabled="isRunning" @input="saveState">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Testcases ({{ input.testcases.length }})</label>
+                        <div v-for="(t, i) in input.testcases" :key="i" class="testcase-item">
+                            <button class="remove-btn" @click="removeTestcase(i)" v-if="!isRunning">×</button>
+                            <textarea v-model="t.sql" rows="1" placeholder="SQL Input" :disabled="isRunning" @input="saveState"></textarea>
+                            <textarea v-model="t.expected" rows="1" placeholder="Expected Output" :disabled="isRunning" @input="saveState"></textarea>
                         </div>
-                      </div>
+                        <button class="secondary" @click="addTestcase" style="padding: 4px; font-size: 0.8em;" :disabled="isRunning">+ Add Testcase</button>
                     </div>
                 </div>
-              </div>
-            </div>
 
-            <div v-else-if="activeWorkflowItem.type === 'results'">
-              <div class="box">
-                <div class="section-title">
-                  <h2>Result Comparison</h2>
+                <div class="controls">
+                    <button v-if="isRunning" @click="stopPipeline" class="secondary">Stop</button>
+                    <button v-else @click="sendMessage" :disabled="!input.desc.trim()">Run Pipeline</button>
                 </div>
-                <div v-for="(r, key) in activeWorkflowItem.data.items" :key="key" 
-                    class="result-card" 
-                    :style="getResultCardStyle(r)">
-                  
-                  <div class="result-col">
-                    <div class="small" style="color:var(--text)">Testcase (SQL)</div>
-                    <div class="code-frame" style="color:var(--accent);" v-html="escapeHtml(r.testcase)"></div>
-                  </div>
-
-                  <div class="result-col">
-                    <div class="small" style="color:var(--text)">Expected Output</div>
-                    <div class="code-frame" style="color:var(--good);" v-html="escapeHtml(r.expected)"></div>
-                  </div>
-
-                  <div class="result-col">
-                    <div class="small" style="color:var(--text)">Actual Output</div>
-                    <div class="code-frame" 
-                        :style="{ borderColor: r.actual.trim() === r.expected.trim() ? 'var(--good)' : 'var(--bad)', 
-                                  color: r.actual.trim() === r.expected.trim() ? 'var(--good)' : 'var(--bad)' }"
-                        v-html="escapeHtml(r.actual)"></div>
-                  </div>
-                </div>
-              </div>
             </div>
-
-            <div v-else>
-              <p class="small" style="text-align:center;">Unknown workflow item type: {{ activeWorkflowItem.type }}</p>
-            </div>
-          </div>
         </div>
-      </div>
+
+        <div v-show="activeTab === 'history'" class="view-container" style="display: flex; flex-direction: column; position: relative;">
+            <!-- Current Live Logs -->
+            <div :style="{ height: logHeight + 'px' }" style="display: flex; flex-direction: column; border-bottom: 1px solid var(--vscode-panel-border); min-height: 100px; flex-shrink: 0;">
+                <div style="padding: 6px 10px; background: var(--vscode-editor-background); border-bottom: 1px solid var(--vscode-panel-border); font-size: 0.85em; font-weight: bold; display: flex; justify-content: space-between; align-items: center;">
+                    <span>Current Session Logs</span>
+                    <button class="secondary" style="padding: 2px 6px; font-size: 0.75em;" @click="clearCurrentLogs">Clear</button>
+                </div>
+                <div class="current-logs" ref="currentLogs" style="flex: 1; overflow: auto; padding: 10px; font-family: var(--vscode-editor-font-family); font-size: 0.8em; white-space: pre; background: var(--vscode-editor-background); color: var(--vscode-editor-foreground);">{{ currentLogs.join('\n') }}</div>
+            </div>
+
+            <!-- Resizer -->
+            <div class="resizer" @mousedown="startResize" style="height: 4px; cursor: ns-resize; background: var(--vscode-panel-border); transition: background 0.2s;"></div>
+
+            <!-- History List -->
+            <div style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
+                <div style="padding: 6px 10px; background: var(--vscode-sideBar-background); border-bottom: 1px solid var(--vscode-panel-border); font-size: 0.85em; font-weight: bold;">History</div>
+                <div class="history-list" style="flex: 1;">
+                    <div v-if="history.length === 0" style="text-align: center; padding: 20px; opacity: 0.5;">No history found.</div>
+                    <div v-for="(item, index) in history" 
+                         :key="index" 
+                         class="history-item"
+                         :class="{active: selectedHistoryItem === item}"
+                         @click="loadHistoryItem(item)">
+                        <div class="history-meta">{{ item.timestamp }}</div>
+                        <div class="history-title">{{ item.input?.desc || 'No description' }}</div>
+                        <div style="font-size: 0.75em; opacity: 0.6; margin-top: 4px;">{{ item.messages.length }} log lines</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- History Detail Overlay -->
+            <div v-if="selectedHistoryItem" style="position: absolute; bottom: 0; left: 0; right: 0; height: 80%; background: var(--vscode-sideBar-background); border-top: 2px solid var(--vscode-button-background); display: flex; flex-direction: column; z-index: 20;">
+                <div style="padding: 8px 10px; border-bottom: 1px solid var(--vscode-panel-border); display: flex; justify-content: space-between; align-items: center; background: var(--vscode-editor-background);">
+                    <strong style="font-size: 0.85em;">History Logs ({{ selectedHistoryItem.timestamp }})</strong>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="secondary" style="padding: 2px 6px; font-size: 0.75em;" @click="restoreInput(selectedHistoryItem)">Restore</button>
+                        <button class="secondary" style="padding: 2px 6px; font-size: 0.75em;" @click="selectedHistoryItem = null">Close</button>
+                    </div>
+                </div>
+                <div style="flex: 1; overflow: auto; padding: 10px; font-family: var(--vscode-editor-font-family); font-size: 0.8em; white-space: pre; background: var(--vscode-editor-background); color: var(--vscode-editor-foreground);">{{ selectedHistoryItem.messages.join('\n') }}</div>
+            </div>
+        </div>
     </div>
 
-
-    <div class="tab-content" :class="{ active: activeTab === 'log' }">
-      <div class="box">
-        <h2>4. Execution Log History ({{ output.logs.items.length }} Logs)</h2>
+    <script>
+        const vscode = acquireVsCodeApi();
+        const previousState = vscode.getState() || {};
         
-        <div v-for="(logGroup, index) in output.logs.items" :key="index" class="box" style="padding:15px;">
-            <strong style="color:var(--accent); font-size:15px;">Log Group #{{ index + 1 }} ({{ logGroup.timestamp }})</strong>
-            <div class="log-box" :ref="el => setLogBoxRef(el, index)" v-text="logGroup.messages.join('\n')"></div>
-        </div>
-      </div>
-    </div>
+        new Vue({
+            el: '#app',
+            data: {
+                activeTab: previousState.activeTab || 'chat',
+                input: (previousState.input && previousState.input.desc) ? previousState.input : {
+                    requirement: 'Extract year from date string',
+                    database: 'SQLite',
+                    databasePath: 'sample.db',
+                    funcName: 'strftime',
+                    category: 'Date/Time',
+                    desc: 'Extract year from a date string using strftime',
+                    testcases: [
+                        { sql: "SELECT strftime('%Y', '2023-10-27')", expected: "2023" },
+                        { sql: "SELECT strftime('%m', '2023-10-27')", expected: "10" }
+                    ]
+                },
+                messages: previousState.messages || [
+                    { role: 'agent', content: 'Hello! How can I help you with your database code today?' }
+                ],
+                modifiedFiles: previousState.modifiedFiles || [], // Restore from state
+                isRunning: false,
+                history: [],
+                selectedHistoryItem: null,
+                currentLogs: [],
+                logHeight: 200,
+                isResizing: false
+            },
+            methods: {
+                startResize(e) {
+                    this.isResizing = true;
+                    document.addEventListener('mousemove', this.doResize);
+                    document.addEventListener('mouseup', this.stopResize);
+                },
+                doResize(e) {
+                    if (this.isResizing) {
+                        const newHeight = e.clientY - this.$el.getBoundingClientRect().top - 80; // Adjusted for header/tabs
+                        if (newHeight > 100 && newHeight < window.innerHeight - 200) {
+                            this.logHeight = newHeight;
+                        }
+                    }
+                },
+                stopResize() {
+                    this.isResizing = false;
+                    document.removeEventListener('mousemove', this.doResize);
+                    document.removeEventListener('mouseup', this.stopResize);
+                },
+                clearCurrentLogs() {
+                    this.currentLogs = [];
+                },
+                isJson(content) {
+                    if (!content) return false;
+                    const trimmed = content.trim();
+                    return trimmed.startsWith('{') && trimmed.endsWith('}');
+                },
+                shouldShowItem(item) {
+                    if (item.category === 'task') return true;
+                    if (item.category === 'log') return true;
+                    if (item.category === 'step') {
+                        return (item.data.state === 'completed' || 
+                                item.data.state === 'calling_tool' || 
+                                (item.data.state === 'thinking' && item.data.content));
+                    }
+                    return false;
+                },
+                shouldShowMessage(msg) {
+                    if (msg.role !== 'agent') return true;
+                    if (!this.isJson(msg.content)) return !!msg.content.trim();
+                    const items = this.parseJsonMessages(msg.content);
+                    return items.some(item => this.shouldShowItem(item));
+                },
+                parseJsonMessages(content) {
+                    const lines = content.split('\n');
+                    const results = [];
+                    lines.forEach((line, idx) => {
+                        const trimmed = line.trim();
+                        if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+                            try {
+                                const parsed = JSON.parse(trimmed);
+                                // Generate a stable ID based on category and step_number if available
+                                let stableId = parsed.category || 'log';
+                                if (parsed.category === 'step' && parsed.data && parsed.data.step_number) {
+                                    stableId += '-' + parsed.data.step_number;
+                                } else if (parsed.category === 'task') {
+                                    stableId += '-details';
+                                } else {
+                                    stableId += '-' + idx;
+                                }
+                                
+                                results.push({
+                                    id: stableId,
+                                    category: parsed.category || 'log',
+                                    data: parsed.data || {}
+                                });
+                            } catch (e) {
+                                results.push({
+                                    id: 'error-' + idx,
+                                    category: 'log',
+                                    data: { message: line, level: 'error' }
+                                });
+                            }
+                        } else if (trimmed) {
+                            results.push({
+                                id: 'log-' + idx,
+                                category: 'log',
+                                data: { message: line, level: 'info' }
+                            });
+                        }
+                    });
+                    return results;
+                },
+                saveState() {
+                    vscode.setState({
+                        activeTab: this.activeTab,
+                        input: this.input,
+                        messages: this.messages,
+                        modifiedFiles: this.modifiedFiles
+                    });
+                },
+                setTab(tab) {
+                    this.activeTab = tab;
+                    this.saveState();
+                },
+                addTestcase() {
+                    this.input.testcases.push({ sql: '', expected: '' });
+                    this.saveState();
+                },
+                removeTestcase(index) {
+                    this.input.testcases.splice(index, 1);
+                    this.saveState();
+                },
+                formatMessage(content) {
+                    // Simple escaping. Newlines handled by white-space: pre-wrap
+                    return content.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                },
+                clearChat() {
+                    this.messages = [
+                        { role: 'agent', content: 'Hello! How can I help you with your database code today?' }
+                    ];
+                    this.modifiedFiles = [];
+                    this.currentLogs = [];
+                    this.saveState();
+                    this.scrollToBottom(true);
+                },
+                sendMessage() {
+                    if (!this.input.desc.trim() || this.isRunning) return;
+                    
+                    // Clear history when starting new pipeline
+                    this.clearChat();
+                    
+                    const content = this.input.desc.trim();
+                    const userMsg = `Requirement: ${this.input.desc}\nDatabase: ${this.input.database}\nFunction: ${this.input.funcName}`;
+                    this.messages.push({ role: 'user', content: userMsg });
+                    this.isRunning = true;
+                    this.currentLogs = []; // Clear logs for new run
+                    this.saveState();
+                    
+                    // Sync legacy requirement field
+                    this.input.requirement = this.input.desc;
 
-  </div> 
+                    vscode.postMessage({
+                        type: 'executeScript',
+                        data: JSON.parse(JSON.stringify(this.input))
+                    });
+                    
+                    this.scrollToBottom(true);
+                },
+                stopPipeline() {
+                    vscode.postMessage({ type: 'stopScript' });
+                },
+                showLogs() {
+                    vscode.postMessage({ type: 'showLogs' });
+                },
+                loadHistoryItem(item) {
+                    this.selectedHistoryItem = item;
+                },
+                restoreInput(item) {
+                    if (item.input) {
+                        this.input = JSON.parse(JSON.stringify(item.input));
+                        this.activeTab = 'chat';
+                        this.saveState();
+                    }
+                },
+                confirmDiff(filePath) {
+                    vscode.postMessage({ type: 'confirmDiff', filePath });
+                    this.modifiedFiles = this.modifiedFiles.filter(f => f !== filePath);
+                },
+                discardDiff(filePath) {
+                    vscode.postMessage({ type: 'discardDiff', filePath });
+                    this.modifiedFiles = this.modifiedFiles.filter(f => f !== filePath);
+                },
+                openFile(filePath) {
+                    vscode.postMessage({ type: 'openFile', filePath });
+                },
+                scrollToBottom(force = false) {
+                    const container = this.$refs.messageList;
+                    if (!container) return;
+                    
+                    // 检测当前是否处于底部（允许 100px 的误差）
+                    // 此时 DOM 尚未更新，scrollHeight 是更新前的旧高度
+                    const isAtBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
 
-  <div v-if="modal.show" class="modal-backdrop" @click.self="modal.show = false">
-    <div class="modal">
-      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:10px; margin-bottom:15px;">
-        <h3 style="margin:0;">[Code Viewer] {{ modal.filename }}</h3>
-        <button class="btn" @click="modal.show = false">Close</button>
-      </div>
-      <pre class="code-box language-cpp" style="background:var(--code-bg); max-height:70vh; min-height:100px; padding:15px;" v-html="highlightedModalContent"></pre>
-    </div>
-  </div>
-
-</div> 
-<script>
-// Acquire VS Code API
-const vscode = acquireVsCodeApi();
-const { createApp, nextTick } = Vue;
-
-const app = createApp({
-  data() {
-    return {
-      activeTab: 'input',
-      tabData: [
-        {id: "input", title: "1. Requirement Input"},
-        {id: "analysis", title: "2. Database Code Analysis"}, 
-        {id: "workflow", title: "3. Workflow"},
-        {id: "log", title: "4. Execution Log"},
-      ],
-
-      activeWorkflowIndex: 0, 
-
-      input: {
-        database: "PostgreSQL",
-        databasePath: "", 
-        funcName: "",
-        category: "",
-        desc: "",
-        testcases: [
-          { sql:"", expected:"" } 
-        ]
-      },
-      inputJsonText: '',
-      outputJsonText: '',
-
-      output: {
-        analysis: { loaded: false },
-        workflow: { items: [], loaded: false },
-        logs: { items: [], loaded: false }
-      },
-      
-      treeColumnsData: [],
-      nodeMap: {}, 
-      treeEdges: [],
-      logBoxRefs: [], 
-
-      modal: {
-        show: false,
-        filename: '',
-        content: ''
-      }
-    };
-  },
-
-  computed: {
-    highlightedModalContent() {
-      return this.simulateCppSyntax(this.modal.content);
-    },
-    activeWorkflowItem() {
-      if (this.output.workflow.loaded && this.output.workflow.items.length > this.activeWorkflowIndex) {
-        return this.output.workflow.items[this.activeWorkflowIndex];
-      }
-      return null;
-    }
-  },
-
-  watch: {
-    'output.logs.items': {
-        handler() {
-            nextTick(() => {
-                const latestIndex = this.output.logs.items.length - 1;
-                const latestBox = this.logBoxRefs[latestIndex];
-                if (latestBox) {
-                    latestBox.scrollTop = latestBox.scrollHeight;
+                    this.$nextTick(() => {
+                        if (force || isAtBottom) {
+                            container.scrollTop = container.scrollHeight;
+                        }
+                    });
                 }
-            });
-        },
-        deep: true
-    },
-    input: {
-        handler(newVal) {
-            this.inputJsonText = JSON.stringify(newVal, null, 2);
-        },
-        deep: true,
-        immediate: true 
-    },
-    activeWorkflowItem(newItem) {
-        if (this.activeTab === 'workflow' && newItem && newItem.type === 'characterization') {
-            nextTick(this.renderTree);
-        }
-    }
-  },
+            },
+            mounted() {
+                vscode.postMessage({ type: 'webviewReady' });
 
-  mounted() {
-    this.outputJsonText = JSON.stringify(this.output, null, 2);
-    this.loadSampleInput(); 
+                window.addEventListener('message', event => {
+                    const message = event.data;
+                    switch (message.type) {
+                        case 'agentReply':
+                            // Replacement logic for steps with same step_number
+                            const raw = message.message.trim();
+                            const lines = raw.split('\n');
 
-    // Listen for messages from the extension (Python result)
-    window.addEventListener('message', event => {
-        const message = event.data;
-        if (message.type === 'result') {
-            this.outputJsonText = JSON.stringify(message.data, null, 2);
-            this.parseOutputJson();
-            this.log("Received response from Python backend.");
-            // Switch to log tab to show progress, or stay where user is?
-            // Let's stay, but user can see 'Loaded' status.
-        } else if (message.type === 'error') {
-            this.log("Python Error: " + message.message);
-            alert("Error: " + message.message);
-        }
-    });
-  },
+                            lines.forEach(line => {
+                                const trimmedLine = line.trim();
+                                if (!trimmedLine) return;
 
-  methods: {
-    capitalize(value) {
-      if (!value) return ''
-      const parts = value.split(/(?=[A-Z])|_/) 
-      return parts.map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
-    },
-    
-    log(msg){
-      let activeLog = this.output.logs.items.find(item => item.isActive);
+                                // Check for file modification indicators FIRST
+                                const modMatch = trimmedLine.match(/Modified file:\s*(.*)/i);
+                                if (modMatch) {
+                                    const filePath = modMatch[1].trim();
+                                    if (!this.modifiedFiles.includes(filePath)) {
+                                        this.modifiedFiles.push(filePath);
+                                    }
+                                    this.saveState();
+                                    return; // Don't show as regular message
+                                }
 
-      if (!activeLog) {
-          activeLog = {
-              timestamp: new Date().toLocaleTimeString(),
-              messages: [],
-              isActive: true
-          };
-          this.output.logs.items.push(activeLog);
-          this.output.logs.loaded = true;
-      }
-      
-      activeLog.messages.push(`[${new Date().toLocaleTimeString()}] ${msg}`);
-    },
+                                if (this.isJson(trimmedLine)) {
+                                    try {
+                                        const parsed = JSON.parse(trimmedLine);
+                                        if (parsed.category === 'step' && parsed.data && parsed.data.step_number) {
+                                            // Find any existing message with same step_number
+                                            const existingIndex = this.messages.findIndex(m => {
+                                                if (m.role !== 'agent' || !this.isJson(m.content)) return false;
+                                                try {
+                                                    const p = JSON.parse(m.content.trim());
+                                                    return p.category === 'step' && p.data && p.data.step_number === parsed.data.step_number;
+                                                } catch (e) { return false; }
+                                            });
 
-    setLogBoxRef(el, index) {
-        if (el) {
-            this.logBoxRefs[index] = el;
-        }
-    },
-
-    escapeHtml(s){
-      return (s || "").replace(/[<>&]/g, c=>({"<":"&lt;",">":"&gt;","&":"&amp;"}[c]));
-    },
-
-    getResultCardStyle(r) {
-      const isMatch = r.expected.trim() === r.actual.trim();
-      return {
-        borderColor: isMatch ? 'var(--good)' : 'var(--bad)',
-        background: isMatch ? '#28362d' : '#4d2828',
-        boxShadow: isMatch ? '0 0 10px rgba(152, 195, 121, 0.2)' : '0 0 10px rgba(224, 108, 117, 0.2)'
-      };
-    },
-
-    switchTab(targetId) {
-      this.activeTab = targetId;
-      if (targetId === 'workflow' && this.output.workflow.loaded && this.activeWorkflowItem && this.activeWorkflowItem.type === 'characterization') {
-        nextTick(this.renderTree); 
-      }
-    },
-
-    openModal(filename, content){
-      this.modal.filename = filename;
-      this.modal.content = content;
-      this.modal.show = true;
-    },
-
-    setActiveWorkflowIndex(index) {
-        this.activeWorkflowIndex = index;
-    },
-    
-    updateWorkflowPseudo(key, content) {
-        if (this.activeWorkflowItem && this.activeWorkflowItem.type === 'pseudo') {
-            this.activeWorkflowItem.data.items[key].code = content;
-            this.log(`Updated Pseudo-Code step: ${this.activeWorkflowItem.id} - ${key}`);
-        }
-    },
-
-    addTestcase() {
-      this.input.testcases.push({ sql: "", expected: "" });
-    },
-    removeTestcase(index) {
-      this.input.testcases.splice(index, 1);
-    },
-    saveInputUI() {
-      this.log("Saved Requirement Input from UI (JSON synced automatically).");
-    },
-    loadSampleInput() {
-      const sample = {
-        database: "PostgreSQL",
-        databasePath: "/var/lib/pgsql/data/db_v1.0.sql", 
-        funcName: "date_trunc",
-        category: "Date/Time",
-        desc: "Truncate timestamp to specified precision",
-        testcases: [
-          { sql:"SELECT date_trunc('hour', '2001-02-16 20:38:40'::timestamp)", expected:"2001-02-16 20:00:00" },
-          { sql:"SELECT date_trunc('day', '2023-10-27 15:00:00'::timestamp)", expected:"2023-10-27 00:00:00" }
-        ]
-      };
-      this.inputJsonText = JSON.stringify(sample, null, 2); 
-      this.log("Loaded sample Input JSON.");
-      this.parseInputJson();
-    },
-    parseInputJson() {
-      try {
-        const parsed = JSON.parse(this.inputJsonText);
-        this.input = JSON.parse(JSON.stringify(parsed));
-        this.log("Parsed Input JSON → updated UI.");
-      } catch (e) {
-        this.log("Input JSON parse error: " + e.message);
-        alert("Invalid Input JSON:\n" + e.message);
-      }
-    },
-    
-    parseOutputJson() {
-      try {
-        const parsed = JSON.parse(this.outputJsonText);
-
-        this.output.analysis.loaded = parsed.analysis?.loaded === true;
-        this.output.workflow.items = parsed.workflow?.items || [];
-        this.output.workflow.loaded = parsed.workflow?.loaded === true;
-        this.output.logs.items = parsed.logs?.items || [];
-        this.output.logs.loaded = parsed.logs?.loaded === true;
-        
-        if (this.output.workflow.items.length > 0) {
-             this.activeWorkflowIndex = 0;
-        }
-
-        this.log("Parsed Output JSON → updated all output blocks.");
-
-        if (this.activeWorkflowItem && this.activeWorkflowItem.type === 'characterization') {
-          nextTick(this.renderTree);
-        }
-
-      } catch (e) {
-        alert("Invalid Output JSON:\n" + e.message);
-        this.log("Output JSON parse error: " + e.message);
-      }
-    },
-
-    runPipeline() {
-      // Close previous log group
-      const lastLog = this.output.logs.items.find(item => item.isActive);
-      if (lastLog) {
-          lastLog.isActive = false;
-      }
-
-      // Reset loading states
-      this.output.analysis.loaded = false;
-      this.output.workflow.loaded = false;
-
-      this.log("Sending request to Python backend...");
-
-      // Deep copy to remove Vue Proxies and ensure clean JSON
-      const payload = JSON.parse(JSON.stringify(this.input));
-      console.log("Sending payload:", payload);
-
-      // Send message to VS Code extension
-      vscode.postMessage({
-          type: 'executeScript',
-          data: payload
-      });
-    },
-
-    simulateCppSyntax(code) {
-      let escaped = this.escapeHtml(code);
-      const keywords = /\b(if|else|for|while|do|return|break|continue|switch|case|default|goto|typedef|enum|union|struct|class|private|public|protected|virtual|override|new|delete|try|catch|throw|const|static|extern|auto|volatile|register|friend|namespace|using|template|typename|export|inline|constexpr|explicit|operator|this|sizeof|alignof|decltype|noexcept|thread_local|#include|#define|#ifdef|#ifndef|#endif)\b/g;
-      const types = /\b(int|void|char|short|long|float|double|bool|string|std::string|vector|std::vector|map|std::map|size_t|unsigned|signed|const\s+char|const\s+int|text|Datum|TimestampTz)\b/g;
-      const functions = /\b([a-zA-Z_][a-zA-Z0-9_]*)(?=\s*\()/g;
-
-      escaped = escaped.replace(keywords, '<span class="token keyword">$&</span>');
-      escaped = escaped.replace(types, '<span class="token keyword">$&</span>'); 
-      
-      const comments = /(\/\/.*)/g;
-      escaped = escaped.replace(comments, '<span class="token comment">$&</span>');
-      
-      const strings = /(".*?")/g;
-      escaped = escaped.replace(strings, '<span class="token string">$&</span>');
-
-      const numbers = /\b(\d+(\.\d*)?([eE][+-]?\d+)?)\b/g;
-      escaped = escaped.replace(numbers, '<span class="token number">$&</span>');
-
-      escaped = escaped.replace(functions, '<span class="token function">$1</span>(');
-
-      return escaped;
-    },
-
-    renderTree() {
-      if (!this.activeWorkflowItem || this.activeWorkflowItem.type !== 'characterization') return;
-
-      const root = this.activeWorkflowItem.data;
-      const columns = {};
-      const nodesById = {};
-      const edges = [];
-      let idCounter = 0;
-      const newId = () => "n" + (idCounter++);
-      
-      idCounter = 0; 
-      this.nodeMap = {}; 
-
-      const rootId = newId();
-      nodesById[rootId] = { id: rootId, name: root.name, raw: root, depth: 0 };
-      columns[0] = { nodes: [nodesById[rootId]], minWidth: '200px' }; 
-
-      function addNode(n, depth, parentId) {
-        const nid = newId();
-        nodesById[nid] = { id: nid, name: n.name, raw: n, depth };
-        columns[depth] = columns[depth] || { nodes: [], minWidth: '200px' };
-        columns[depth].nodes.push(nodesById[nid]);
-        if (parentId) edges.push({ from: parentId, to: nid });
-        (n.deps || []).forEach(ch => addNode(ch, depth + 1, nid));
-      }
-
-      (root.components || []).forEach(c => {
-        const cid = newId();
-        nodesById[cid] = { id: cid, name: c.name, raw: c, depth: 1 };
-        columns[1] = columns[1] || { nodes: [], minWidth: '200px' };
-        columns[1].nodes.push(nodesById[cid]);
-        edges.push({ from: rootId, to: cid });
-        (c.deps || []).forEach(ch => addNode(ch, 2, cid));
-      });
-
-      this.treeColumnsData = Object.keys(columns).map(key => columns[key]);
-      this.treeEdges = edges;
-
-      nextTick(() => {
-        this.measureAndSetTreeWidths(columns);
-      });
-    },
-    
-    measureAndSetTreeWidths(columns) {
-      const depths = Object.keys(columns).map(x => +x).sort((a, b) => a - b);
-      const measuredWidths = {};
-      
-      depths.forEach(d => {
-        let maxW = 0;
-        columns[d].nodes.forEach(node => {
-          const nodeDom = this.nodeMap[node.id];
-          const element = Array.isArray(nodeDom) ? nodeDom[0] : nodeDom;
-          if (element) {
-             maxW = Math.max(maxW, element.offsetWidth);
-          }
+                                            if (existingIndex !== -1) {
+                                                const oldMsg = JSON.parse(this.messages[existingIndex].content);
+                                                // Inherit content (LLM Response) if new message doesn't have it
+                                                if (!parsed.data.content && oldMsg.data && oldMsg.data.content) {
+                                                    parsed.data.content = oldMsg.data.content;
+                                                }
+                                                // Replace the existing step
+                                                this.messages.splice(existingIndex, 1, { role: 'agent', content: JSON.stringify(parsed) });
+                                                this.saveState();
+                                                this.scrollToBottom();
+                                                return;
+                                            }
+                                        }
+                                    } catch (e) {}
+                                }
+                                // Fallback to pushing new message
+                                this.messages.push({ role: 'agent', content: trimmedLine });
+                                
+                                this.saveState();
+                                this.scrollToBottom();
+                            });
+                            break;
+                        case 'logUpdate':
+                            this.currentLogs.push(message.message);
+                            this.$nextTick(() => {
+                                const logContainer = this.$refs.currentLogs;
+                                if (logContainer) {
+                                    logContainer.scrollTop = logContainer.scrollHeight;
+                                }
+                            });
+                            break;
+                        case 'finished':
+                            this.isRunning = false;
+                            this.messages.push({ role: 'system', content: `Pipeline finished with code ${message.code}` });
+                            this.saveState();
+                            this.scrollToBottom();
+                            break;
+                        case 'stopped':
+                            this.isRunning = false;
+                            this.messages.push({ role: 'system', content: 'Pipeline stopped by user.' });
+                            this.saveState();
+                            this.scrollToBottom();
+                            break;
+                        case 'loadHistory':
+                            this.history = message.data.reverse();
+                            break;
+                        case 'clearChat':
+                            this.clearChat();
+                            break;
+                    }
+                });
+            }
         });
-        measuredWidths[d] = maxW;
-      });
-
-      this.treeColumnsData.forEach((col, d) => {
-          const finalWidth = Math.max(200, measuredWidths[d] + 20); 
-          col.minWidth = finalWidth + 'px';
-      });
-
-      nextTick(() => {
-          this.drawLines(this.treeEdges, this.nodeMap, this.$refs.treeSvg);
-      });
-    },
-
-    drawLines(edges, rawDomMap, svg){
-      const container = this.$refs.treeContainer;
-      const colContainer = this.$refs.treeColumns;
-      if(!container || !colContainer || !svg) return;
-
-      const r = container.getBoundingClientRect();
-      
-      const contentWidth = colContainer.scrollWidth + 60; 
-      const contentHeight = colContainer.scrollHeight + 40; 
-
-      svg.setAttribute("width", contentWidth);
-      svg.setAttribute("height", contentHeight);
-      svg.style.width = contentWidth + 'px';
-      svg.style.height = contentHeight + 'px';
-
-      svg.innerHTML = svg.querySelector('defs') ? svg.querySelector('defs').outerHTML : '';
-
-      const domMap = {};
-      for(const id in rawDomMap) {
-          if (Array.isArray(rawDomMap[id]) && rawDomMap[id].length > 0) {
-              domMap[id] = rawDomMap[id][0];
-          } else if (!Array.isArray(rawDomMap[id])) {
-              domMap[id] = rawDomMap[id];
-          }
-      }
-
-      edges.forEach(e=>{
-        const f = domMap[e.from];
-        const t = domMap[e.to];
-        if(!f||!t) return;
-
-        const fb = f.getBoundingClientRect();
-        const tb = t.getBoundingClientRect();
-
-        const fx = fb.right - r.left + container.scrollLeft;
-        const fy = fb.top + fb.height/2 - r.top + container.scrollTop;
-        const tx = tb.left - r.left + container.scrollLeft;
-        const ty = tb.top + tb.height/2 - r.top + container.scrollTop;
-
-        const dx = Math.max(30,(tx-fx)/2);
-        const d = `M${fx},${fy} C${fx+dx},${fy} ${tx-dx},${ty} ${tx},${ty}`;
-
-        const p = document.createElementNS("http://www.w3.org/2000/svg","path");
-        p.setAttribute("d", d);
-        p.setAttribute("stroke", "var(--accent)");
-        p.setAttribute("stroke-width","2");
-        p.setAttribute("fill","none");
-        p.setAttribute("marker-end", "url(#arrowhead)");
-        svg.appendChild(p);
-      });
-      
-      if(!svg.querySelector('defs')){
-          const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
-          defs.innerHTML = `
-              <marker id="arrowhead" markerWidth="8" markerHeight="5" 
-                      refX="8" refY="2.5" orient="auto">
-                  <polygon points="0 0, 8 2.5, 0 5" fill="var(--accent)" />
-              </marker>`;
-          svg.prepend(defs);
-      }
-    }
-  }
-});
-
-app.mount('#app');
-</script>
+    </script>
 </body>
 </html>

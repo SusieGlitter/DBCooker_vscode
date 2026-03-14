@@ -1,182 +1,199 @@
-import sys
+# -*- coding: utf-8 -*-
+# @Project: DBCode
+# @Module: agent_main
+# @Author: Anonymous
+# @Time: 2025/9/13 15:55
+
+import os
 import json
-import argparse
-import yaml
+import shlex
+import shutil
+import subprocess
 import time
-import datetime
+
+import pandas as pd
+from tqdm import tqdm
+from datetime import datetime
+
+import sys
+
+
+user_name = os.environ.get('USER') or os.environ.get('USERNAME')
+
+user = user_name if user_name else "default_user"
+
+sys.path.append(f"/data/{user_name}/program/DBCode")
+
+from code_agent.cli import run as code_run
+from code_agent.agent import BaseAgent
+from code_agent.prompt.agent_prompt import USER_PROMPT_VIBE_CODING
+
+from code_utils.sample import eval_llm_gen_code
+from code_utils.fileControl import replace_compile_with_backup, process_list_data
+from code_utils.constants import agent_type, compile_folder, backup_folder, install_folder, database, MODEL_NAME, \
+    db_name
+
+
+def prepare_directory(origin_code):
+    # TODO: to be modified with declaration.
+    origin_gen_code = [origin_code, []]
+    replace_compile_with_backup(compile_folder, backup_folder, database=None)
+    processed_files = process_list_data(origin_gen_code, database)
+    print("==File modification completed==")
+
+    return processed_files
+
+
+def get_git_diff(compile_folder, result_folder) -> (str, list):
+    """Get the git diff of the project."""
+    # pwd = os.getcwd()
+    if not os.path.isdir(compile_folder):
+        return "", []
+
+    os.chdir(compile_folder)
+    try:
+        _ = subprocess.check_output(["git", "add", "."]).decode()
+        code_changes = subprocess.check_output(["git", "--no-pager", "diff", "--staged"]).decode()
+
+        file_list = subprocess.check_output(["git", "--no-pager", "diff",
+                                             "--staged", "--name-only"]).decode().splitlines()
+        for file in file_list:
+            file = file.split("\t")[-1]
+            src = os.path.join(compile_folder, file)
+            dst = os.path.join(result_folder, file)
+            if not os.path.exists(os.path.dirname(dst)):
+                os.makedirs(os.path.dirname(dst))
+
+            shutil.copyfile(src, dst)
+
+        # if not self.base_commit:
+        #     stdout = subprocess.check_output(["git", "--no-pager", "diff"]).decode()
+        # else:
+        #     stdout = subprocess.check_output(
+        #         ["git", "--no-pager", "diff", self.base_commit, "HEAD"]
+        #     ).decode()
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        code_changes = ""
+        file_list = []
+
+    # finally:
+    #     os.chdir(pwd)
+
+    return code_changes, file_list
+
+
+def run_code_agent(task, working_dir, config_file, must_patch,
+                   patch_path, trajectory_file, console_type, agent_type):
+    is_success, response, execution_time = code_run(
+        task=task,
+        file_path=None,
+        working_dir=working_dir,
+        config_file=config_file,
+        # model: str | None = None,
+        # model_base_url: str | None = None,
+        # api_key: str | None = None,
+        # max_steps: int | None = None,
+        must_patch=must_patch,
+        patch_path=patch_path,
+        trajectory_file=trajectory_file,
+        console_type=console_type,
+        agent_type=agent_type,
+    )
+
+    return is_success, response, execution_time
+
 
 def main():
-    # 1. Parse Arguments to get config file path
-    parser = argparse.ArgumentParser(description='DBCooker Backend')
-    parser.add_argument('--config', type=str, required=True, help='Path to the YAML configuration file')
-    args = parser.parse_args()
-
+    input_str = sys.stdin.read()
+    if not input_str:
+        print("No input received from stdin")
+        return
+    
     try:
-        # 2. Read YAML Configuration
-        config = {}
-        with open(args.config, 'r', encoding='utf-8') as f:
-            config = yaml.safe_load(f)
-        
-        api_key = config.get('apiKey', '')
-        timestamp = config.get('timestamp', '')
-
-        # 3. Read JSON from Stdin
-        input_str = sys.stdin.read()
-        if not input_str:
-            raise ValueError("No input received from stdin")
-        
         req = json.loads(input_str)
-        func_name = req.get('funcName', 'N/A')
+        # Demo: output serial content to chat
+        print("[SERIAL] Initializing serial connection...")
+        print("[SERIAL] Sending handshake to database agent...")
+    except json.JSONDecodeError:
+        print("Invalid JSON input")
+        return
 
-        # 4. Core Logic (Moving the mock logic from Vue to Python)
-        
-        # Prepare the Code Attempts Data
-        code_attempts_data = {
-            "attempt1": {
-                "mode": "Template Fill-in",
-                "syntaxOK": True, 
-                "compileOK": False, 
-                "semanticOK": False,
-                "error": "Compiler Error: Undefined function 'PARSE_TEXT' in scope. Use 'text_to_unit'.",
-                "generatedFiles": [
-                    {
-                        "filename": "date_trunc_v1.c", 
-                        "content": "#include <stdio.h>\n// This is an incorrect implementation (Attempt 1).\nint main(void) {\n  const char* unit = \"hour\";\n  if (unit == NULL) {\n    return 1; // Error\n  }\n  return 0;\n}"
-                    }
-                ]
-            },
-            "attempt2": {
-                "mode": "Free Generation",
-                "syntaxOK": True, 
-                "compileOK": True, 
-                "semanticOK": True,
-                "error": "",
-                "generatedFiles": [
-                    {
-                        "filename": "date_trunc_v2.c", 
-                        "content": "#include <postgres.h>\n#include <utils/datetime.h>\n\n/* Function definition for date_trunc (Attempt 2 - Final) */\nDatum date_trunc(PG_FUNCTION_ARGS)\n{\n  // Get arguments\n  text *units = PG_GETARG_TEXT_PP(0);\n  TimestampTz timestamp = PG_GETARG_TIMESTAMPTZ(1);\n\n  // Check for null values\n  if (units == NULL) return (Datum)0;\n\n  // Core logic: Truncate the timestamp\n  TimestampTz result = call_date_trunc_core(timestamp, units);\n\n  // Return the result\n  PG_RETURN_TIMESTAMPTZ(result);\n}"
-                    }
-                ]
-            }
+    func_name = req.get("funcName", "unknown_func")
+    description = req.get("desc", "")
+    category = req.get("category", "")
+    
+    testcases = req.get("testcases", [])
+    example_lines = []
+    for tc in testcases:
+        example_lines.append(f"SQL: {tc.get('sql', '')}\nExpected: {tc.get('expected', '')}")
+    example = "\n\n".join(example_lines)
+
+    req_db = req.get("database", "").lower()
+    current_db = req_db if req_db else database
+
+    model_name = MODEL_NAME
+
+    result_folder = f"/data/{user_name}/program/DBCode/results/{current_db}/{agent_type}_{model_name.split('/')[-1]}"
+    result_load = f"{result_folder}/{current_db}_{agent_type}_{model_name.split('/')[-1]}_results.json"
+    print("result_load", result_load)
+    
+    result_data = dict()
+    if os.path.exists(result_load):
+        with open(result_load, "r", encoding="utf-8") as rf:
+            result_data = json.load(rf)
+
+    origin_code = dict()
+    prepare_directory(origin_code)
+
+    file_path = "\n".join(origin_code.keys())
+    task = {
+        "database": current_db, "db_name": db_name, "directory": compile_folder,
+        "func_name": func_name, "category": category, "description": description,
+        "example": example, "file_path": file_path,
+        "compile_folder": compile_folder, "result_folder": result_folder,
+        "backup_folder": backup_folder, "origin_code": origin_code,
+        "spec_file": {
+            "postgresql": f"/data/{user_name}/program/DBCode/data/benchmark/postgresql/"
+                          f"postgresql_functions_with_testcase_code_understand.json",
+            "sqlite": f"/data/{user_name}/program/DBCode/data/benchmark/sqlite/"
+                      f"sqlite_functions_with_testcase_code_understand.json",
+            "duckdb": f"/data/{user_name}/program/DBCode/data/benchmark/duckdb/"
+                      f"duckdb_functions_with_testcase_code_understand.json",
         }
+    }
 
-        # Build Workflow Items
-        items = [
-            {
-                "id": "char",
-                "type": "characterization",
-                "data": {
-                    "name": func_name, 
-                    "components": [
-                        { "name": "PG_GETARG_TEXT_PP", "deps": [] },
-                        { "name": "normalize_units_for_truncation", "deps": [{"name": "downcase_identifier", "deps": []}]},
-                        { "name": "date_math_core_engine", "deps": [] }
-                    ]
-                }
-            },
-            {
-                "id": "pseudo",
-                "type": "pseudo",
-                "data": {
-                    "items": {
-                        "step1": {
-                            "title": "Input Validation and Parsing",
-                            "code": "IF input IS NOT VALID THEN\n  RAISE ERROR 'Invalid input unit';\nEND IF\nparsed_unit = PARSE_TEXT(input, 'unit');"
-                        },
-                        "step2": {
-                            "title": "Timezone Handling", 
-                            "code": "IF timezone_present THEN\n  ts = CONVERT_TO_UTC(ts, timezone);\nEND IF;"
-                        }
-                    }
-                }
-            }
-        ]
+    config_file = f"/data/{user_name}/program/DBCode/code_config.yaml"
+    console_type = "simple"
+    must_patch = True
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    patch_path = (f"{result_folder}/{func_name}/"
+                    f"{current_db}_{agent_type}_{model_name.split('/')[-1]}_{func_name}_{timestamp}_patch.txt")
+    trajectory_file = (f"{result_folder}/{func_name}/"
+                        f"{current_db}_{agent_type}_{model_name.split('/')[-1]}_{func_name}_{timestamp}_trajectory.json")
+    
+    if not os.path.exists(os.path.dirname(patch_path)):
+        os.makedirs(os.path.dirname(patch_path))
 
-        attempt_count = 0
-        for key, attempt_data in code_attempts_data.items():
-            attempt_count += 1
-            items.append({
-                "id": f"code_{attempt_count}",
-                "type": "codeAttempt",
-                "data": {
-                    key: attempt_data
-                }
-            })
-            
-        # Build Results Item (Dynamic based on input testcases)
-        testcases = req.get('testcases', [])
-        results_data = {}
-        for idx, tc in enumerate(testcases):
-            # Simulation: every even index passes, odd index fails (just for demo variety)
-            is_match = (idx % 2 == 0)
-            expected = tc.get('expected', 'N/A')
-            results_data[f"test_{idx}"] = {
-                "testcase": tc.get('sql', 'N/A'),
-                "expected": expected,
-                "actual": expected if is_match else f"[{expected}] (Mismatch)"
-            }
+    user_prompt = task
+    is_success, response, execution_time = run_code_agent(task, compile_folder, config_file, must_patch,
+                                                            patch_path, trajectory_file, console_type, agent_type)
 
-        items.append({
-            "id": "res",
-            "type": "results",
-            "data": {
-                "items": results_data
-            }
-        })
+    gen_code, file_changes = "", []
+    if is_success:
+        gen_code, file_changes = get_git_diff(compile_folder, f"{result_folder}/{func_name}")
+    
+    result_data[func_name] = {
+        "prompt": user_prompt, "origin_code": origin_code,
+        "is_success": is_success, "execution_time": execution_time, "response": response,
+        "gen_code": gen_code, "file_changes": file_changes
+    }
 
-        # Build Response Object
-        response = {
-            "analysis": { 
-                "loaded": True 
-            },
-            "workflow": {
-                "items": items,
-                "loaded": True
-            },
-            "logs": {
-                "items": [
-                    {
-                        "timestamp": "09:00:00 AM",
-                        "messages": ["Previous run log 1.", "Previous run log 2. (Success)"],
-                        "isActive": False
-                    },
-                    {
-                        "timestamp": datetime.datetime.now().strftime("%I:%M:%S %p"),
-                        "messages": [
-                            f"Pipeline started for function: {func_name}",
-                            f"Configuration loaded (API Key: {'***' + api_key[-4:] if api_key and len(api_key)>4 else 'Not Set'})",
-                            "Database Code Analysis completed.", 
-                            "Characterization completed. (3 components found)", 
-                            "Pseudo-code generated.", 
-                            "Code Attempt 1 failed: Compile error.", 
-                            "Code Attempt 2 succeeded: Final code generated.", 
-                            "Results generated."
-                        ],
-                        "isActive": True 
-                    }
-                ],
-                "loaded": True
-            }
-        }
+    if not os.path.exists(os.path.dirname(result_load)):
+        os.makedirs(os.path.dirname(result_load))
 
-        # 5. Output JSON to Stdout
-        print(json.dumps(response), flush=True)
+    with open(result_load, "w", encoding="utf-8") as wf:
+        json.dump(result_data, wf, indent=4)
 
-    except Exception as e:
-        # Return error as JSON
-        error_response = {
-            "status": "error",
-            "message": str(e)
-        }
-        # Print to stdout so the extension catches it as JSON result or just fails
-        # But our extension logic catches stderr for failures. 
-        # If we print to stdout, it's treated as success unless we exit 1.
-        # Let's print to stderr for critical failures or return a specific error JSON.
-        # Here we return a JSON that the frontend handles as an error type if needed, 
-        # but the extension expects the whole output to be the result.
-        # Let's just print the error structure.
-        print(json.dumps({"error": str(e)}), flush=True)
-        sys.exit(1)
 
 if __name__ == "__main__":
     main()

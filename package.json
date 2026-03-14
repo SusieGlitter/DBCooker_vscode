@@ -1,7 +1,13 @@
 {
-  "name": "demo",
-  "displayName": "demo",
-  "description": "Interact with Python scripts via a React Webview",
+  "name": "dbcooker",
+  "displayName": "DBCooker",
+  "publisher": "AlthHe",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AlthHe/dbcooker.git"
+  },
+  "description": "DBCooker: A tool for adding built-in functions to databases with automatic modification, diff checking, and chat interaction.",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.108.1"
@@ -15,26 +21,42 @@
     "commands": [
       {
         "command": "pythonBridge.start",
-        "title": "Start Python Bridge"
+        "title": "Start DBCooker Interface"
+      },
+      {
+        "command": "pythonBridge.showLogs",
+        "title": "Show DBCooker Logs"
+      },
+      {
+        "command": "cppHelper.confirm",
+        "title": "Confirm Changes"
+      },
+      {
+        "command": "cppHelper.discard",
+        "title": "Discard Changes"
       }
     ],
-    "configuration": {
-      "title": "Python Bridge",
-      "properties": {
-        "pythonBridge.apiKey": {
-          "type": "string",
-          "default": "",
-          "description": "API Key to be passed to the Python script configuration."
-        },
-        "pythonBridge.pythonPath": {
-          "type": "string",
-          "default": "python",
-          "description": "Path to the Python interpreter."
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "dbcooker-explorer",
+          "title": "DBCooker",
+          "icon": "$(rocket)"
         }
-      }
+      ]
+    },
+    "views": {
+      "dbcooker-explorer": [
+        {
+          "type": "webview",
+          "id": "dbcooker.chatView",
+          "name": "DBCooker Chat"
+        }
+      ]
     }
   },
   "scripts": {
+    "build": "npm run compile",
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
