@@ -258,7 +258,17 @@ class DBCookerChatProvider implements vscode.WebviewViewProvider {
 
     private async _runPythonScript(inputData: any) {
         try {
-            const pythonPath = 'python';
+            // Use the bundled venv python if available, otherwise fallback to system python
+            let pythonPath = 'python';
+            const venvPythonPath = path.join(this._extensionPath, 'venv', process.platform === 'win32' ? 'Scripts/python.exe' : 'bin/python');
+            
+            if (fs.existsSync(venvPythonPath)) {
+                pythonPath = venvPythonPath;
+                outputChannel.appendLine(`[Extension] Using bundled Python venv: ${pythonPath}`);
+            } else {
+                outputChannel.appendLine(`[Extension] Bundled venv not found at ${venvPythonPath}, using system python.`);
+            }
+
             const user = process.env.USER || process.env.USERNAME || 'default_user';
             const scriptPath = `/data/${user}/program/DBCode/agent_main.py`;
             

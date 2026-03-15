@@ -8,7 +8,7 @@
     "url": "https://github.com/SusieGlitter/DBCooker_vscode.git"
   },
   "description": "DBCooker: A tool for adding built-in functions to databases with automatic modification, diff checking, and chat interaction.",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "engines": {
     "vscode": "^1.108.1"
   },
