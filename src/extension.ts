@@ -269,8 +269,7 @@ class DBCookerChatProvider implements vscode.WebviewViewProvider {
                 outputChannel.appendLine(`[Extension] Bundled venv not found at ${venvPythonPath}, using system python.`);
             }
 
-            const user = process.env.USER || process.env.USERNAME || 'default_user';
-            const scriptPath = `/data/${user}/program/DBCode/agent_main.py`;
+            const scriptPath = path.join(this._extensionPath, 'src', 'py', 'DBCode', 'agent_main.py');
             
             this._logs = []; // Clear current logs
             this._isKilledByUser = false;
@@ -286,7 +285,8 @@ class DBCookerChatProvider implements vscode.WebviewViewProvider {
             };
 
             const pythonProcess = cp.spawn(pythonPath, [scriptPath], {
-                env: { ...process.env, COLUMNS: '300' }
+                env: { ...process.env, COLUMNS: '300', EXTENSION_PATH: this._extensionPath },
+                cwd: path.join(this._extensionPath, 'src', 'py', 'DBCode')
             });
             this._currentProcess = pythonProcess;
 

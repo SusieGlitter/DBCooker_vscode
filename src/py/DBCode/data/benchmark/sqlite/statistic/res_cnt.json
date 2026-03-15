@@ -1,0 +1,131 @@
+{
+    "sqlite-version-3.8.0": {
+        "cnt": 52
+    },
+    "sqlite-version-3.9.0": {
+        "cnt": 58
+    },
+    "sqlite-version-3.10.0": {
+        "cnt": 58
+    },
+    "sqlite-version-3.11.0": {
+        "cnt": 58
+    },
+    "sqlite-version-3.12.0": {
+        "cnt": 58
+    },
+    "sqlite-version-3.13.0": {
+        "cnt": 58
+    },
+    "sqlite-version-3.14.0": {
+        "cnt": 59
+    },
+    "sqlite-version-3.15.0": {
+        "cnt": 59
+    },
+    "sqlite-version-3.16.0": {
+        "cnt": 59
+    },
+    "sqlite-version-3.17.0": {
+        "cnt": 60
+    },
+    "sqlite-version-3.18.0": {
+        "cnt": 60
+    },
+    "sqlite-version-3.19.0": {
+        "cnt": 60
+    },
+    "sqlite-version-3.20.0": {
+        "cnt": 60
+    },
+    "sqlite-version-3.21.0": {
+        "cnt": 60
+    },
+    "sqlite-version-3.22.0": {
+        "cnt": 60
+    },
+    "sqlite-version-3.23.0": {
+        "cnt": 60
+    },
+    "sqlite-version-3.24.0": {
+        "cnt": 60
+    },
+    "sqlite-version-3.25.0": {
+        "cnt": 62
+    },
+    "sqlite-version-3.26.0": {
+        "cnt": 62
+    },
+    "sqlite-version-3.27.0": {
+        "cnt": 62
+    },
+    "sqlite-version-3.28.0": {
+        "cnt": 61
+    },
+    "sqlite-version-3.29.0": {
+        "cnt": 61
+    },
+    "sqlite-version-3.30.0": {
+        "cnt": 60
+    },
+    "sqlite-version-3.31.0": {
+        "cnt": 63
+    },
+    "sqlite-version-3.32.0": {
+        "cnt": 64
+    },
+    "sqlite-version-3.33.0": {
+        "cnt": 64
+    },
+    "sqlite-version-3.34.0": {
+        "cnt": 65
+    },
+    "sqlite-version-3.35.0": {
+        "cnt": 96
+    },
+    "sqlite-version-3.36.0": {
+        "cnt": 97
+    },
+    "sqlite-version-3.37.0": {
+        "cnt": 97
+    },
+    "sqlite-version-3.38.0": {
+        "cnt": 119
+    },
+    "sqlite-version-3.39.0": {
+        "cnt": 120
+    },
+    "sqlite-version-3.40.0": {
+        "cnt": 120
+    },
+    "sqlite-version-3.41.0": {
+        "cnt": 121
+    },
+    "sqlite-version-3.42.0": {
+        "cnt": 122
+    },
+    "sqlite-version-3.43.0": {
+        "cnt": 125
+    },
+    "sqlite-version-3.44.0": {
+        "cnt": 128
+    },
+    "sqlite-version-3.45.0": {
+        "cnt": 138
+    },
+    "sqlite-version-3.46.0": {
+        "cnt": 140
+    },
+    "sqlite-version-3.47.0": {
+        "cnt": 141
+    },
+    "sqlite-version-3.48.0": {
+        "cnt": 141
+    },
+    "sqlite-version-3.49.0": {
+        "cnt": 141
+    },
+    "sqlite-version-3.50.0": {
+        "cnt": 143
+    }
+}

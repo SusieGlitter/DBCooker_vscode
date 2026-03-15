@@ -1,0 +1,62 @@
+{
+    "sin": [
+        [
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:1102",
+            "ScalarFunction SinFun::GetFunction() {\n\tScalarFunction function({LogicalType::DOUBLE}, LogicalType::DOUBLE,\n\t                        ScalarFunction::UnaryFunction<double, double, NoInfiniteDoubleWrapper<SinOperator>>);\n\tBaseScalarFunction::SetReturnsError(function);\n\treturn function;\n}"
+        ],
+        [
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:1095",
+            "struct SinOperator {\n\ttemplate <class TA, class TR>\n\tstatic inline TR Operation(TA input) {\n\t\treturn std::sin(input);\n\t}\n}"
+        ]
+    ],
+    "tan": [
+        [
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:1136",
+            "ScalarFunction TanFun::GetFunction() {\n\tScalarFunction function({LogicalType::DOUBLE}, LogicalType::DOUBLE,\n\t                        ScalarFunction::UnaryFunction<double, double, NoInfiniteDoubleWrapper<TanOperator>>);\n\tBaseScalarFunction::SetReturnsError(function);\n\treturn function;\n}"
+        ],
+        [
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:1129",
+            "struct TanOperator {\n\ttemplate <class TA, class TR>\n\tstatic inline TR Operation(TA input) {\n\t\treturn (double)std::tan(input);\n\t}\n}"
+        ]
+    ],
+    "to_base64": [
+        [
+            "./duckdb-1.3.0/extension/core_functions/scalar/blob/base64.cpp:37",
+            "ScalarFunction ToBase64Fun::GetFunction() {\n\treturn ScalarFunction({LogicalType::BLOB}, LogicalType::VARCHAR, Base64EncodeFunction);\n}"
+        ]
+    ],
+    "array_negative_inner_product": [
+        [
+            "./duckdb-1.3.0/extension/core_functions/scalar/array/array_functions.cpp:241",
+            "ScalarFunctionSet ArrayNegativeInnerProductFun::GetFunctions() {\n\tScalarFunctionSet set(\"array_negative_inner_product\");\n\tfor (auto &type : LogicalType::Real()) {\n\t\tAddArrayFoldFunction<NegativeInnerProductOp>(set, type);\n\t}\n\treturn set;\n}"
+        ],
+        [
+            "./duckdb-1.3.0/extension/core_functions/include/core_functions/array_kernels.hpp:32",
+            "struct NegativeInnerProductOp {\n\tstatic constexpr bool ALLOW_EMPTY = true;\n\n\ttemplate <class TYPE>\n\tstatic TYPE Operation(const TYPE *lhs_data, const TYPE *rhs_data, const idx_t count) {\n\t\treturn -InnerProductOp::Operation(lhs_data, rhs_data, count);\n\t}\n}"
+        ],
+        [
+            "./duckdb-1.3.0/extension/core_functions/include/core_functions/array_kernels.hpp:11",
+            "struct InnerProductOp {\n\tstatic constexpr bool ALLOW_EMPTY = true;\n\n\ttemplate <class TYPE>\n\tstatic TYPE Operation(const TYPE *lhs_data, const TYPE *rhs_data, const idx_t count) {\n\n\t\tTYPE result = 0;\n\n\t\tauto lhs_ptr = lhs_data;\n\t\tauto rhs_ptr = rhs_data;\n\n\t\tfor (idx_t i = 0; i < count; i++) {\n\t\t\tconst auto x = *lhs_ptr++;\n\t\t\tconst auto y = *rhs_ptr++;\n\t\t\tresult += x * y;\n\t\t}\n\n\t\treturn result;\n\t}\n}"
+        ]
+    ],
+    "array_inner_product": [
+        [
+            "./duckdb-1.3.0/extension/core_functions/scalar/array/array_functions.cpp:233",
+            "ScalarFunctionSet ArrayInnerProductFun::GetFunctions() {\n\tScalarFunctionSet set(\"array_inner_product\");\n\tfor (auto &type : LogicalType::Real()) {\n\t\tAddArrayFoldFunction<InnerProductOp>(set, type);\n\t}\n\treturn set;\n}"
+        ],
+        [
+            "./duckdb-1.3.0/extension/core_functions/include/core_functions/array_kernels.hpp:11",
+            "struct InnerProductOp {\n\tstatic constexpr bool ALLOW_EMPTY = true;\n\n\ttemplate <class TYPE>\n\tstatic TYPE Operation(const TYPE *lhs_data, const TYPE *rhs_data, const idx_t count) {\n\n\t\tTYPE result = 0;\n\n\t\tauto lhs_ptr = lhs_data;\n\t\tauto rhs_ptr = rhs_data;\n\n\t\tfor (idx_t i = 0; i < count; i++) {\n\t\t\tconst auto x = *lhs_ptr++;\n\t\t\tconst auto y = *rhs_ptr++;\n\t\t\tresult += x * y;\n\t\t}\n\n\t\treturn result;\n\t}\n}"
+        ]
+    ],
+    "greatest_common_divisor": [
+        [
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:1473",
+            "ScalarFunctionSet GreatestCommonDivisorFun::GetFunctions() {\n\tScalarFunctionSet funcs;\n\tfuncs.AddFunction(\n\t    ScalarFunction({LogicalType::BIGINT, LogicalType::BIGINT}, LogicalType::BIGINT,\n\t                   ScalarFunction::BinaryFunction<int64_t, int64_t, int64_t, GreatestCommonDivisorOperator>));\n\tfuncs.AddFunction(\n\t    ScalarFunction({LogicalType::HUGEINT, LogicalType::HUGEINT}, LogicalType::HUGEINT,\n\t                   ScalarFunction::BinaryFunction<hugeint_t, hugeint_t, hugeint_t, GreatestCommonDivisorOperator>));\n\treturn funcs;\n}"
+        ],
+        [
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:1466",
+            "struct GreatestCommonDivisorOperator {\n\ttemplate <class TA, class TB, class TR>\n\tstatic inline TR Operation(TA left, TB right) {\n\t\treturn GreatestCommonDivisor(left, right);\n\t}\n}"
+        ]
+    ]
+}

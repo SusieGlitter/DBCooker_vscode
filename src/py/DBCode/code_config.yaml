@@ -1,0 +1,115 @@
+experiment:
+  database: deprecated
+  db_name: deprecated
+  autoworkflow: false
+
+embeddings:
+  model: all-MiniLM-L12-v2
+  model_provider: local
+
+vector_database:
+  persist_directory: 
+
+agents:
+  plan_agent:
+    enable_lakeview: false
+    model: plan_agent_model
+    max_steps: 20
+    run_steps: 1
+    tools:
+      - bash
+      - str_replace_based_edit_tool
+      - sequentialthinking
+      - task_done
+
+  code_agent:
+    enable_lakeview: false
+    model: code_agent_model
+    max_steps: 100
+    run_steps: 1
+    tools:
+      - bash
+      - str_replace_based_edit_tool
+      - sequentialthinking
+      - task_done
+
+  test_agent:
+    enable_lakeview: false
+    model: test_agent_model
+    max_steps: 100
+    run_steps: 1
+    tools:
+      - sequentialthinking
+      - task_done
+      - database_compile
+      - database_execute
+
+allow_mcp_servers:
+  - playwright
+
+mcp_servers:
+  playwright:
+    command: npx
+    args:
+      - "@playwright/mcp@0.0.27"
+
+lakeview:
+  model: lakeview_model
+
+model_providers:
+  anthropic:
+    api_key: your_anthropic_api_key
+    provider: doubao
+  doubao:
+    base_url: https://dashscope.aliyuncs.com/compatible-mode/v1
+    api_key: sk-9d35b7001a044a5f92580aee4461170b
+    provider: doubao
+  openai:
+    base_url: https://dashscope.aliyuncs.com/compatible-mode/v1
+    api_key: sk-9d35b7001a044a5f92580aee4461170b
+    provider: doubao
+  local:
+    base_url: 
+    api_key: None
+    provider: local
+
+models:
+  plan_agent_model:
+    model_provider: doubao
+    model: qwen3-coder-next
+    max_tokens: 2048
+    temperature: 0.0
+    top_p: 1
+    top_k: 0
+    max_retries: 20
+    parallel_tool_calls: false
+
+  code_agent_model:
+    model_provider: doubao
+    model: qwen3-coder-next
+    max_tokens: 2048
+    temperature: 0.0
+    top_p: 1
+    top_k: 0
+    max_retries: 100
+    parallel_tool_calls: false
+
+  test_agent_model:
+    model_provider: doubao
+    model: qwen3-coder-next
+    max_tokens: 2048
+    temperature: 0.0
+    top_p: 1
+    top_k: 0
+    max_retries: 100
+    parallel_tool_calls: false
+
+  lakeview_model:
+    model_provider: doubao
+    model: qwen3-coder-next
+    max_tokens: 2048
+    temperature: 0.0
+    top_p: 1
+    top_k: 0
+    max_retries: 100
+    parallel_tool_calls: false

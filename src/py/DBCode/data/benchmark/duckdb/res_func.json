@@ -1,0 +1,1872 @@
+{
+    "array_cross_product": {
+        "Name": "array_cross_product",
+        "Parameters": "array, array",
+        "Description": "Compute the cross product of two arrays of size 3. The array elements can not be NULL.",
+        "Example": "array_cross_product([1, 2, 3], [1, 2, 3])",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/array/array_functions.cpp:265": "ScalarFunctionSet ArrayCrossProductFun::GetFunctions() {\n\tScalarFunctionSet set(\"array_cross_product\");\n\n\tauto float_array = LogicalType::ARRAY(LogicalType::FLOAT, 3);\n\tauto double_array = LogicalType::ARRAY(LogicalType::DOUBLE, 3);\n\tset.AddFunction(\n\t    ScalarFunction({float_array, float_array}, float_array, ArrayFixedCombine<float, CrossProductOp, 3>));\n\tset.AddFunction(\n\t    ScalarFunction({double_array, double_array}, double_array, ArrayFixedCombine<double, CrossProductOp, 3>));\n\tfor (auto &func : set.functions) {\n\t\tBaseScalarFunction::SetReturnsError(func);\n\t}\n\treturn set;\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/array/array_functions.cpp:64": "struct CrossProductOp {\n\ttemplate <class TYPE>\n\tstatic void Operation(const TYPE *lhs_data, const TYPE *rhs_data, TYPE *res_data, idx_t size) {\n\t\tD_ASSERT(size == 3);\n\n\t\tauto lx = lhs_data[0];\n\t\tauto ly = lhs_data[1];\n\t\tauto lz = lhs_data[2];\n\n\t\tauto rx = rhs_data[0];\n\t\tauto ry = rhs_data[1];\n\t\tauto rz = rhs_data[2];\n\n\t\tres_data[0] = ly * rz - lz * ry;\n\t\tres_data[1] = lz * rx - lx * rz;\n\t\tres_data[2] = lx * ry - ly * rx;\n\t}\n}"
+        },
+        "Class&Functions": [
+            "CrossProductOp",
+            "ArrayCrossProductFun"
+        ]
+    },
+    "array_cosine_similarity": {
+        "Name": "array_cosine_similarity",
+        "Parameters": "array1,array2",
+        "Description": "Compute the cosine similarity between two arrays of the same size. The array elements can not be NULL. The arrays can have any size as long as the size is the same for both arguments.",
+        "Example": "array_cosine_similarity([1, 2, 3], [1, 2, 3])",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/array/array_functions.cpp:249": "ScalarFunctionSet ArrayCosineSimilarityFun::GetFunctions() {\n\tScalarFunctionSet set(\"array_cosine_similarity\");\n\tfor (auto &type : LogicalType::Real()) {\n\t\tAddArrayFoldFunction<CosineSimilarityOp>(set, type);\n\t}\n\treturn set;\n}",
+            "./duckdb-1.3.0/extension/core_functions/include/core_functions/array_kernels.hpp:41": "struct CosineSimilarityOp {\n\tstatic constexpr bool ALLOW_EMPTY = false;\n\n\ttemplate <class TYPE>\n\tstatic TYPE Operation(const TYPE *lhs_data, const TYPE *rhs_data, const idx_t count) {\n\n\t\tTYPE distance = 0;\n\t\tTYPE norm_l = 0;\n\t\tTYPE norm_r = 0;\n\n\t\tauto l_ptr = lhs_data;\n\t\tauto r_ptr = rhs_data;\n\n\t\tfor (idx_t i = 0; i < count; i++) {\n\t\t\tconst auto x = *l_ptr++;\n\t\t\tconst auto y = *r_ptr++;\n\t\t\tdistance += x * y;\n\t\t\tnorm_l += x * x;\n\t\t\tnorm_r += y * y;\n\t\t}\n\n\t\tauto similarity = distance / std::sqrt(norm_l * norm_r);\n\t\treturn std::max(static_cast<TYPE>(-1.0), std::min(similarity, static_cast<TYPE>(1.0)));\n\t}\n}"
+        },
+        "Class&Functions": [
+            "CosineSimilarityOp",
+            "ArrayCosineSimilarityFun"
+        ]
+    },
+    "array_cosine_distance": {
+        "Name": "array_cosine_distance",
+        "Parameters": "array1,array2",
+        "Description": "Compute the cosine distance between two arrays of the same size. The array elements can not be NULL. The arrays can have any size as long as the size is the same for both arguments.",
+        "Example": "array_cosine_distance([1, 2, 3], [1, 2, 3])",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/array/array_functions.cpp:257": "ScalarFunctionSet ArrayCosineDistanceFun::GetFunctions() {\n\tScalarFunctionSet set(\"array_cosine_distance\");\n\tfor (auto &type : LogicalType::Real()) {\n\t\tAddArrayFoldFunction<CosineDistanceOp>(set, type);\n\t}\n\treturn set;\n}",
+            "./duckdb-1.3.0/extension/core_functions/include/core_functions/array_kernels.hpp:67": "struct CosineDistanceOp {\n\tstatic constexpr bool ALLOW_EMPTY = false;\n\n\ttemplate <class TYPE>\n\tstatic TYPE Operation(const TYPE *lhs_data, const TYPE *rhs_data, const idx_t count) {\n\t\treturn static_cast<TYPE>(1.0) - CosineSimilarityOp::Operation(lhs_data, rhs_data, count);\n\t}\n}",
+            "./duckdb-1.3.0/extension/core_functions/include/core_functions/array_kernels.hpp:41": "struct CosineSimilarityOp {\n\tstatic constexpr bool ALLOW_EMPTY = false;\n\n\ttemplate <class TYPE>\n\tstatic TYPE Operation(const TYPE *lhs_data, const TYPE *rhs_data, const idx_t count) {\n\n\t\tTYPE distance = 0;\n\t\tTYPE norm_l = 0;\n\t\tTYPE norm_r = 0;\n\n\t\tauto l_ptr = lhs_data;\n\t\tauto r_ptr = rhs_data;\n\n\t\tfor (idx_t i = 0; i < count; i++) {\n\t\t\tconst auto x = *l_ptr++;\n\t\t\tconst auto y = *r_ptr++;\n\t\t\tdistance += x * y;\n\t\t\tnorm_l += x * x;\n\t\t\tnorm_r += y * y;\n\t\t}\n\n\t\tauto similarity = distance / std::sqrt(norm_l * norm_r);\n\t\treturn std::max(static_cast<TYPE>(-1.0), std::min(similarity, static_cast<TYPE>(1.0)));\n\t}\n}"
+        },
+        "Class&Functions": [
+            "CosineSimilarityOp",
+            "ArrayCosineDistanceFun",
+            "CosineDistanceOp"
+        ]
+    },
+    "array_distance": {
+        "Name": "array_distance",
+        "Parameters": "array1,array2",
+        "Description": "Compute the distance between two arrays of the same size. The array elements can not be NULL. The arrays can have any size as long as the size is the same for both arguments.",
+        "Example": "array_distance([1, 2, 3], [1, 2, 3])",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/array/array_functions.cpp:225": "ScalarFunctionSet ArrayDistanceFun::GetFunctions() {\n\tScalarFunctionSet set(\"array_distance\");\n\tfor (auto &type : LogicalType::Real()) {\n\t\tAddArrayFoldFunction<DistanceOp>(set, type);\n\t}\n\treturn set;\n}",
+            "./duckdb-1.3.0/extension/core_functions/include/core_functions/array_kernels.hpp:98": "struct DistanceOp {\n\tstatic constexpr bool ALLOW_EMPTY = true;\n\n\ttemplate <class TYPE>\n\tstatic TYPE Operation(const TYPE *lhs_data, const TYPE *rhs_data, const idx_t count) {\n\t\treturn std::sqrt(DistanceSquaredOp::Operation(lhs_data, rhs_data, count));\n\t}\n}",
+            "./duckdb-1.3.0/extension/core_functions/include/core_functions/array_kernels.hpp:76": "struct DistanceSquaredOp {\n\tstatic constexpr bool ALLOW_EMPTY = true;\n\n\ttemplate <class TYPE>\n\tstatic TYPE Operation(const TYPE *lhs_data, const TYPE *rhs_data, const idx_t count) {\n\n\t\tTYPE distance = 0;\n\n\t\tauto l_ptr = lhs_data;\n\t\tauto r_ptr = rhs_data;\n\n\t\tfor (idx_t i = 0; i < count; i++) {\n\t\t\tconst auto x = *l_ptr++;\n\t\t\tconst auto y = *r_ptr++;\n\t\t\tconst auto diff = x - y;\n\t\t\tdistance += diff * diff;\n\t\t}\n\n\t\treturn distance;\n\t}\n}"
+        },
+        "Class&Functions": [
+            "DistanceSquaredOp",
+            "ArrayDistanceFun",
+            "DistanceOp"
+        ]
+    },
+    "array_inner_product": {
+        "Name": "array_inner_product",
+        "Parameters": "array1,array2",
+        "Description": "Compute the inner product between two arrays of the same size. The array elements can not be NULL. The arrays can have any size as long as the size is the same for both arguments.",
+        "Example": "array_inner_product([1, 2, 3], [1, 2, 3])",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/array/array_functions.cpp:233": "ScalarFunctionSet ArrayInnerProductFun::GetFunctions() {\n\tScalarFunctionSet set(\"array_inner_product\");\n\tfor (auto &type : LogicalType::Real()) {\n\t\tAddArrayFoldFunction<InnerProductOp>(set, type);\n\t}\n\treturn set;\n}",
+            "./duckdb-1.3.0/extension/core_functions/include/core_functions/array_kernels.hpp:11": "struct InnerProductOp {\n\tstatic constexpr bool ALLOW_EMPTY = true;\n\n\ttemplate <class TYPE>\n\tstatic TYPE Operation(const TYPE *lhs_data, const TYPE *rhs_data, const idx_t count) {\n\n\t\tTYPE result = 0;\n\n\t\tauto lhs_ptr = lhs_data;\n\t\tauto rhs_ptr = rhs_data;\n\n\t\tfor (idx_t i = 0; i < count; i++) {\n\t\t\tconst auto x = *lhs_ptr++;\n\t\t\tconst auto y = *rhs_ptr++;\n\t\t\tresult += x * y;\n\t\t}\n\n\t\treturn result;\n\t}\n}"
+        },
+        "Class&Functions": [
+            "ArrayInnerProductFun",
+            "InnerProductOp"
+        ]
+    },
+    "array_negative_inner_product": {
+        "Name": "array_negative_inner_product",
+        "Parameters": "array1,array2",
+        "Description": "Compute the negative inner product between two arrays of the same size. The array elements can not be NULL. The arrays can have any size as long as the size is the same for both arguments.",
+        "Example": "array_negative_inner_product([1, 2, 3], [1, 2, 3])",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/array/array_functions.cpp:241": "ScalarFunctionSet ArrayNegativeInnerProductFun::GetFunctions() {\n\tScalarFunctionSet set(\"array_negative_inner_product\");\n\tfor (auto &type : LogicalType::Real()) {\n\t\tAddArrayFoldFunction<NegativeInnerProductOp>(set, type);\n\t}\n\treturn set;\n}",
+            "./duckdb-1.3.0/extension/core_functions/include/core_functions/array_kernels.hpp:32": "struct NegativeInnerProductOp {\n\tstatic constexpr bool ALLOW_EMPTY = true;\n\n\ttemplate <class TYPE>\n\tstatic TYPE Operation(const TYPE *lhs_data, const TYPE *rhs_data, const idx_t count) {\n\t\treturn -InnerProductOp::Operation(lhs_data, rhs_data, count);\n\t}\n}",
+            "./duckdb-1.3.0/extension/core_functions/include/core_functions/array_kernels.hpp:11": "struct InnerProductOp {\n\tstatic constexpr bool ALLOW_EMPTY = true;\n\n\ttemplate <class TYPE>\n\tstatic TYPE Operation(const TYPE *lhs_data, const TYPE *rhs_data, const idx_t count) {\n\n\t\tTYPE result = 0;\n\n\t\tauto lhs_ptr = lhs_data;\n\t\tauto rhs_ptr = rhs_data;\n\n\t\tfor (idx_t i = 0; i < count; i++) {\n\t\t\tconst auto x = *lhs_ptr++;\n\t\t\tconst auto y = *rhs_ptr++;\n\t\t\tresult += x * y;\n\t\t}\n\n\t\treturn result;\n\t}\n}"
+        },
+        "Class&Functions": [
+            "InnerProductOp",
+            "ArrayNegativeInnerProductFun",
+            "NegativeInnerProductOp"
+        ]
+    },
+    "array_dot_product": {
+        "Name": "array_inner_product",
+        "Parameters": "array1,array2",
+        "Description": "Compute the inner product between two arrays of the same size. The array elements can not be NULL. The arrays can have any size as long as the size is the same for both arguments.",
+        "Example": "array_inner_product([1, 2, 3], [1, 2, 3])",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/array/array_functions.cpp:233": "ScalarFunctionSet ArrayInnerProductFun::GetFunctions() {\n\tScalarFunctionSet set(\"array_inner_product\");\n\tfor (auto &type : LogicalType::Real()) {\n\t\tAddArrayFoldFunction<InnerProductOp>(set, type);\n\t}\n\treturn set;\n}",
+            "./duckdb-1.3.0/extension/core_functions/include/core_functions/array_kernels.hpp:11": "struct InnerProductOp {\n\tstatic constexpr bool ALLOW_EMPTY = true;\n\n\ttemplate <class TYPE>\n\tstatic TYPE Operation(const TYPE *lhs_data, const TYPE *rhs_data, const idx_t count) {\n\n\t\tTYPE result = 0;\n\n\t\tauto lhs_ptr = lhs_data;\n\t\tauto rhs_ptr = rhs_data;\n\n\t\tfor (idx_t i = 0; i < count; i++) {\n\t\t\tconst auto x = *lhs_ptr++;\n\t\t\tconst auto y = *rhs_ptr++;\n\t\t\tresult += x * y;\n\t\t}\n\n\t\treturn result;\n\t}\n}"
+        },
+        "Class&Functions": [
+            "ArrayInnerProductFun",
+            "InnerProductOp"
+        ]
+    },
+    "array_negative_dot_product": {
+        "Name": "array_negative_inner_product",
+        "Parameters": "array1,array2",
+        "Description": "Compute the negative inner product between two arrays of the same size. The array elements can not be NULL. The arrays can have any size as long as the size is the same for both arguments.",
+        "Example": "array_negative_inner_product([1, 2, 3], [1, 2, 3])",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/array/array_functions.cpp:241": "ScalarFunctionSet ArrayNegativeInnerProductFun::GetFunctions() {\n\tScalarFunctionSet set(\"array_negative_inner_product\");\n\tfor (auto &type : LogicalType::Real()) {\n\t\tAddArrayFoldFunction<NegativeInnerProductOp>(set, type);\n\t}\n\treturn set;\n}",
+            "./duckdb-1.3.0/extension/core_functions/include/core_functions/array_kernels.hpp:32": "struct NegativeInnerProductOp {\n\tstatic constexpr bool ALLOW_EMPTY = true;\n\n\ttemplate <class TYPE>\n\tstatic TYPE Operation(const TYPE *lhs_data, const TYPE *rhs_data, const idx_t count) {\n\t\treturn -InnerProductOp::Operation(lhs_data, rhs_data, count);\n\t}\n}",
+            "./duckdb-1.3.0/extension/core_functions/include/core_functions/array_kernels.hpp:11": "struct InnerProductOp {\n\tstatic constexpr bool ALLOW_EMPTY = true;\n\n\ttemplate <class TYPE>\n\tstatic TYPE Operation(const TYPE *lhs_data, const TYPE *rhs_data, const idx_t count) {\n\n\t\tTYPE result = 0;\n\n\t\tauto lhs_ptr = lhs_data;\n\t\tauto rhs_ptr = rhs_data;\n\n\t\tfor (idx_t i = 0; i < count; i++) {\n\t\t\tconst auto x = *lhs_ptr++;\n\t\t\tconst auto y = *rhs_ptr++;\n\t\t\tresult += x * y;\n\t\t}\n\n\t\treturn result;\n\t}\n}"
+        },
+        "Class&Functions": [
+            "InnerProductOp",
+            "ArrayNegativeInnerProductFun",
+            "NegativeInnerProductOp"
+        ]
+    },
+    "bit_count": {
+        "Name": "bit_count",
+        "Parameters": "x",
+        "Description": "Returns the number of bits that are set",
+        "Example": "bit_count(31)",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:243": "ScalarFunctionSet BitCountFun::GetFunctions() {\n\tScalarFunctionSet functions;\n\tfunctions.AddFunction(ScalarFunction({LogicalType::TINYINT}, LogicalType::TINYINT,\n\t                                     ScalarFunction::UnaryFunction<int8_t, int8_t, BitCntOperator>));\n\tfunctions.AddFunction(ScalarFunction({LogicalType::SMALLINT}, LogicalType::TINYINT,\n\t                                     ScalarFunction::UnaryFunction<int16_t, int8_t, BitCntOperator>));\n\tfunctions.AddFunction(ScalarFunction({LogicalType::INTEGER}, LogicalType::TINYINT,\n\t                                     ScalarFunction::UnaryFunction<int32_t, int8_t, BitCntOperator>));\n\tfunctions.AddFunction(ScalarFunction({LogicalType::BIGINT}, LogicalType::TINYINT,\n\t                                     ScalarFunction::UnaryFunction<int64_t, int8_t, BitCntOperator>));\n\tfunctions.AddFunction(ScalarFunction({LogicalType::HUGEINT}, LogicalType::TINYINT,\n\t                                     ScalarFunction::UnaryFunction<hugeint_t, int8_t, HugeIntBitCntOperator>));\n\tfunctions.AddFunction(ScalarFunction({LogicalType::BIT}, LogicalType::BIGINT,\n\t                                     ScalarFunction::UnaryFunction<string_t, idx_t, BitStringBitCntOperator>));\n\treturn functions;\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:207": "struct BitCntOperator {\n\ttemplate <class TA, class TR>\n\tstatic inline TR Operation(TA input) {\n\t\tusing TU = typename std::make_unsigned<TA>::type;\n\t\tTR count = 0;\n\t\tfor (auto value = TU(input); value; ++count) {\n\t\t\tvalue &= (value - 1);\n\t\t}\n\t\treturn count;\n\t}\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:235": "struct BitStringBitCntOperator {\n\ttemplate <class TA, class TR>\n\tstatic inline TR Operation(TA input) {\n\t\tTR count = Bit::BitCount(input);\n\t\treturn count;\n\t}\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:219": "struct HugeIntBitCntOperator {\n\ttemplate <class TA, class TR>\n\tstatic inline TR Operation(TA input) {\n\t\tusing TU = typename std::make_unsigned<int64_t>::type;\n\t\tTR count = 0;\n\n\t\tfor (auto value = TU(input.upper); value; ++count) {\n\t\t\tvalue &= (value - 1);\n\t\t}\n\t\tfor (auto value = TU(input.lower); value; ++count) {\n\t\t\tvalue &= (value - 1);\n\t\t}\n\t\treturn count;\n\t}\n}"
+        },
+        "Class&Functions": [
+            "BitStringBitCntOperator",
+            "BitCountFun",
+            "HugeIntBitCntOperator",
+            "BitCntOperator"
+        ]
+    },
+    "bit_length": {
+        "Name": "bit_length",
+        "Code": {
+            "./duckdb-1.3.0/src/function/scalar/string/length.cpp:257": "ScalarFunctionSet BitLengthFun::GetFunctions() {\n\tScalarFunctionSet bit_length(\"bit_length\");\n\tbit_length.AddFunction(ScalarFunction({LogicalType::VARCHAR}, LogicalType::BIGINT,\n\t                                      ScalarFunction::UnaryFunction<string_t, int64_t, BitLenOperator>));\n\tbit_length.AddFunction(ScalarFunction({LogicalType::BIT}, LogicalType::BIGINT,\n\t                                      ScalarFunction::UnaryFunction<string_t, int64_t, BitStringLenOperator>));\n\treturn (bit_length);\n}",
+            "./duckdb-1.3.0/src/function/scalar/string/length.cpp:43": "struct BitLenOperator {\n\ttemplate <class TA, class TR>\n\tstatic inline TR Operation(TA input) {\n\t\treturn UnsafeNumericCast<TR>(8 * input.GetSize());\n\t}\n}",
+            "./duckdb-1.3.0/src/function/scalar/string/length.cpp:51": "struct BitStringLenOperator {\n\ttemplate <class TA, class TR>\n\tstatic inline TR Operation(TA input) {\n\t\treturn UnsafeNumericCast<TR>(Bit::BitLength(input));\n\t}\n}"
+        },
+        "Class&Functions": [
+            "BitStringLenOperator",
+            "BitLengthFun",
+            "BitLenOperator"
+        ]
+    },
+    "bit_position": {
+        "Name": "bit_position",
+        "Parameters": "substring,bitstring",
+        "Description": "Returns first starting index of the specified substring within bits, or zero if it is not present. The first (leftmost) bit is indexed 1",
+        "Example": "bit_position('010'::BIT, '1110101'::BIT)",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/bit/bitstring.cpp:117": "ScalarFunction BitPositionFun::GetFunction() {\n\treturn ScalarFunction({LogicalType::BIT, LogicalType::BIT}, LogicalType::INTEGER,\n\t                      ScalarFunction::BinaryFunction<string_t, string_t, int32_t, BitPositionOperator>);\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/bit/bitstring.cpp:107": "struct BitPositionOperator {\n\ttemplate <class TA, class TB, class TR>\n\tstatic inline TR Operation(TA substring, TB input) {\n\t\tif (substring.GetSize() > input.GetSize()) {\n\t\t\treturn 0;\n\t\t}\n\t\treturn UnsafeNumericCast<TR>(Bit::BitPosition(substring, input));\n\t}\n}"
+        },
+        "Class&Functions": [
+            "BitPositionOperator",
+            "BitPositionFun"
+        ]
+    },
+    "get_bit": {
+        "Name": "get_bit",
+        "Parameters": "bitstring,index",
+        "Description": "Extracts the nth bit from bitstring; the first (leftmost) bit is indexed 0",
+        "Example": "get_bit('0110010'::BIT, 2)",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/bit/bitstring.cpp:69": "ScalarFunction GetBitFun::GetFunction() {\n\tScalarFunction func({LogicalType::BIT, LogicalType::INTEGER}, LogicalType::INTEGER,\n\t                    ScalarFunction::BinaryFunction<string_t, int32_t, int32_t, GetBitOperator>);\n\tBaseScalarFunction::SetReturnsError(func);\n\treturn func;\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/bit/bitstring.cpp:58": "struct GetBitOperator {\n\ttemplate <class TA, class TB, class TR>\n\tstatic inline TR Operation(TA input, TB n) {\n\t\tif (n < 0 || (idx_t)n > Bit::BitLength(input) - 1) {\n\t\t\tthrow OutOfRangeException(\"bit index %s out of valid range (0..%s)\", NumericHelper::ToString(n),\n\t\t\t                          NumericHelper::ToString(Bit::BitLength(input) - 1));\n\t\t}\n\t\treturn UnsafeNumericCast<TR>(Bit::GetBit(input, UnsafeNumericCast<idx_t>(n)));\n\t}\n}"
+        },
+        "Class&Functions": [
+            "GetBitOperator",
+            "GetBitFun"
+        ]
+    },
+    "length": {
+        "Name": "length",
+        "Parameters": "string",
+        "Description": "Number of characters in `string`.",
+        "Example": "length('Hello🦆')",
+        "Code": {
+            "./duckdb-1.3.0/src/function/scalar/string/length.cpp:220": "ScalarFunctionSet LengthFun::GetFunctions() {\n\tScalarFunctionSet length(\"length\");\n\tlength.AddFunction(ScalarFunction({LogicalType::VARCHAR}, LogicalType::BIGINT,\n\t                                  ScalarFunction::UnaryFunction<string_t, int64_t, StringLengthOperator>, nullptr,\n\t                                  nullptr, LengthPropagateStats));\n\tlength.AddFunction(ScalarFunction({LogicalType::BIT}, LogicalType::BIGINT,\n\t                                  ScalarFunction::UnaryFunction<string_t, int64_t, BitStringLenOperator>));\n\tlength.AddFunction(\n\t    ScalarFunction({LogicalType::LIST(LogicalType::ANY)}, LogicalType::BIGINT, nullptr, ArrayOrListLengthBind));\n\treturn (length);\n}",
+            "./duckdb-1.3.0/src/function/scalar/string/length.cpp:51": "struct BitStringLenOperator {\n\ttemplate <class TA, class TR>\n\tstatic inline TR Operation(TA input) {\n\t\treturn UnsafeNumericCast<TR>(Bit::BitLength(input));\n\t}\n}"
+        },
+        "Class&Functions": [
+            "LengthFun",
+            "BitStringLenOperator"
+        ]
+    },
+    "octet_length": {
+        "Name": "octet_length",
+        "Parameters": "blob::BLOB\\1bitstring::BIT",
+        "Description": "Number of bytes in `blob`.\\1Returns the number of bytes in the `bitstring`.",
+        "Example": "octet_length('\\\\xAA\\\\xBB'::BLOB)\\1octet_length('1101011'::BITSTRING)",
+        "Categories": "blob\\1bitstring",
+        "Code": {
+            "./duckdb-1.3.0/src/function/scalar/string/length.cpp:266": "ScalarFunctionSet OctetLengthFun::GetFunctions() {\n\t// length for BLOB type\n\tScalarFunctionSet octet_length(\"octet_length\");\n\toctet_length.AddFunction(ScalarFunction({LogicalType::BLOB}, LogicalType::BIGINT,\n\t                                        ScalarFunction::UnaryFunction<string_t, int64_t, StrLenOperator>));\n\toctet_length.AddFunction(ScalarFunction({LogicalType::BIT}, LogicalType::BIGINT,\n\t                                        ScalarFunction::UnaryFunction<string_t, int64_t, OctetLenOperator>));\n\treturn (octet_length);\n}",
+            "./duckdb-1.3.0/src/function/scalar/string/length.cpp:35": "struct OctetLenOperator {\n\ttemplate <class TA, class TR>\n\tstatic inline TR Operation(TA input) {\n\t\treturn UnsafeNumericCast<TR>(Bit::OctetLength(input));\n\t}\n}",
+            "./duckdb-1.3.0/src/function/scalar/string/length.cpp:28": "struct StrLenOperator {\n\ttemplate <class TA, class TR>\n\tstatic inline TR Operation(TA input) {\n\t\treturn UnsafeNumericCast<TR>(input.GetSize());\n\t}\n}"
+        },
+        "Class&Functions": [
+            "StrLenOperator",
+            "OctetLengthFun",
+            "OctetLenOperator"
+        ]
+    },
+    "hex": {
+        "Name": "hex",
+        "Parameters": "string::VARCHAR\\1blob::BLOB\\1value::ANY",
+        "Description": "Converts the string to hexadecimal representation.\\1Converts `blob` to `VARCHAR` using hexadecimal encoding.\\1Converts the value to hexadecimal representation.",
+        "Example": "hex('Hello')\\1hex('\\\\xAA\\\\xBB'::BLOB)\\1hex(42)",
+        "Categories": "string\\1blob\\1numeric",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/string/hex.cpp:391": "ScalarFunctionSet HexFun::GetFunctions() {\n\tScalarFunctionSet to_hex;\n\tto_hex.AddFunction(\n\t    ScalarFunction({LogicalType::VARCHAR}, LogicalType::VARCHAR, ToHexFunction<string_t, HexStrOperator>));\n\tto_hex.AddFunction(\n\t    ScalarFunction({LogicalType::VARINT}, LogicalType::VARCHAR, ToHexFunction<string_t, HexStrOperator>));\n\tto_hex.AddFunction(\n\t    ScalarFunction({LogicalType::BLOB}, LogicalType::VARCHAR, ToHexFunction<string_t, HexStrOperator>));\n\tto_hex.AddFunction(\n\t    ScalarFunction({LogicalType::BIGINT}, LogicalType::VARCHAR, ToHexFunction<int64_t, HexIntegralOperator>));\n\tto_hex.AddFunction(\n\t    ScalarFunction({LogicalType::UBIGINT}, LogicalType::VARCHAR, ToHexFunction<uint64_t, HexIntegralOperator>));\n\tto_hex.AddFunction(\n\t    ScalarFunction({LogicalType::HUGEINT}, LogicalType::VARCHAR, ToHexFunction<hugeint_t, HexHugeIntOperator>));\n\tto_hex.AddFunction(\n\t    ScalarFunction({LogicalType::UHUGEINT}, LogicalType::VARCHAR, ToHexFunction<uhugeint_t, HexUhugeIntOperator>));\n\treturn to_hex;\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/string/hex.cpp:119": "struct HexHugeIntOperator {\n\ttemplate <class INPUT_TYPE, class RESULT_TYPE>\n\tstatic RESULT_TYPE Operation(INPUT_TYPE input, Vector &result) {\n\n\t\tidx_t num_leading_zero = CountZeros<hugeint_t>::Leading(UnsafeNumericCast<hugeint_t>(input));\n\t\tidx_t buffer_size = sizeof(INPUT_TYPE) * 2 - (num_leading_zero / 4);\n\n\t\t// Special case: All bits are zero\n\t\tif (buffer_size == 0) {\n\t\t\tauto target = StringVector::EmptyString(result, 1);\n\t\t\tauto output = target.GetDataWriteable();\n\t\t\t*output = '0';\n\t\t\ttarget.Finalize();\n\t\t\treturn target;\n\t\t}\n\n\t\tD_ASSERT(buffer_size > 0);\n\t\tauto target = StringVector::EmptyString(result, buffer_size);\n\t\tauto output = target.GetDataWriteable();\n\n\t\tWriteHugeIntHexBytes<hugeint_t>(input, output, buffer_size);\n\n\t\ttarget.Finalize();\n\t\treturn target;\n\t}\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/string/hex.cpp:89": "struct HexIntegralOperator {\n\ttemplate <class INPUT_TYPE, class RESULT_TYPE>\n\tstatic RESULT_TYPE Operation(INPUT_TYPE input, Vector &result) {\n\n\t\tauto num_leading_zero = CountZeros<uint64_t>::Leading(static_cast<uint64_t>(input));\n\t\tidx_t num_bits_to_check = 64 - num_leading_zero;\n\t\tD_ASSERT(num_bits_to_check <= sizeof(INPUT_TYPE) * 8);\n\n\t\tidx_t buffer_size = (num_bits_to_check + 3) / 4;\n\n\t\t// Special case: All bits are zero\n\t\tif (buffer_size == 0) {\n\t\t\tauto target = StringVector::EmptyString(result, 1);\n\t\t\tauto output = target.GetDataWriteable();\n\t\t\t*output = '0';\n\t\t\ttarget.Finalize();\n\t\t\treturn target;\n\t\t}\n\n\t\tD_ASSERT(buffer_size > 0);\n\t\tauto target = StringVector::EmptyString(result, buffer_size);\n\t\tauto output = target.GetDataWriteable();\n\n\t\tWriteHexBytes(static_cast<uint64_t>(input), output, buffer_size);\n\n\t\ttarget.Finalize();\n\t\treturn target;\n\t}\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/string/hex.cpp:67": "struct HexStrOperator {\n\ttemplate <class INPUT_TYPE, class RESULT_TYPE>\n\tstatic RESULT_TYPE Operation(INPUT_TYPE input, Vector &result) {\n\t\tauto data = input.GetData();\n\t\tauto size = input.GetSize();\n\n\t\t// Allocate empty space\n\t\tauto target = StringVector::EmptyString(result, size * 2);\n\t\tauto output = target.GetDataWriteable();\n\n\t\tfor (idx_t i = 0; i < size; ++i) {\n\t\t\t*output = Blob::HEX_TABLE[(data[i] >> 4) & 0x0F];\n\t\t\toutput++;\n\t\t\t*output = Blob::HEX_TABLE[data[i] & 0x0F];\n\t\t\toutput++;\n\t\t}\n\n\t\ttarget.Finalize();\n\t\treturn target;\n\t}\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/string/hex.cpp:146": "struct HexUhugeIntOperator {\n\ttemplate <class INPUT_TYPE, class RESULT_TYPE>\n\tstatic RESULT_TYPE Operation(INPUT_TYPE input, Vector &result) {\n\n\t\tidx_t num_leading_zero = CountZeros<uhugeint_t>::Leading(UnsafeNumericCast<uhugeint_t>(input));\n\t\tidx_t buffer_size = sizeof(INPUT_TYPE) * 2 - (num_leading_zero / 4);\n\n\t\t// Special case: All bits are zero\n\t\tif (buffer_size == 0) {\n\t\t\tauto target = StringVector::EmptyString(result, 1);\n\t\t\tauto output = target.GetDataWriteable();\n\t\t\t*output = '0';\n\t\t\ttarget.Finalize();\n\t\t\treturn target;\n\t\t}\n\n\t\tD_ASSERT(buffer_size > 0);\n\t\tauto target = StringVector::EmptyString(result, buffer_size);\n\t\tauto output = target.GetDataWriteable();\n\n\t\tWriteHugeIntHexBytes<uhugeint_t>(input, output, buffer_size);\n\n\t\ttarget.Finalize();\n\t\treturn target;\n\t}\n}"
+        },
+        "Class&Functions": [
+            "HexHugeIntOperator",
+            "HexStrOperator",
+            "HexIntegralOperator",
+            "HexFun",
+            "HexUhugeIntOperator"
+        ]
+    },
+    "to_hex": {
+        "Name": "hex",
+        "Parameters": "string::VARCHAR\\1blob::BLOB\\1value::ANY",
+        "Description": "Converts the string to hexadecimal representation.\\1Converts `blob` to `VARCHAR` using hexadecimal encoding.\\1Converts the value to hexadecimal representation.",
+        "Example": "hex('Hello')\\1hex('\\\\xAA\\\\xBB'::BLOB)\\1hex(42)",
+        "Categories": "string\\1blob\\1numeric",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/string/hex.cpp:391": "ScalarFunctionSet HexFun::GetFunctions() {\n\tScalarFunctionSet to_hex;\n\tto_hex.AddFunction(\n\t    ScalarFunction({LogicalType::VARCHAR}, LogicalType::VARCHAR, ToHexFunction<string_t, HexStrOperator>));\n\tto_hex.AddFunction(\n\t    ScalarFunction({LogicalType::VARINT}, LogicalType::VARCHAR, ToHexFunction<string_t, HexStrOperator>));\n\tto_hex.AddFunction(\n\t    ScalarFunction({LogicalType::BLOB}, LogicalType::VARCHAR, ToHexFunction<string_t, HexStrOperator>));\n\tto_hex.AddFunction(\n\t    ScalarFunction({LogicalType::BIGINT}, LogicalType::VARCHAR, ToHexFunction<int64_t, HexIntegralOperator>));\n\tto_hex.AddFunction(\n\t    ScalarFunction({LogicalType::UBIGINT}, LogicalType::VARCHAR, ToHexFunction<uint64_t, HexIntegralOperator>));\n\tto_hex.AddFunction(\n\t    ScalarFunction({LogicalType::HUGEINT}, LogicalType::VARCHAR, ToHexFunction<hugeint_t, HexHugeIntOperator>));\n\tto_hex.AddFunction(\n\t    ScalarFunction({LogicalType::UHUGEINT}, LogicalType::VARCHAR, ToHexFunction<uhugeint_t, HexUhugeIntOperator>));\n\treturn to_hex;\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/string/hex.cpp:119": "struct HexHugeIntOperator {\n\ttemplate <class INPUT_TYPE, class RESULT_TYPE>\n\tstatic RESULT_TYPE Operation(INPUT_TYPE input, Vector &result) {\n\n\t\tidx_t num_leading_zero = CountZeros<hugeint_t>::Leading(UnsafeNumericCast<hugeint_t>(input));\n\t\tidx_t buffer_size = sizeof(INPUT_TYPE) * 2 - (num_leading_zero / 4);\n\n\t\t// Special case: All bits are zero\n\t\tif (buffer_size == 0) {\n\t\t\tauto target = StringVector::EmptyString(result, 1);\n\t\t\tauto output = target.GetDataWriteable();\n\t\t\t*output = '0';\n\t\t\ttarget.Finalize();\n\t\t\treturn target;\n\t\t}\n\n\t\tD_ASSERT(buffer_size > 0);\n\t\tauto target = StringVector::EmptyString(result, buffer_size);\n\t\tauto output = target.GetDataWriteable();\n\n\t\tWriteHugeIntHexBytes<hugeint_t>(input, output, buffer_size);\n\n\t\ttarget.Finalize();\n\t\treturn target;\n\t}\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/string/hex.cpp:89": "struct HexIntegralOperator {\n\ttemplate <class INPUT_TYPE, class RESULT_TYPE>\n\tstatic RESULT_TYPE Operation(INPUT_TYPE input, Vector &result) {\n\n\t\tauto num_leading_zero = CountZeros<uint64_t>::Leading(static_cast<uint64_t>(input));\n\t\tidx_t num_bits_to_check = 64 - num_leading_zero;\n\t\tD_ASSERT(num_bits_to_check <= sizeof(INPUT_TYPE) * 8);\n\n\t\tidx_t buffer_size = (num_bits_to_check + 3) / 4;\n\n\t\t// Special case: All bits are zero\n\t\tif (buffer_size == 0) {\n\t\t\tauto target = StringVector::EmptyString(result, 1);\n\t\t\tauto output = target.GetDataWriteable();\n\t\t\t*output = '0';\n\t\t\ttarget.Finalize();\n\t\t\treturn target;\n\t\t}\n\n\t\tD_ASSERT(buffer_size > 0);\n\t\tauto target = StringVector::EmptyString(result, buffer_size);\n\t\tauto output = target.GetDataWriteable();\n\n\t\tWriteHexBytes(static_cast<uint64_t>(input), output, buffer_size);\n\n\t\ttarget.Finalize();\n\t\treturn target;\n\t}\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/string/hex.cpp:67": "struct HexStrOperator {\n\ttemplate <class INPUT_TYPE, class RESULT_TYPE>\n\tstatic RESULT_TYPE Operation(INPUT_TYPE input, Vector &result) {\n\t\tauto data = input.GetData();\n\t\tauto size = input.GetSize();\n\n\t\t// Allocate empty space\n\t\tauto target = StringVector::EmptyString(result, size * 2);\n\t\tauto output = target.GetDataWriteable();\n\n\t\tfor (idx_t i = 0; i < size; ++i) {\n\t\t\t*output = Blob::HEX_TABLE[(data[i] >> 4) & 0x0F];\n\t\t\toutput++;\n\t\t\t*output = Blob::HEX_TABLE[data[i] & 0x0F];\n\t\t\toutput++;\n\t\t}\n\n\t\ttarget.Finalize();\n\t\treturn target;\n\t}\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/string/hex.cpp:146": "struct HexUhugeIntOperator {\n\ttemplate <class INPUT_TYPE, class RESULT_TYPE>\n\tstatic RESULT_TYPE Operation(INPUT_TYPE input, Vector &result) {\n\n\t\tidx_t num_leading_zero = CountZeros<uhugeint_t>::Leading(UnsafeNumericCast<uhugeint_t>(input));\n\t\tidx_t buffer_size = sizeof(INPUT_TYPE) * 2 - (num_leading_zero / 4);\n\n\t\t// Special case: All bits are zero\n\t\tif (buffer_size == 0) {\n\t\t\tauto target = StringVector::EmptyString(result, 1);\n\t\t\tauto output = target.GetDataWriteable();\n\t\t\t*output = '0';\n\t\t\ttarget.Finalize();\n\t\t\treturn target;\n\t\t}\n\n\t\tD_ASSERT(buffer_size > 0);\n\t\tauto target = StringVector::EmptyString(result, buffer_size);\n\t\tauto output = target.GetDataWriteable();\n\n\t\tWriteHugeIntHexBytes<uhugeint_t>(input, output, buffer_size);\n\n\t\ttarget.Finalize();\n\t\treturn target;\n\t}\n}"
+        },
+        "Class&Functions": [
+            "HexHugeIntOperator",
+            "HexStrOperator",
+            "HexIntegralOperator",
+            "HexFun",
+            "HexUhugeIntOperator"
+        ]
+    },
+    "dayname": {
+        "Name": "dayname",
+        "Parameters": "ts",
+        "Description": "The (English) name of the weekday",
+        "Example": "dayname(TIMESTAMP '1992-03-22')",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/date_part.cpp:2211": "ScalarFunctionSet DayNameFun::GetFunctions() {\n\tScalarFunctionSet dayname;\n\tdayname.AddFunction(ScalarFunction({LogicalType::DATE}, LogicalType::VARCHAR,\n\t                                   DatePart::UnaryFunction<date_t, string_t, DayNameOperator>));\n\tdayname.AddFunction(ScalarFunction({LogicalType::TIMESTAMP}, LogicalType::VARCHAR,\n\t                                   DatePart::UnaryFunction<timestamp_t, string_t, DayNameOperator>));\n\treturn dayname;\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/date_part.cpp:1774": "struct DayNameOperator {\n\ttemplate <class TA, class TR>\n\tstatic inline TR Operation(TA input) {\n\t\treturn Date::DAY_NAMES[DatePart::DayOfWeekOperator::Operation<TA, int64_t>(input)];\n\t}\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/date_part.cpp:290": "struct DayOfWeekOperator {\n\t\ttemplate <class TR>\n\t\tstatic inline TR DayOfWeekFromISO(TR isodow) {\n\t\t\t// day of the week (Sunday = 0, Saturday = 6)\n\t\t\t// turn sunday into 0 by doing mod 7\n\t\t\treturn isodow % 7;\n\t\t}\n\n\t\ttemplate <class TA, class TR>\n\t\tstatic inline TR Operation(TA input) {\n\t\t\treturn DayOfWeekFromISO(Date::ExtractISODayOfTheWeek(input));\n\t\t}\n\n\t\ttemplate <class T>\n\t\tstatic unique_ptr<BaseStatistics> PropagateStatistics(ClientContext &context, FunctionStatisticsInput &input) {\n\t\t\treturn PropagateSimpleDatePartStatistics<0, 6>(input.child_stats);\n\t\t}\n\t}"
+        },
+        "Class&Functions": [
+            "DayNameFun",
+            "DayNameOperator",
+            "DayOfWeekOperator"
+        ]
+    },
+    "greatest": {
+        "Name": "greatest",
+        "Parameters": "arg1, arg2, ...",
+        "Description": "Returns the highest value of the set of input parameters",
+        "Example": "greatest(42, 84)",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/generic/least.cpp:256": "ScalarFunctionSet GreatestFun::GetFunctions() {\n\treturn GetLeastGreatestFunctions<GreaterOp>();\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/generic/least.cpp:17": "struct GreaterOp {\n\tusing OP = GreaterThan;\n\n\tstatic OrderByNullType NullOrdering() {\n\t\treturn OrderByNullType::NULLS_FIRST;\n\t}\n}"
+        },
+        "Class&Functions": [
+            "GreaterOp",
+            "GreatestFun"
+        ]
+    },
+    "isfinite": {
+        "Name": "isfinite",
+        "Parameters": "x",
+        "Description": "Returns true if the floating point value is finite, false otherwise",
+        "Example": "isfinite(5.5)",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:1063": "ScalarFunctionSet IsFiniteFun::GetFunctions() {\n\tScalarFunctionSet funcs;\n\tfuncs.AddFunction(ScalarFunction({LogicalType::FLOAT}, LogicalType::BOOLEAN,\n\t                                 ScalarFunction::UnaryFunction<float, bool, IsFiniteOperator>));\n\tfuncs.AddFunction(ScalarFunction({LogicalType::DOUBLE}, LogicalType::BOOLEAN,\n\t                                 ScalarFunction::UnaryFunction<double, bool, IsFiniteOperator>));\n\tfuncs.AddFunction(ScalarFunction({LogicalType::DATE}, LogicalType::BOOLEAN,\n\t                                 ScalarFunction::UnaryFunction<date_t, bool, IsFiniteOperator>));\n\tfuncs.AddFunction(ScalarFunction({LogicalType::TIMESTAMP}, LogicalType::BOOLEAN,\n\t                                 ScalarFunction::UnaryFunction<timestamp_t, bool, IsFiniteOperator>));\n\tfuncs.AddFunction(ScalarFunction({LogicalType::TIMESTAMP_TZ}, LogicalType::BOOLEAN,\n\t                                 ScalarFunction::UnaryFunction<timestamp_t, bool, IsFiniteOperator>));\n\treturn funcs;\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:1056": "struct IsFiniteOperator {\n\ttemplate <class TA, class TR>\n\tstatic inline TR Operation(TA input) {\n\t\treturn Value::IsFinite(input);\n\t}\n}"
+        },
+        "Class&Functions": [
+            "IsFiniteOperator",
+            "IsFiniteFun"
+        ]
+    },
+    "isinf": {
+        "Name": "isinf",
+        "Parameters": "x",
+        "Description": "Returns true if the floating point value is infinite, false otherwise",
+        "Example": "isinf('Infinity'::float)",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:1038": "ScalarFunctionSet IsInfiniteFun::GetFunctions() {\n\tScalarFunctionSet funcs(\"isinf\");\n\tfuncs.AddFunction(ScalarFunction({LogicalType::FLOAT}, LogicalType::BOOLEAN,\n\t                                 ScalarFunction::UnaryFunction<float, bool, IsInfiniteOperator>));\n\tfuncs.AddFunction(ScalarFunction({LogicalType::DOUBLE}, LogicalType::BOOLEAN,\n\t                                 ScalarFunction::UnaryFunction<double, bool, IsInfiniteOperator>));\n\tfuncs.AddFunction(ScalarFunction({LogicalType::DATE}, LogicalType::BOOLEAN,\n\t                                 ScalarFunction::UnaryFunction<date_t, bool, IsInfiniteOperator>));\n\tfuncs.AddFunction(ScalarFunction({LogicalType::TIMESTAMP}, LogicalType::BOOLEAN,\n\t                                 ScalarFunction::UnaryFunction<timestamp_t, bool, IsInfiniteOperator>));\n\tfuncs.AddFunction(ScalarFunction({LogicalType::TIMESTAMP_TZ}, LogicalType::BOOLEAN,\n\t                                 ScalarFunction::UnaryFunction<timestamp_t, bool, IsInfiniteOperator>));\n\treturn funcs;\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:1021": "struct IsInfiniteOperator {\n\ttemplate <class TA, class TR>\n\tstatic inline TR Operation(TA input) {\n\t\treturn !Value::IsNan(input) && !Value::IsFinite(input);\n\t}\n}"
+        },
+        "Class&Functions": [
+            "IsInfiniteOperator",
+            "IsInfiniteFun"
+        ]
+    },
+    "julian": {
+        "Name": "julian",
+        "Parameters": "ts",
+        "Description": "Extract the Julian Day number from a date or timestamp",
+        "Example": "julian(timestamp '2006-01-01 12:00')",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/date_part.cpp:2220": "ScalarFunctionSet JulianDayFun::GetFunctions() {\n\tusing OP = DatePart::JulianDayOperator;\n\n\tScalarFunctionSet operator_set;\n\tauto date_func = DatePart::UnaryFunction<date_t, double, OP>;\n\tauto date_stats = OP::template PropagateStatistics<date_t>;\n\toperator_set.AddFunction(\n\t    ScalarFunction({LogicalType::DATE}, LogicalType::DOUBLE, date_func, nullptr, nullptr, date_stats));\n\tauto ts_func = DatePart::UnaryFunction<timestamp_t, double, OP>;\n\tauto ts_stats = OP::template PropagateStatistics<timestamp_t>;\n\toperator_set.AddFunction(\n\t    ScalarFunction({LogicalType::TIMESTAMP}, LogicalType::DOUBLE, ts_func, nullptr, nullptr, ts_stats));\n\n\treturn operator_set;\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/date_part.cpp:582": "struct JulianDayOperator {\n\t\ttemplate <class TA, class TR>\n\t\tstatic inline TR Operation(TA input) {\n\t\t\treturn Timestamp::GetJulianDay(input);\n\t\t}\n\n\t\ttemplate <class T>\n\t\tstatic unique_ptr<BaseStatistics> PropagateStatistics(ClientContext &context, FunctionStatisticsInput &input) {\n\t\t\treturn PropagateDatePartStatistics<T, JulianDayOperator, double>(input.child_stats, LogicalType::DOUBLE);\n\t\t}\n\t}"
+        },
+        "Class&Functions": [
+            "JulianDayFun",
+            "JulianDayOperator"
+        ]
+    },
+    "last_day": {
+        "Name": "last_day",
+        "Parameters": "ts",
+        "Description": "Returns the last day of the month",
+        "Example": "last_day(TIMESTAMP '1992-03-22 01:02:03.1234')",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/date_part.cpp:2193": "ScalarFunctionSet LastDayFun::GetFunctions() {\n\tScalarFunctionSet last_day;\n\tlast_day.AddFunction(ScalarFunction({LogicalType::DATE}, LogicalType::DATE,\n\t                                    DatePart::UnaryFunction<date_t, date_t, LastDayOperator>));\n\tlast_day.AddFunction(ScalarFunction({LogicalType::TIMESTAMP}, LogicalType::DATE,\n\t                                    DatePart::UnaryFunction<timestamp_t, date_t, LastDayOperator>));\n\treturn last_day;\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/date_part.cpp:1750": "struct LastDayOperator {\n\ttemplate <class TA, class TR>\n\tstatic inline TR Operation(TA input) {\n\t\tint32_t yyyy, mm, dd;\n\t\tDate::Convert(input, yyyy, mm, dd);\n\t\tyyyy += (mm / 12);\n\t\tmm %= 12;\n\t\t++mm;\n\t\treturn Date::FromDate(yyyy, mm, 1) - 1;\n\t}\n}"
+        },
+        "Class&Functions": [
+            "LastDayFun",
+            "LastDayOperator"
+        ]
+    },
+    "least": {
+        "Name": "least",
+        "Parameters": "arg1, arg2, ...",
+        "Description": "Returns the lowest value of the set of input parameters",
+        "Example": "least(42, 84)",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/generic/least.cpp:252": "ScalarFunctionSet LeastFun::GetFunctions() {\n\treturn GetLeastGreatestFunctions<LeastOp>();\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/generic/least.cpp:9": "struct LeastOp {\n\tusing OP = LessThan;\n\n\tstatic OrderByNullType NullOrdering() {\n\t\treturn OrderByNullType::NULLS_LAST;\n\t}\n}"
+        },
+        "Class&Functions": [
+            "LeastFun",
+            "LeastOp"
+        ]
+    },
+    "monthname": {
+        "Name": "monthname",
+        "Parameters": "ts",
+        "Description": "The (English) name of the month",
+        "Example": "monthname(TIMESTAMP '1992-09-20')",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/date_part.cpp:2202": "ScalarFunctionSet MonthNameFun::GetFunctions() {\n\tScalarFunctionSet monthname;\n\tmonthname.AddFunction(ScalarFunction({LogicalType::DATE}, LogicalType::VARCHAR,\n\t                                     DatePart::UnaryFunction<date_t, string_t, MonthNameOperator>));\n\tmonthname.AddFunction(ScalarFunction({LogicalType::TIMESTAMP}, LogicalType::VARCHAR,\n\t                                     DatePart::UnaryFunction<timestamp_t, string_t, MonthNameOperator>));\n\treturn monthname;\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/date_part.cpp:1767": "struct MonthNameOperator {\n\ttemplate <class TA, class TR>\n\tstatic inline TR Operation(TA input) {\n\t\treturn Date::MONTH_NAMES[DatePart::MonthOperator::Operation<TA, int64_t>(input) - 1];\n\t}\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/date_diff.cpp:46": "struct MonthOperator {\n\t\ttemplate <class TA, class TB, class TR>\n\t\tstatic inline TR Operation(TA startdate, TB enddate) {\n\t\t\tint32_t start_year, start_month, start_day;\n\t\t\tDate::Convert(startdate, start_year, start_month, start_day);\n\t\t\tint32_t end_year, end_month, end_day;\n\t\t\tDate::Convert(enddate, end_year, end_month, end_day);\n\n\t\t\treturn (end_year * 12 + end_month - 1) - (start_year * 12 + start_month - 1);\n\t\t}\n\t}"
+        },
+        "Class&Functions": [
+            "MonthNameOperator",
+            "MonthOperator",
+            "MonthNameFun"
+        ]
+    },
+    "century": {
+        "Name": "century",
+        "Parameters": "ts",
+        "Description": "Extract the century component from a date or timestamp",
+        "Example": "century(timestamp '2021-08-03 11:59:44.123456')",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/date_part.cpp:2012": "ScalarFunctionSet CenturyFun::GetFunctions() {\n\treturn GetDatePartFunction<DatePart::CenturyOperator>();\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/date_diff.cpp:72": "struct CenturyOperator {\n\t\ttemplate <class TA, class TB, class TR>\n\t\tstatic inline TR Operation(TA startdate, TB enddate) {\n\t\t\treturn Date::ExtractYear(enddate) / 100 - Date::ExtractYear(startdate) / 100;\n\t\t}\n\t}"
+        },
+        "Class&Functions": [
+            "CenturyOperator",
+            "CenturyFun"
+        ]
+    },
+    "day": {
+        "Name": "day",
+        "Parameters": "ts",
+        "Description": "Extract the day component from a date or timestamp",
+        "Example": "day(timestamp '2021-08-03 11:59:44.123456')",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/date_part.cpp:2004": "ScalarFunctionSet DayFun::GetFunctions() {\n\treturn GetCachedDatepartFunction<DatePart::DayOperator>();\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/date_diff.cpp:58": "struct DayOperator {\n\t\ttemplate <class TA, class TB, class TR>\n\t\tstatic inline TR Operation(TA startdate, TB enddate) {\n\t\t\treturn TR(Date::EpochDays(enddate)) - TR(Date::EpochDays(startdate));\n\t\t}\n\t}"
+        },
+        "Class&Functions": [
+            "DayFun",
+            "DayOperator"
+        ]
+    },
+    "dayofmonth": {
+        "Name": "dayofmonth",
+        "Parameters": "ts",
+        "Description": "Extract the dayofmonth component from a date or timestamp",
+        "Example": "dayofmonth(timestamp '2021-08-03 11:59:44.123456')",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/date_part.cpp:2181": "ScalarFunctionSet DayOfMonthFun::GetFunctions() {\n\treturn GetDatePartFunction<DatePart::DayOperator>();\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/date_diff.cpp:58": "struct DayOperator {\n\t\ttemplate <class TA, class TB, class TR>\n\t\tstatic inline TR Operation(TA startdate, TB enddate) {\n\t\t\treturn TR(Date::EpochDays(enddate)) - TR(Date::EpochDays(startdate));\n\t\t}\n\t}"
+        },
+        "Class&Functions": [
+            "DayOfMonthFun",
+            "DayOperator"
+        ]
+    },
+    "dayofweek": {
+        "Name": "dayofweek",
+        "Parameters": "ts",
+        "Description": "Extract the dayofweek component from a date or timestamp",
+        "Example": "dayofweek(timestamp '2021-08-03 11:59:44.123456')",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/date_part.cpp:2024": "ScalarFunctionSet DayOfWeekFun::GetFunctions() {\n\tauto set = GetDatePartFunction<DatePart::DayOfWeekOperator>();\n\tfor (auto &func : set.functions) {\n\t\tBaseScalarFunction::SetReturnsError(func);\n\t}\n\treturn set;\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/date_part.cpp:290": "struct DayOfWeekOperator {\n\t\ttemplate <class TR>\n\t\tstatic inline TR DayOfWeekFromISO(TR isodow) {\n\t\t\t// day of the week (Sunday = 0, Saturday = 6)\n\t\t\t// turn sunday into 0 by doing mod 7\n\t\t\treturn isodow % 7;\n\t\t}\n\n\t\ttemplate <class TA, class TR>\n\t\tstatic inline TR Operation(TA input) {\n\t\t\treturn DayOfWeekFromISO(Date::ExtractISODayOfTheWeek(input));\n\t\t}\n\n\t\ttemplate <class T>\n\t\tstatic unique_ptr<BaseStatistics> PropagateStatistics(ClientContext &context, FunctionStatisticsInput &input) {\n\t\t\treturn PropagateSimpleDatePartStatistics<0, 6>(input.child_stats);\n\t\t}\n\t}"
+        },
+        "Class&Functions": [
+            "DayOfWeekOperator",
+            "DayOfWeekFun"
+        ]
+    },
+    "dayofyear": {
+        "Name": "dayofyear",
+        "Parameters": "ts",
+        "Description": "Extract the dayofyear component from a date or timestamp",
+        "Example": "dayofyear(timestamp '2021-08-03 11:59:44.123456')",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/date_part.cpp:2036": "ScalarFunctionSet DayOfYearFun::GetFunctions() {\n\treturn GetDatePartFunction<DatePart::DayOfYearOperator>();\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/date_part.cpp:322": "struct DayOfYearOperator {\n\t\ttemplate <class TA, class TR>\n\t\tstatic inline TR Operation(TA input) {\n\t\t\treturn Date::ExtractDayOfTheYear(input);\n\t\t}\n\n\t\ttemplate <class T>\n\t\tstatic unique_ptr<BaseStatistics> PropagateStatistics(ClientContext &context, FunctionStatisticsInput &input) {\n\t\t\treturn PropagateSimpleDatePartStatistics<1, 366>(input.child_stats);\n\t\t}\n\t}"
+        },
+        "Class&Functions": [
+            "DayOfYearFun",
+            "DayOfYearOperator"
+        ]
+    },
+    "decade": {
+        "Name": "decade",
+        "Parameters": "ts",
+        "Description": "Extract the decade component from a date or timestamp",
+        "Example": "decade(timestamp '2021-08-03 11:59:44.123456')",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/date_part.cpp:2008": "ScalarFunctionSet DecadeFun::GetFunctions() {\n\treturn GetDatePartFunction<DatePart::DecadeOperator>();\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/date_diff.cpp:65": "struct DecadeOperator {\n\t\ttemplate <class TA, class TB, class TR>\n\t\tstatic inline TR Operation(TA startdate, TB enddate) {\n\t\t\treturn Date::ExtractYear(enddate) / 10 - Date::ExtractYear(startdate) / 10;\n\t\t}\n\t}"
+        },
+        "Class&Functions": [
+            "DecadeFun",
+            "DecadeOperator"
+        ]
+    },
+    "epoch": {
+        "Name": "epoch",
+        "Parameters": "temporal",
+        "Description": "Extract the epoch component from a temporal type",
+        "Example": "epoch(timestamp '2021-08-03 11:59:44.123456')",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/date_part.cpp:2076": "ScalarFunctionSet EpochFun::GetFunctions() {\n\treturn GetTimePartFunction<DatePart::EpochOperator, double>(LogicalType::DOUBLE);\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/date_part.cpp:495": "struct EpochOperator {\n\t\ttemplate <class TA, class TR>\n\t\tstatic inline TR Operation(TA input) {\n\t\t\treturn TR(Date::Epoch(input));\n\t\t}\n\n\t\ttemplate <class T>\n\t\tstatic unique_ptr<BaseStatistics> PropagateStatistics(ClientContext &context, FunctionStatisticsInput &input) {\n\t\t\treturn PropagateDatePartStatistics<T, EpochOperator, double>(input.child_stats, LogicalType::DOUBLE);\n\t\t}\n\t}"
+        },
+        "Class&Functions": [
+            "EpochOperator",
+            "EpochFun"
+        ]
+    },
+    "era": {
+        "Name": "era",
+        "Parameters": "ts",
+        "Description": "Extract the era component from a date or timestamp",
+        "Example": "era(timestamp '2021-08-03 11:59:44.123456')",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/date_part.cpp:2048": "ScalarFunctionSet EraFun::GetFunctions() {\n\treturn GetDatePartFunction<DatePart::EraOperator>();\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/date_part.cpp:507": "struct EraOperator {\n\t\ttemplate <class TR>\n\t\tstatic inline TR EraFromYear(TR yyyy) {\n\t\t\treturn yyyy > 0 ? 1 : 0;\n\t\t}\n\n\t\ttemplate <class TA, class TR>\n\t\tstatic inline TR Operation(TA input) {\n\t\t\treturn EraFromYear(Date::ExtractYear(input));\n\t\t}\n\n\t\ttemplate <class T>\n\t\tstatic unique_ptr<BaseStatistics> PropagateStatistics(ClientContext &context, FunctionStatisticsInput &input) {\n\t\t\treturn PropagateSimpleDatePartStatistics<0, 1>(input.child_stats);\n\t\t}\n\t}"
+        },
+        "Class&Functions": [
+            "EraFun",
+            "EraOperator"
+        ]
+    },
+    "hour": {
+        "Name": "hour",
+        "Parameters": "ts",
+        "Description": "Extract the hour component from a date or timestamp",
+        "Example": "hour(timestamp '2021-08-03 11:59:44.123456')",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/date_part.cpp:2173": "ScalarFunctionSet HoursFun::GetFunctions() {\n\treturn GetTimePartFunction<DatePart::HoursOperator>();\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/date_diff.cpp:144": "struct HoursOperator {\n\t\ttemplate <class TA, class TB, class TR>\n\t\tstatic inline TR Operation(TA startdate, TB enddate) {\n\t\t\treturn Date::Epoch(enddate) / Interval::SECS_PER_HOUR - Date::Epoch(startdate) / Interval::SECS_PER_HOUR;\n\t\t}\n\t}"
+        },
+        "Class&Functions": [
+            "HoursOperator",
+            "HoursFun"
+        ]
+    },
+    "isodow": {
+        "Name": "isodow",
+        "Parameters": "ts",
+        "Description": "Extract the isodow component from a date or timestamp",
+        "Example": "isodow(timestamp '2021-08-03 11:59:44.123456')",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/date_part.cpp:2032": "ScalarFunctionSet ISODayOfWeekFun::GetFunctions() {\n\treturn GetDatePartFunction<DatePart::ISODayOfWeekOperator>();\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/date_part.cpp:309": "struct ISODayOfWeekOperator {\n\t\ttemplate <class TA, class TR>\n\t\tstatic inline TR Operation(TA input) {\n\t\t\t// isodow (Monday = 1, Sunday = 7)\n\t\t\treturn Date::ExtractISODayOfTheWeek(input);\n\t\t}\n\n\t\ttemplate <class T>\n\t\tstatic unique_ptr<BaseStatistics> PropagateStatistics(ClientContext &context, FunctionStatisticsInput &input) {\n\t\t\treturn PropagateSimpleDatePartStatistics<1, 7>(input.child_stats);\n\t\t}\n\t}"
+        },
+        "Class&Functions": [
+            "ISODayOfWeekOperator",
+            "ISODayOfWeekFun"
+        ]
+    },
+    "isoyear": {
+        "Name": "isoyear",
+        "Parameters": "ts",
+        "Description": "Extract the isoyear component from a date or timestamp",
+        "Example": "isoyear(timestamp '2021-08-03 11:59:44.123456')",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/date_part.cpp:2044": "ScalarFunctionSet ISOYearFun::GetFunctions() {\n\treturn GetDatePartFunction<DatePart::ISOYearOperator>();\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/date_diff.cpp:107": "struct ISOYearOperator {\n\t\ttemplate <class TA, class TB, class TR>\n\t\tstatic inline TR Operation(TA startdate, TB enddate) {\n\t\t\treturn Date::ExtractISOYearNumber(enddate) - Date::ExtractISOYearNumber(startdate);\n\t\t}\n\t}"
+        },
+        "Class&Functions": [
+            "ISOYearFun",
+            "ISOYearOperator"
+        ]
+    },
+    "microsecond": {
+        "Name": "microsecond",
+        "Parameters": "ts",
+        "Description": "Extract the microsecond component from a date or timestamp",
+        "Example": "microsecond(timestamp '2021-08-03 11:59:44.123456')",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/date_part.cpp:2157": "ScalarFunctionSet MicrosecondsFun::GetFunctions() {\n\treturn GetTimePartFunction<DatePart::MicrosecondsOperator>();\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/date_diff.cpp:114": "struct MicrosecondsOperator {\n\t\ttemplate <class TA, class TB, class TR>\n\t\tstatic inline TR Operation(TA startdate, TB enddate) {\n\t\t\treturn Date::EpochMicroseconds(enddate) - Date::EpochMicroseconds(startdate);\n\t\t}\n\t}"
+        },
+        "Class&Functions": [
+            "MicrosecondsFun",
+            "MicrosecondsOperator"
+        ]
+    },
+    "millennium": {
+        "Name": "millennium",
+        "Parameters": "ts",
+        "Description": "Extract the millennium component from a date or timestamp",
+        "Example": "millennium(timestamp '2021-08-03 11:59:44.123456')",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/date_part.cpp:2016": "ScalarFunctionSet MillenniumFun::GetFunctions() {\n\treturn GetDatePartFunction<DatePart::MillenniumOperator>();\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/date_trunc.cpp:28": "struct MillenniumOperator {\n\t\ttemplate <class TA, class TR>\n\t\tstatic inline TR Operation(TA input) {\n\t\t\treturn Date::FromDate((Date::ExtractYear(input) / 1000) * 1000, 1, 1);\n\t\t}\n\t}"
+        },
+        "Class&Functions": [
+            "MillenniumFun",
+            "MillenniumOperator"
+        ]
+    },
+    "millisecond": {
+        "Name": "millisecond",
+        "Parameters": "ts",
+        "Description": "Extract the millisecond component from a date or timestamp",
+        "Example": "millisecond(timestamp '2021-08-03 11:59:44.123456')",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/date_part.cpp:2161": "ScalarFunctionSet MillisecondsFun::GetFunctions() {\n\treturn GetTimePartFunction<DatePart::MillisecondsOperator>();\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/date_diff.cpp:121": "struct MillisecondsOperator {\n\t\ttemplate <class TA, class TB, class TR>\n\t\tstatic inline TR Operation(TA startdate, TB enddate) {\n\t\t\treturn Date::EpochMicroseconds(enddate) / Interval::MICROS_PER_MSEC -\n\t\t\t       Date::EpochMicroseconds(startdate) / Interval::MICROS_PER_MSEC;\n\t\t}\n\t}"
+        },
+        "Class&Functions": [
+            "MillisecondsFun",
+            "MillisecondsOperator"
+        ]
+    },
+    "minute": {
+        "Name": "minute",
+        "Parameters": "ts",
+        "Description": "Extract the minute component from a date or timestamp",
+        "Example": "minute(timestamp '2021-08-03 11:59:44.123456')",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/date_part.cpp:2169": "ScalarFunctionSet MinutesFun::GetFunctions() {\n\treturn GetTimePartFunction<DatePart::MinutesOperator>();\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/date_diff.cpp:136": "struct MinutesOperator {\n\t\ttemplate <class TA, class TB, class TR>\n\t\tstatic inline TR Operation(TA startdate, TB enddate) {\n\t\t\treturn Date::Epoch(enddate) / Interval::SECS_PER_MINUTE -\n\t\t\t       Date::Epoch(startdate) / Interval::SECS_PER_MINUTE;\n\t\t}\n\t}"
+        },
+        "Class&Functions": [
+            "MinutesFun",
+            "MinutesOperator"
+        ]
+    },
+    "month": {
+        "Name": "month",
+        "Parameters": "ts",
+        "Description": "Extract the month component from a date or timestamp",
+        "Example": "month(timestamp '2021-08-03 11:59:44.123456')",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/date_part.cpp:2000": "ScalarFunctionSet MonthFun::GetFunctions() {\n\treturn GetCachedDatepartFunction<DatePart::MonthOperator>();\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/date_diff.cpp:46": "struct MonthOperator {\n\t\ttemplate <class TA, class TB, class TR>\n\t\tstatic inline TR Operation(TA startdate, TB enddate) {\n\t\t\tint32_t start_year, start_month, start_day;\n\t\t\tDate::Convert(startdate, start_year, start_month, start_day);\n\t\t\tint32_t end_year, end_month, end_day;\n\t\t\tDate::Convert(enddate, end_year, end_month, end_day);\n\n\t\t\treturn (end_year * 12 + end_month - 1) - (start_year * 12 + start_month - 1);\n\t\t}\n\t}"
+        },
+        "Class&Functions": [
+            "MonthOperator",
+            "MonthFun"
+        ]
+    },
+    "quarter": {
+        "Name": "quarter",
+        "Parameters": "ts",
+        "Description": "Extract the quarter component from a date or timestamp",
+        "Example": "quarter(timestamp '2021-08-03 11:59:44.123456')",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/date_part.cpp:2020": "ScalarFunctionSet QuarterFun::GetFunctions() {\n\treturn GetDatePartFunction<DatePart::QuarterOperator>();\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/date_diff.cpp:86": "struct QuarterOperator {\n\t\ttemplate <class TA, class TB, class TR>\n\t\tstatic inline TR Operation(TA startdate, TB enddate) {\n\t\t\tint32_t start_year, start_month, start_day;\n\t\t\tDate::Convert(startdate, start_year, start_month, start_day);\n\t\t\tint32_t end_year, end_month, end_day;\n\t\t\tDate::Convert(enddate, end_year, end_month, end_day);\n\n\t\t\treturn (end_year * 12 + end_month - 1) / Interval::MONTHS_PER_QUARTER -\n\t\t\t       (start_year * 12 + start_month - 1) / Interval::MONTHS_PER_QUARTER;\n\t\t}\n\t}"
+        },
+        "Class&Functions": [
+            "QuarterFun",
+            "QuarterOperator"
+        ]
+    },
+    "second": {
+        "Name": "second",
+        "Parameters": "ts",
+        "Description": "Extract the second component from a date or timestamp",
+        "Example": "second(timestamp '2021-08-03 11:59:44.123456')",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/date_part.cpp:2165": "ScalarFunctionSet SecondsFun::GetFunctions() {\n\treturn GetTimePartFunction<DatePart::SecondsOperator>();\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/date_diff.cpp:129": "struct SecondsOperator {\n\t\ttemplate <class TA, class TB, class TR>\n\t\tstatic inline TR Operation(TA startdate, TB enddate) {\n\t\t\treturn Date::Epoch(enddate) - Date::Epoch(startdate);\n\t\t}\n\t}"
+        },
+        "Class&Functions": [
+            "SecondsOperator",
+            "SecondsFun"
+        ]
+    },
+    "timezone_hour": {
+        "Name": "timezone_hour",
+        "Parameters": "ts",
+        "Description": "Extract the timezone_hour component from a date or timestamp",
+        "Example": "timezone_hour(timestamp '2021-08-03 11:59:44.123456')",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/date_part.cpp:2068": "ScalarFunctionSet TimezoneHourFun::GetFunctions() {\n\treturn GetDatePartFunction<DatePart::TimezoneHourOperator>();\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/date_part.cpp:556": "struct TimezoneHourOperator {\n\t\ttemplate <class TA, class TR>\n\t\tstatic inline TR Operation(TA input) {\n\t\t\t// Regular timestamps are UTC.\n\t\t\treturn 0;\n\t\t}\n\n\t\ttemplate <class T>\n\t\tstatic unique_ptr<BaseStatistics> PropagateStatistics(ClientContext &context, FunctionStatisticsInput &input) {\n\t\t\treturn PropagateSimpleDatePartStatistics<0, 0>(input.child_stats);\n\t\t}\n\t}"
+        },
+        "Class&Functions": [
+            "TimezoneHourFun",
+            "TimezoneHourOperator"
+        ]
+    },
+    "timezone_minute": {
+        "Name": "timezone_minute",
+        "Parameters": "ts",
+        "Description": "Extract the timezone_minute component from a date or timestamp",
+        "Example": "timezone_minute(timestamp '2021-08-03 11:59:44.123456')",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/date_part.cpp:2072": "ScalarFunctionSet TimezoneMinuteFun::GetFunctions() {\n\treturn GetDatePartFunction<DatePart::TimezoneMinuteOperator>();\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/date_part.cpp:569": "struct TimezoneMinuteOperator {\n\t\ttemplate <class TA, class TR>\n\t\tstatic inline TR Operation(TA input) {\n\t\t\t// Regular timestamps are UTC.\n\t\t\treturn 0;\n\t\t}\n\n\t\ttemplate <class T>\n\t\tstatic unique_ptr<BaseStatistics> PropagateStatistics(ClientContext &context, FunctionStatisticsInput &input) {\n\t\t\treturn PropagateSimpleDatePartStatistics<0, 0>(input.child_stats);\n\t\t}\n\t}"
+        },
+        "Class&Functions": [
+            "TimezoneMinuteOperator",
+            "TimezoneMinuteFun"
+        ]
+    },
+    "timezone": {
+        "Name": "timezone",
+        "Parameters": "ts",
+        "Description": "Extract the timezone component from a date or timestamp",
+        "Example": "timezone(timestamp '2021-08-03 11:59:44.123456')",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/date_part.cpp:2052": "ScalarFunctionSet TimezoneFun::GetFunctions() {\n\tauto operator_set = GetDatePartFunction<DatePart::TimezoneOperator>();\n\n\t//\tPG also defines timezone(INTERVAL, TIME_TZ) => TIME_TZ\n\tScalarFunction function({LogicalType::INTERVAL, LogicalType::TIME_TZ}, LogicalType::TIME_TZ,\n\t                        DatePart::TimezoneOperator::BinaryFunction<interval_t, dtime_tz_t, dtime_tz_t>);\n\n\toperator_set.AddFunction(function);\n\n\tfor (auto &func : operator_set.functions) {\n\t\tBaseScalarFunction::SetReturnsError(func);\n\t}\n\n\treturn operator_set;\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/date_part.cpp:524": "struct TimezoneOperator {\n\t\ttemplate <class TA, class TR>\n\t\tstatic inline TR Operation(TA input) {\n\t\t\t// Regular timestamps are UTC.\n\t\t\treturn 0;\n\t\t}\n\n\t\ttemplate <typename TA, typename TB, typename TR>\n\t\tstatic TR Operation(TA interval, TB timetz) {\n\t\t\tauto time = Time::NormalizeTimeTZ(timetz);\n\t\t\tdate_t date(0);\n\t\t\ttime = Interval::Add(time, interval, date);\n\t\t\tauto offset = UnsafeNumericCast<int32_t>(interval.micros / Interval::MICROS_PER_SEC);\n\t\t\treturn TR(time, offset);\n\t\t}\n\n\t\ttemplate <typename TA, typename TB, typename TR>\n\t\tstatic void BinaryFunction(DataChunk &input, ExpressionState &state, Vector &result) {\n\t\t\tD_ASSERT(input.ColumnCount() == 2);\n\t\t\tauto &offset = input.data[0];\n\t\t\tauto &timetz = input.data[1];\n\n\t\t\tauto func = DatePart::TimezoneOperator::Operation<TA, TB, TR>;\n\t\t\tBinaryExecutor::Execute<TA, TB, TR>(offset, timetz, result, input.size(), func);\n\t\t}\n\n\t\ttemplate <class T>\n\t\tstatic unique_ptr<BaseStatistics> PropagateStatistics(ClientContext &context, FunctionStatisticsInput &input) {\n\t\t\treturn PropagateSimpleDatePartStatistics<0, 0>(input.child_stats);\n\t\t}\n\t}"
+        },
+        "Class&Functions": [
+            "TimezoneFun",
+            "TimezoneOperator"
+        ]
+    },
+    "week": {
+        "Name": "week",
+        "Parameters": "ts",
+        "Description": "Extract the week component from a date or timestamp",
+        "Example": "week(timestamp '2021-08-03 11:59:44.123456')",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/date_part.cpp:2040": "ScalarFunctionSet WeekFun::GetFunctions() {\n\treturn GetDatePartFunction<DatePart::WeekOperator>();\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/date_diff.cpp:99": "struct WeekOperator {\n\t\ttemplate <class TA, class TB, class TR>\n\t\tstatic inline TR Operation(TA startdate, TB enddate) {\n\t\t\t//\tWeeks do not count Monday crossings, just distance\n\t\t\treturn (enddate.days - startdate.days) / Interval::DAYS_PER_WEEK;\n\t\t}\n\t}"
+        },
+        "Class&Functions": [
+            "WeekOperator",
+            "WeekFun"
+        ]
+    },
+    "weekday": {
+        "Name": "weekday",
+        "Parameters": "ts",
+        "Description": "Extract the weekday component from a date or timestamp",
+        "Example": "weekday(timestamp '2021-08-03 11:59:44.123456')",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/date_part.cpp:2185": "ScalarFunctionSet WeekDayFun::GetFunctions() {\n\treturn GetDatePartFunction<DatePart::DayOfWeekOperator>();\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/date_part.cpp:290": "struct DayOfWeekOperator {\n\t\ttemplate <class TR>\n\t\tstatic inline TR DayOfWeekFromISO(TR isodow) {\n\t\t\t// day of the week (Sunday = 0, Saturday = 6)\n\t\t\t// turn sunday into 0 by doing mod 7\n\t\t\treturn isodow % 7;\n\t\t}\n\n\t\ttemplate <class TA, class TR>\n\t\tstatic inline TR Operation(TA input) {\n\t\t\treturn DayOfWeekFromISO(Date::ExtractISODayOfTheWeek(input));\n\t\t}\n\n\t\ttemplate <class T>\n\t\tstatic unique_ptr<BaseStatistics> PropagateStatistics(ClientContext &context, FunctionStatisticsInput &input) {\n\t\t\treturn PropagateSimpleDatePartStatistics<0, 6>(input.child_stats);\n\t\t}\n\t}"
+        },
+        "Class&Functions": [
+            "DayOfWeekOperator",
+            "WeekDayFun"
+        ]
+    },
+    "weekofyear": {
+        "Name": "weekofyear",
+        "Parameters": "ts",
+        "Description": "Extract the weekofyear component from a date or timestamp",
+        "Example": "weekofyear(timestamp '2021-08-03 11:59:44.123456')",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/date_part.cpp:2189": "ScalarFunctionSet WeekOfYearFun::GetFunctions() {\n\treturn GetDatePartFunction<DatePart::WeekOperator>();\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/date_diff.cpp:99": "struct WeekOperator {\n\t\ttemplate <class TA, class TB, class TR>\n\t\tstatic inline TR Operation(TA startdate, TB enddate) {\n\t\t\t//\tWeeks do not count Monday crossings, just distance\n\t\t\treturn (enddate.days - startdate.days) / Interval::DAYS_PER_WEEK;\n\t\t}\n\t}"
+        },
+        "Class&Functions": [
+            "WeekOperator",
+            "WeekOfYearFun"
+        ]
+    },
+    "year": {
+        "Name": "year",
+        "Parameters": "ts",
+        "Description": "Extract the year component from a date or timestamp",
+        "Example": "year(timestamp '2021-08-03 11:59:44.123456')",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/date_part.cpp:1996": "ScalarFunctionSet YearFun::GetFunctions() {\n\treturn GetCachedDatepartFunction<DatePart::YearOperator>();\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/date_diff.cpp:39": "struct YearOperator {\n\t\ttemplate <class TA, class TB, class TR>\n\t\tstatic inline TR Operation(TA startdate, TB enddate) {\n\t\t\treturn Date::ExtractYear(enddate) - Date::ExtractYear(startdate);\n\t\t}\n\t}"
+        },
+        "Class&Functions": [
+            "YearFun",
+            "YearOperator"
+        ]
+    },
+    "yearweek": {
+        "Name": "yearweek",
+        "Parameters": "ts",
+        "Description": "Extract the yearweek component from a date or timestamp",
+        "Example": "yearweek(timestamp '2021-08-03 11:59:44.123456')",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/date_part.cpp:2177": "ScalarFunctionSet YearWeekFun::GetFunctions() {\n\treturn GetDatePartFunction<DatePart::YearWeekOperator>();\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/date_part.cpp:358": "struct YearWeekOperator {\n\t\ttemplate <class TR>\n\t\tstatic inline TR YearWeekFromParts(TR yyyy, TR ww) {\n\t\t\treturn yyyy * 100 + ((yyyy > 0) ? ww : -ww);\n\t\t}\n\n\t\ttemplate <class TA, class TR>\n\t\tstatic inline TR Operation(TA input) {\n\t\t\tint32_t yyyy, ww;\n\t\t\tDate::ExtractISOYearWeek(input, yyyy, ww);\n\t\t\treturn YearWeekFromParts(yyyy, ww);\n\t\t}\n\n\t\ttemplate <class T>\n\t\tstatic unique_ptr<BaseStatistics> PropagateStatistics(ClientContext &context, FunctionStatisticsInput &input) {\n\t\t\treturn PropagateDatePartStatistics<T, YearWeekOperator>(input.child_stats);\n\t\t}\n\t}"
+        },
+        "Class&Functions": [
+            "YearWeekFun",
+            "YearWeekOperator"
+        ]
+    },
+    "to_centuries": {
+        "Name": "to_centuries",
+        "Parameters": "integer",
+        "Description": "Construct a century interval",
+        "Example": "to_centuries(5)",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/to_interval.cpp:193": "ScalarFunctionSet ToCenturiesFun::GetFunctions() {\n\treturn GetIntegerIntervalFunctions<ToCenturiesOperator>();\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/to_interval.cpp:29": "struct ToCenturiesOperator {\n\ttemplate <class TA, class TR>\n\tstatic inline TR Operation(TA input) {\n\t\tconst auto iinput = Cast::Operation<TA, int32_t>(input);\n\t\tinterval_t result;\n\t\tresult.days = 0;\n\t\tresult.micros = 0;\n\t\tif (!TryMultiplyOperator::Operation<int32_t, int32_t, int32_t>(iinput, Interval::MONTHS_PER_CENTURY,\n\t\t                                                               result.months)) {\n\t\t\tthrow OutOfRangeException(\"Interval value %s centuries out of range\", NumericHelper::ToString(input));\n\t\t}\n\t\treturn result;\n\t}\n}",
+            "./duckdb-1.3.0/src/include/duckdb/common/operator/multiply.hpp:40": "struct TryMultiplyOperator {\n\ttemplate <class TA, class TB, class TR>\n\tstatic inline bool Operation(TA left, TB right, TR &result) {\n\t\tthrow InternalException(\"Unimplemented type for TryMultiplyOperator\");\n\t}\n}"
+        },
+        "Class&Functions": [
+            "ToCenturiesFun",
+            "ToCenturiesOperator",
+            "TryMultiplyOperator"
+        ]
+    },
+    "to_days": {
+        "Name": "to_days",
+        "Parameters": "integer",
+        "Description": "Construct a day interval",
+        "Example": "to_days(5)",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/to_interval.cpp:217": "ScalarFunctionSet ToDaysFun::GetFunctions() {\n\treturn GetIntegerIntervalFunctions<ToDaysOperator>();\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/to_interval.cpp:115": "struct ToDaysOperator {\n\ttemplate <class TA, class TR>\n\tstatic inline TR Operation(TA input) {\n\t\tinterval_t result;\n\t\tresult.months = 0;\n\t\tresult.days = Cast::Operation<TA, int32_t>(input);\n\t\tresult.micros = 0;\n\t\treturn result;\n\t}\n}"
+        },
+        "Class&Functions": [
+            "ToDaysOperator",
+            "ToDaysFun"
+        ]
+    },
+    "to_decades": {
+        "Name": "to_decades",
+        "Parameters": "integer",
+        "Description": "Construct a decade interval",
+        "Example": "to_decades(5)",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/to_interval.cpp:197": "ScalarFunctionSet ToDecadesFun::GetFunctions() {\n\treturn GetIntegerIntervalFunctions<ToDecadesOperator>();\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/to_interval.cpp:44": "struct ToDecadesOperator {\n\ttemplate <class TA, class TR>\n\tstatic inline TR Operation(TA input) {\n\t\tconst auto iinput = Cast::Operation<TA, int32_t>(input);\n\t\tinterval_t result;\n\t\tresult.days = 0;\n\t\tresult.micros = 0;\n\t\tif (!TryMultiplyOperator::Operation<int32_t, int32_t, int32_t>(iinput, Interval::MONTHS_PER_DECADE,\n\t\t                                                               result.months)) {\n\t\t\tthrow OutOfRangeException(\"Interval value %s decades out of range\", NumericHelper::ToString(input));\n\t\t}\n\t\treturn result;\n\t}\n}",
+            "./duckdb-1.3.0/src/include/duckdb/common/operator/multiply.hpp:40": "struct TryMultiplyOperator {\n\ttemplate <class TA, class TB, class TR>\n\tstatic inline bool Operation(TA left, TB right, TR &result) {\n\t\tthrow InternalException(\"Unimplemented type for TryMultiplyOperator\");\n\t}\n}"
+        },
+        "Class&Functions": [
+            "ToDecadesFun",
+            "ToDecadesOperator",
+            "TryMultiplyOperator"
+        ]
+    },
+    "to_hours": {
+        "Name": "to_hours",
+        "Parameters": "integer",
+        "Description": "Construct a hour interval",
+        "Example": "to_hours(5)",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/to_interval.cpp:221": "ScalarFunction ToHoursFun::GetFunction() {\n\tScalarFunction function({LogicalType::BIGINT}, LogicalType::INTERVAL,\n\t                        ScalarFunction::UnaryFunction<int64_t, interval_t, ToHoursOperator>);\n\tBaseScalarFunction::SetReturnsError(function);\n\treturn function;\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/to_interval.cpp:126": "struct ToHoursOperator {\n\ttemplate <class TA, class TR>\n\tstatic inline TR Operation(TA input) {\n\t\tinterval_t result;\n\t\tresult.months = 0;\n\t\tresult.days = 0;\n\t\tif (!TryMultiplyOperator::Operation<TA, int64_t, int64_t>(input, Interval::MICROS_PER_HOUR, result.micros)) {\n\t\t\tthrow OutOfRangeException(\"Interval value %s hours out of range\", NumericHelper::ToString(input));\n\t\t}\n\t\treturn result;\n\t}\n}",
+            "./duckdb-1.3.0/src/include/duckdb/common/operator/multiply.hpp:40": "struct TryMultiplyOperator {\n\ttemplate <class TA, class TB, class TR>\n\tstatic inline bool Operation(TA left, TB right, TR &result) {\n\t\tthrow InternalException(\"Unimplemented type for TryMultiplyOperator\");\n\t}\n}"
+        },
+        "Class&Functions": [
+            "TryMultiplyOperator",
+            "ToHoursFun",
+            "ToHoursOperator"
+        ]
+    },
+    "to_microseconds": {
+        "Name": "to_microseconds",
+        "Parameters": "integer",
+        "Description": "Construct a microsecond interval",
+        "Example": "to_microseconds(5)",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/to_interval.cpp:249": "ScalarFunction ToMicrosecondsFun::GetFunction() {\n\tScalarFunction function({LogicalType::BIGINT}, LogicalType::INTERVAL,\n\t                        ScalarFunction::UnaryFunction<int64_t, interval_t, ToMicroSecondsOperator>);\n\tBaseScalarFunction::SetReturnsError(function);\n\treturn function;\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/to_interval.cpp:165": "struct ToMicroSecondsOperator {\n\ttemplate <class TA, class TR>\n\tstatic inline TR Operation(TA input) {\n\t\tinterval_t result;\n\t\tresult.months = 0;\n\t\tresult.days = 0;\n\t\tresult.micros = input;\n\t\treturn result;\n\t}\n}"
+        },
+        "Class&Functions": [
+            "ToMicrosecondsFun",
+            "ToMicroSecondsOperator"
+        ]
+    },
+    "to_millennia": {
+        "Name": "to_millennia",
+        "Parameters": "integer",
+        "Description": "Construct a millenium interval",
+        "Example": "to_millennia(1)",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/to_interval.cpp:189": "ScalarFunctionSet ToMillenniaFun::GetFunctions() {\n\treturn GetIntegerIntervalFunctions<ToMillenniaOperator>();\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/to_interval.cpp:14": "struct ToMillenniaOperator {\n\ttemplate <class TA, class TR>\n\tstatic inline TR Operation(TA input) {\n\t\tconst auto iinput = Cast::Operation<TA, int32_t>(input);\n\t\tinterval_t result;\n\t\tresult.days = 0;\n\t\tresult.micros = 0;\n\t\tif (!TryMultiplyOperator::Operation<int32_t, int32_t, int32_t>(iinput, Interval::MONTHS_PER_MILLENIUM,\n\t\t                                                               result.months)) {\n\t\t\tthrow OutOfRangeException(\"Interval value %s millennia out of range\", NumericHelper::ToString(input));\n\t\t}\n\t\treturn result;\n\t}\n}",
+            "./duckdb-1.3.0/src/include/duckdb/common/operator/multiply.hpp:40": "struct TryMultiplyOperator {\n\ttemplate <class TA, class TB, class TR>\n\tstatic inline bool Operation(TA left, TB right, TR &result) {\n\t\tthrow InternalException(\"Unimplemented type for TryMultiplyOperator\");\n\t}\n}"
+        },
+        "Class&Functions": [
+            "ToMillenniaFun",
+            "TryMultiplyOperator",
+            "ToMillenniaOperator"
+        ]
+    },
+    "to_milliseconds": {
+        "Name": "to_milliseconds",
+        "Parameters": "double",
+        "Description": "Construct a millisecond interval",
+        "Example": "to_milliseconds(5.5)",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/to_interval.cpp:242": "ScalarFunction ToMillisecondsFun::GetFunction() {\n\tScalarFunction function({LogicalType::DOUBLE}, LogicalType::INTERVAL,\n\t                        ScalarFunction::UnaryFunction<double, interval_t, ToMilliSecondsOperator>);\n\tBaseScalarFunction::SetReturnsError(function);\n\treturn function;\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/to_interval.cpp:152": "struct ToMilliSecondsOperator {\n\ttemplate <class TA, class TR>\n\tstatic inline TR Operation(TA input) {\n\t\tinterval_t result;\n\t\tresult.months = 0;\n\t\tresult.days = 0;\n\t\tif (!TryMultiplyOperator::Operation<TA, int64_t, int64_t>(input, Interval::MICROS_PER_MSEC, result.micros)) {\n\t\t\tthrow OutOfRangeException(\"Interval value %s milliseconds out of range\", NumericHelper::ToString(input));\n\t\t}\n\t\treturn result;\n\t}\n}",
+            "./duckdb-1.3.0/src/include/duckdb/common/operator/multiply.hpp:40": "struct TryMultiplyOperator {\n\ttemplate <class TA, class TB, class TR>\n\tstatic inline bool Operation(TA left, TB right, TR &result) {\n\t\tthrow InternalException(\"Unimplemented type for TryMultiplyOperator\");\n\t}\n}"
+        },
+        "Class&Functions": [
+            "ToMillisecondsFun",
+            "ToMilliSecondsOperator",
+            "TryMultiplyOperator"
+        ]
+    },
+    "to_minutes": {
+        "Name": "to_minutes",
+        "Parameters": "integer",
+        "Description": "Construct a minute interval",
+        "Example": "to_minutes(5)",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/to_interval.cpp:228": "ScalarFunction ToMinutesFun::GetFunction() {\n\tScalarFunction function({LogicalType::BIGINT}, LogicalType::INTERVAL,\n\t                        ScalarFunction::UnaryFunction<int64_t, interval_t, ToMinutesOperator>);\n\tBaseScalarFunction::SetReturnsError(function);\n\treturn function;\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/to_interval.cpp:139": "struct ToMinutesOperator {\n\ttemplate <class TA, class TR>\n\tstatic inline TR Operation(TA input) {\n\t\tinterval_t result;\n\t\tresult.months = 0;\n\t\tresult.days = 0;\n\t\tif (!TryMultiplyOperator::Operation<TA, int64_t, int64_t>(input, Interval::MICROS_PER_MINUTE, result.micros)) {\n\t\t\tthrow OutOfRangeException(\"Interval value %s minutes out of range\", NumericHelper::ToString(input));\n\t\t}\n\t\treturn result;\n\t}\n}",
+            "./duckdb-1.3.0/src/include/duckdb/common/operator/multiply.hpp:40": "struct TryMultiplyOperator {\n\ttemplate <class TA, class TB, class TR>\n\tstatic inline bool Operation(TA left, TB right, TR &result) {\n\t\tthrow InternalException(\"Unimplemented type for TryMultiplyOperator\");\n\t}\n}"
+        },
+        "Class&Functions": [
+            "ToMinutesFun",
+            "ToMinutesOperator",
+            "TryMultiplyOperator"
+        ]
+    },
+    "to_months": {
+        "Name": "to_months",
+        "Parameters": "integer",
+        "Description": "Construct a month interval",
+        "Example": "to_months(5)",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/to_interval.cpp:209": "ScalarFunctionSet ToMonthsFun::GetFunctions() {\n\treturn GetIntegerIntervalFunctions<ToMonthsOperator>();\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/to_interval.cpp:89": "struct ToMonthsOperator {\n\ttemplate <class TA, class TR>\n\tstatic inline TR Operation(TA input) {\n\t\tinterval_t result;\n\t\tresult.months = Cast::Operation<TA, int32_t>(input);\n\t\t;\n\t\tresult.days = 0;\n\t\tresult.micros = 0;\n\t\treturn result;\n\t}\n}"
+        },
+        "Class&Functions": [
+            "ToMonthsOperator",
+            "ToMonthsFun"
+        ]
+    },
+    "to_seconds": {
+        "Name": "to_seconds",
+        "Parameters": "double",
+        "Description": "Construct a second interval",
+        "Example": "to_seconds(5.5)",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/to_interval.cpp:235": "ScalarFunction ToSecondsFun::GetFunction() {\n\tScalarFunction function({LogicalType::DOUBLE}, LogicalType::INTERVAL,\n\t                        ScalarFunction::UnaryFunction<double, interval_t, ToSecondsOperator>);\n\tBaseScalarFunction::SetReturnsError(function);\n\treturn function;\n}",
+            "./duckdb-1.3.0/src/include/duckdb/function/to_interval.hpp:16": "struct ToSecondsOperator {\n\ttemplate <class TA, class TR>\n\tstatic inline TR Operation(TA input) {\n\t\tinterval_t result;\n\t\tresult.months = 0;\n\t\tresult.days = 0;\n\t\tif (!TryMultiplyOperator::Operation<TA, int64_t, int64_t>(input, Interval::MICROS_PER_SEC, result.micros)) {\n\t\t\tthrow OutOfRangeException(\"Interval value %s seconds out of range\", NumericHelper::ToString(input));\n\t\t}\n\t\treturn result;\n\t}\n}",
+            "./duckdb-1.3.0/src/include/duckdb/common/operator/multiply.hpp:40": "struct TryMultiplyOperator {\n\ttemplate <class TA, class TB, class TR>\n\tstatic inline bool Operation(TA left, TB right, TR &result) {\n\t\tthrow InternalException(\"Unimplemented type for TryMultiplyOperator\");\n\t}\n}"
+        },
+        "Class&Functions": [
+            "ToSecondsFun",
+            "ToSecondsOperator",
+            "TryMultiplyOperator"
+        ]
+    },
+    "to_weeks": {
+        "Name": "to_weeks",
+        "Parameters": "integer",
+        "Description": "Construct a week interval",
+        "Example": "to_weeks(5)",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/to_interval.cpp:213": "ScalarFunctionSet ToWeeksFun::GetFunctions() {\n\treturn GetIntegerIntervalFunctions<ToWeeksOperator>();\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/to_interval.cpp:101": "struct ToWeeksOperator {\n\ttemplate <class TA, class TR>\n\tstatic inline TR Operation(TA input) {\n\t\tconst auto iinput = Cast::Operation<TA, int32_t>(input);\n\t\tinterval_t result;\n\t\tresult.months = 0;\n\t\tif (!TryMultiplyOperator::Operation<int32_t, int32_t, int32_t>(iinput, Interval::DAYS_PER_WEEK, result.days)) {\n\t\t\tthrow OutOfRangeException(\"Interval value %d weeks out of range\", input);\n\t\t}\n\t\tresult.micros = 0;\n\t\treturn result;\n\t}\n}",
+            "./duckdb-1.3.0/src/include/duckdb/common/operator/multiply.hpp:40": "struct TryMultiplyOperator {\n\ttemplate <class TA, class TB, class TR>\n\tstatic inline bool Operation(TA left, TB right, TR &result) {\n\t\tthrow InternalException(\"Unimplemented type for TryMultiplyOperator\");\n\t}\n}"
+        },
+        "Class&Functions": [
+            "ToWeeksOperator",
+            "TryMultiplyOperator",
+            "ToWeeksFun"
+        ]
+    },
+    "to_years": {
+        "Name": "to_years",
+        "Parameters": "integer",
+        "Description": "Construct a year interval",
+        "Example": "to_years(5)",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/to_interval.cpp:201": "ScalarFunctionSet ToYearsFun::GetFunctions() {\n\treturn GetIntegerIntervalFunctions<ToYearsOperator>();\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/to_interval.cpp:59": "struct ToYearsOperator {\n\ttemplate <class TA, class TR>\n\tstatic inline TR Operation(TA input) {\n\t\tconst auto iinput = Cast::Operation<TA, int32_t>(input);\n\t\tinterval_t result;\n\t\tresult.days = 0;\n\t\tresult.micros = 0;\n\t\tif (!TryMultiplyOperator::Operation<int32_t, int32_t, int32_t>(iinput, Interval::MONTHS_PER_YEAR,\n\t\t                                                               result.months)) {\n\t\t\tthrow OutOfRangeException(\"Interval value %d years out of range\", input);\n\t\t}\n\t\treturn result;\n\t}\n}",
+            "./duckdb-1.3.0/src/include/duckdb/common/operator/multiply.hpp:40": "struct TryMultiplyOperator {\n\ttemplate <class TA, class TB, class TR>\n\tstatic inline bool Operation(TA left, TB right, TR &result) {\n\t\tthrow InternalException(\"Unimplemented type for TryMultiplyOperator\");\n\t}\n}"
+        },
+        "Class&Functions": [
+            "ToYearsFun",
+            "ToYearsOperator",
+            "TryMultiplyOperator"
+        ]
+    },
+    "to_quarters": {
+        "Name": "to_quarters",
+        "Parameters": "integer",
+        "Description": "Construct a quarter interval",
+        "Example": "to_quarters(5)",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/to_interval.cpp:205": "ScalarFunctionSet ToQuartersFun::GetFunctions() {\n\treturn GetIntegerIntervalFunctions<ToQuartersOperator>();\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/to_interval.cpp:74": "struct ToQuartersOperator {\n\ttemplate <class TA, class TR>\n\tstatic inline TR Operation(TA input) {\n\t\tconst auto iinput = Cast::Operation<TA, int32_t>(input);\n\t\tinterval_t result;\n\t\tif (!TryMultiplyOperator::Operation<int32_t, int32_t, int32_t>(iinput, Interval::MONTHS_PER_QUARTER,\n\t\t                                                               result.months)) {\n\t\t\tthrow OutOfRangeException(\"Interval value %d quarters out of range\", input);\n\t\t}\n\t\tresult.days = 0;\n\t\tresult.micros = 0;\n\t\treturn result;\n\t}\n}",
+            "./duckdb-1.3.0/src/include/duckdb/common/operator/multiply.hpp:40": "struct TryMultiplyOperator {\n\ttemplate <class TA, class TB, class TR>\n\tstatic inline bool Operation(TA left, TB right, TR &result) {\n\t\tthrow InternalException(\"Unimplemented type for TryMultiplyOperator\");\n\t}\n}"
+        },
+        "Class&Functions": [
+            "ToQuartersFun",
+            "ToQuartersOperator",
+            "TryMultiplyOperator"
+        ]
+    },
+    "len": {
+        "Name": "length",
+        "Parameters": "string",
+        "Description": "Number of characters in `string`.",
+        "Example": "length('Hello🦆')",
+        "Code": {
+            "./duckdb-1.3.0/src/function/scalar/string/length.cpp:220": "ScalarFunctionSet LengthFun::GetFunctions() {\n\tScalarFunctionSet length(\"length\");\n\tlength.AddFunction(ScalarFunction({LogicalType::VARCHAR}, LogicalType::BIGINT,\n\t                                  ScalarFunction::UnaryFunction<string_t, int64_t, StringLengthOperator>, nullptr,\n\t                                  nullptr, LengthPropagateStats));\n\tlength.AddFunction(ScalarFunction({LogicalType::BIT}, LogicalType::BIGINT,\n\t                                  ScalarFunction::UnaryFunction<string_t, int64_t, BitStringLenOperator>));\n\tlength.AddFunction(\n\t    ScalarFunction({LogicalType::LIST(LogicalType::ANY)}, LogicalType::BIGINT, nullptr, ArrayOrListLengthBind));\n\treturn (length);\n}",
+            "./duckdb-1.3.0/src/function/scalar/string/length.cpp:51": "struct BitStringLenOperator {\n\ttemplate <class TA, class TR>\n\tstatic inline TR Operation(TA input) {\n\t\treturn UnsafeNumericCast<TR>(Bit::BitLength(input));\n\t}\n}"
+        },
+        "Class&Functions": [
+            "LengthFun",
+            "BitStringLenOperator"
+        ]
+    },
+    "list_cosine_similarity": {
+        "Name": "list_cosine_similarity",
+        "Parameters": "list1,list2",
+        "Description": "Compute the cosine similarity between two lists",
+        "Example": "list_cosine_similarity([1, 2, 3], [1, 2, 3])",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/list/list_distance.cpp:112": "ScalarFunctionSet ListCosineSimilarityFun::GetFunctions() {\n\tScalarFunctionSet set(\"list_cosine_similarity\");\n\tfor (auto &type : LogicalType::Real()) {\n\t\tAddListFoldFunction<CosineSimilarityOp>(set, type);\n\t}\n\tfor (auto &func : set.functions) {\n\t\tBaseScalarFunction::SetReturnsError(func);\n\t}\n\treturn set;\n}",
+            "./duckdb-1.3.0/extension/core_functions/include/core_functions/array_kernels.hpp:41": "struct CosineSimilarityOp {\n\tstatic constexpr bool ALLOW_EMPTY = false;\n\n\ttemplate <class TYPE>\n\tstatic TYPE Operation(const TYPE *lhs_data, const TYPE *rhs_data, const idx_t count) {\n\n\t\tTYPE distance = 0;\n\t\tTYPE norm_l = 0;\n\t\tTYPE norm_r = 0;\n\n\t\tauto l_ptr = lhs_data;\n\t\tauto r_ptr = rhs_data;\n\n\t\tfor (idx_t i = 0; i < count; i++) {\n\t\t\tconst auto x = *l_ptr++;\n\t\t\tconst auto y = *r_ptr++;\n\t\t\tdistance += x * y;\n\t\t\tnorm_l += x * x;\n\t\t\tnorm_r += y * y;\n\t\t}\n\n\t\tauto similarity = distance / std::sqrt(norm_l * norm_r);\n\t\treturn std::max(static_cast<TYPE>(-1.0), std::min(similarity, static_cast<TYPE>(1.0)));\n\t}\n}"
+        },
+        "Class&Functions": [
+            "CosineSimilarityOp",
+            "ListCosineSimilarityFun"
+        ]
+    },
+    "list_cosine_distance": {
+        "Name": "list_cosine_distance",
+        "Parameters": "list1,list2",
+        "Description": "Compute the cosine distance between two lists",
+        "Example": "list_cosine_distance([1, 2, 3], [1, 2, 3])",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/list/list_distance.cpp:123": "ScalarFunctionSet ListCosineDistanceFun::GetFunctions() {\n\tScalarFunctionSet set(\"list_cosine_distance\");\n\tfor (auto &type : LogicalType::Real()) {\n\t\tAddListFoldFunction<CosineDistanceOp>(set, type);\n\t}\n\treturn set;\n}",
+            "./duckdb-1.3.0/extension/core_functions/include/core_functions/array_kernels.hpp:67": "struct CosineDistanceOp {\n\tstatic constexpr bool ALLOW_EMPTY = false;\n\n\ttemplate <class TYPE>\n\tstatic TYPE Operation(const TYPE *lhs_data, const TYPE *rhs_data, const idx_t count) {\n\t\treturn static_cast<TYPE>(1.0) - CosineSimilarityOp::Operation(lhs_data, rhs_data, count);\n\t}\n}",
+            "./duckdb-1.3.0/extension/core_functions/include/core_functions/array_kernels.hpp:41": "struct CosineSimilarityOp {\n\tstatic constexpr bool ALLOW_EMPTY = false;\n\n\ttemplate <class TYPE>\n\tstatic TYPE Operation(const TYPE *lhs_data, const TYPE *rhs_data, const idx_t count) {\n\n\t\tTYPE distance = 0;\n\t\tTYPE norm_l = 0;\n\t\tTYPE norm_r = 0;\n\n\t\tauto l_ptr = lhs_data;\n\t\tauto r_ptr = rhs_data;\n\n\t\tfor (idx_t i = 0; i < count; i++) {\n\t\t\tconst auto x = *l_ptr++;\n\t\t\tconst auto y = *r_ptr++;\n\t\t\tdistance += x * y;\n\t\t\tnorm_l += x * x;\n\t\t\tnorm_r += y * y;\n\t\t}\n\n\t\tauto similarity = distance / std::sqrt(norm_l * norm_r);\n\t\treturn std::max(static_cast<TYPE>(-1.0), std::min(similarity, static_cast<TYPE>(1.0)));\n\t}\n}"
+        },
+        "Class&Functions": [
+            "CosineSimilarityOp",
+            "ListCosineDistanceFun",
+            "CosineDistanceOp"
+        ]
+    },
+    "list_distance": {
+        "Name": "list_distance",
+        "Parameters": "list1,list2",
+        "Description": "Compute the distance between two lists",
+        "Example": "list_distance([1, 2, 3], [1, 2, 3])",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/list/list_distance.cpp:85": "ScalarFunctionSet ListDistanceFun::GetFunctions() {\n\tScalarFunctionSet set(\"list_distance\");\n\tfor (auto &type : LogicalType::Real()) {\n\t\tAddListFoldFunction<DistanceOp>(set, type);\n\t}\n\tfor (auto &func : set.functions) {\n\t\tBaseScalarFunction::SetReturnsError(func);\n\t}\n\treturn set;\n}",
+            "./duckdb-1.3.0/extension/core_functions/include/core_functions/array_kernels.hpp:98": "struct DistanceOp {\n\tstatic constexpr bool ALLOW_EMPTY = true;\n\n\ttemplate <class TYPE>\n\tstatic TYPE Operation(const TYPE *lhs_data, const TYPE *rhs_data, const idx_t count) {\n\t\treturn std::sqrt(DistanceSquaredOp::Operation(lhs_data, rhs_data, count));\n\t}\n}",
+            "./duckdb-1.3.0/extension/core_functions/include/core_functions/array_kernels.hpp:76": "struct DistanceSquaredOp {\n\tstatic constexpr bool ALLOW_EMPTY = true;\n\n\ttemplate <class TYPE>\n\tstatic TYPE Operation(const TYPE *lhs_data, const TYPE *rhs_data, const idx_t count) {\n\n\t\tTYPE distance = 0;\n\n\t\tauto l_ptr = lhs_data;\n\t\tauto r_ptr = rhs_data;\n\n\t\tfor (idx_t i = 0; i < count; i++) {\n\t\t\tconst auto x = *l_ptr++;\n\t\t\tconst auto y = *r_ptr++;\n\t\t\tconst auto diff = x - y;\n\t\t\tdistance += diff * diff;\n\t\t}\n\n\t\treturn distance;\n\t}\n}"
+        },
+        "Class&Functions": [
+            "ListDistanceFun",
+            "DistanceSquaredOp",
+            "DistanceOp"
+        ]
+    },
+    "list_dot_product": {
+        "Name": "list_inner_product",
+        "Parameters": "list1,list2",
+        "Description": "Compute the inner product between two lists",
+        "Example": "list_inner_product([1, 2, 3], [1, 2, 3])",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/list/list_distance.cpp:96": "ScalarFunctionSet ListInnerProductFun::GetFunctions() {\n\tScalarFunctionSet set(\"list_inner_product\");\n\tfor (auto &type : LogicalType::Real()) {\n\t\tAddListFoldFunction<InnerProductOp>(set, type);\n\t}\n\treturn set;\n}",
+            "./duckdb-1.3.0/extension/core_functions/include/core_functions/array_kernels.hpp:11": "struct InnerProductOp {\n\tstatic constexpr bool ALLOW_EMPTY = true;\n\n\ttemplate <class TYPE>\n\tstatic TYPE Operation(const TYPE *lhs_data, const TYPE *rhs_data, const idx_t count) {\n\n\t\tTYPE result = 0;\n\n\t\tauto lhs_ptr = lhs_data;\n\t\tauto rhs_ptr = rhs_data;\n\n\t\tfor (idx_t i = 0; i < count; i++) {\n\t\t\tconst auto x = *lhs_ptr++;\n\t\t\tconst auto y = *rhs_ptr++;\n\t\t\tresult += x * y;\n\t\t}\n\n\t\treturn result;\n\t}\n}"
+        },
+        "Class&Functions": [
+            "ListInnerProductFun",
+            "InnerProductOp"
+        ]
+    },
+    "list_negative_dot_product": {
+        "Name": "list_negative_inner_product",
+        "Parameters": "list1,list2",
+        "Description": "Compute the negative inner product between two lists",
+        "Example": "list_negative_inner_product([1, 2, 3], [1, 2, 3])",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/list/list_distance.cpp:104": "ScalarFunctionSet ListNegativeInnerProductFun::GetFunctions() {\n\tScalarFunctionSet set(\"list_negative_inner_product\");\n\tfor (auto &type : LogicalType::Real()) {\n\t\tAddListFoldFunction<NegativeInnerProductOp>(set, type);\n\t}\n\treturn set;\n}",
+            "./duckdb-1.3.0/extension/core_functions/include/core_functions/array_kernels.hpp:32": "struct NegativeInnerProductOp {\n\tstatic constexpr bool ALLOW_EMPTY = true;\n\n\ttemplate <class TYPE>\n\tstatic TYPE Operation(const TYPE *lhs_data, const TYPE *rhs_data, const idx_t count) {\n\t\treturn -InnerProductOp::Operation(lhs_data, rhs_data, count);\n\t}\n}",
+            "./duckdb-1.3.0/extension/core_functions/include/core_functions/array_kernels.hpp:11": "struct InnerProductOp {\n\tstatic constexpr bool ALLOW_EMPTY = true;\n\n\ttemplate <class TYPE>\n\tstatic TYPE Operation(const TYPE *lhs_data, const TYPE *rhs_data, const idx_t count) {\n\n\t\tTYPE result = 0;\n\n\t\tauto lhs_ptr = lhs_data;\n\t\tauto rhs_ptr = rhs_data;\n\n\t\tfor (idx_t i = 0; i < count; i++) {\n\t\t\tconst auto x = *lhs_ptr++;\n\t\t\tconst auto y = *rhs_ptr++;\n\t\t\tresult += x * y;\n\t\t}\n\n\t\treturn result;\n\t}\n}"
+        },
+        "Class&Functions": [
+            "ListNegativeInnerProductFun",
+            "InnerProductOp",
+            "NegativeInnerProductOp"
+        ]
+    },
+    "acosh": {
+        "Name": "acosh",
+        "Parameters": "x",
+        "Description": "Computes the inverse hyperbolic cos of x",
+        "Example": "acosh(2.3)",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:1238": "ScalarFunction AcoshFun::GetFunction() {\n\treturn ScalarFunction({LogicalType::DOUBLE}, LogicalType::DOUBLE,\n\t                      ScalarFunction::UnaryFunction<double, double, AcoshOperator>);\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:1231": "struct AcoshOperator {\n\ttemplate <class TA, class TR>\n\tstatic inline TR Operation(TA input) {\n\t\treturn (double)std::acosh(input);\n\t}\n}"
+        },
+        "Class&Functions": [
+            "AcoshFun",
+            "AcoshOperator"
+        ]
+    },
+    "asin": {
+        "Name": "asin",
+        "Parameters": "x",
+        "Description": "Computes the arcsine of x",
+        "Example": "asin(0.5)",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:1156": "ScalarFunction AsinFun::GetFunction() {\n\tScalarFunction function({LogicalType::DOUBLE}, LogicalType::DOUBLE,\n\t                        ScalarFunction::UnaryFunction<double, double, NoInfiniteDoubleWrapper<ASinOperator>>);\n\tBaseScalarFunction::SetReturnsError(function);\n\treturn function;\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:1146": "struct ASinOperator {\n\ttemplate <class TA, class TR>\n\tstatic inline TR Operation(TA input) {\n\t\tif (input < -1 || input > 1) {\n\t\t\tthrow InvalidInputException(\"ASIN is undefined outside [-1,1]\");\n\t\t}\n\t\treturn (double)std::asin(input);\n\t}\n}"
+        },
+        "Class&Functions": [
+            "AsinFun",
+            "ASinOperator"
+        ]
+    },
+    "asinh": {
+        "Name": "asinh",
+        "Parameters": "x",
+        "Description": "Computes the inverse hyperbolic sin of x",
+        "Example": "asinh(0.5)",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:1268": "ScalarFunction AsinhFun::GetFunction() {\n\treturn ScalarFunction({LogicalType::DOUBLE}, LogicalType::DOUBLE,\n\t                      ScalarFunction::UnaryFunction<double, double, AsinhOperator>);\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:1261": "struct AsinhOperator {\n\ttemplate <class TA, class TR>\n\tstatic inline TR Operation(TA input) {\n\t\treturn (double)std::asinh(input);\n\t}\n}"
+        },
+        "Class&Functions": [
+            "AsinhFun",
+            "AsinhOperator"
+        ]
+    },
+    "atan": {
+        "Name": "atan",
+        "Parameters": "x",
+        "Description": "Computes the arctangent of x",
+        "Example": "atan(0.5)",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:1173": "ScalarFunction AtanFun::GetFunction() {\n\treturn ScalarFunction({LogicalType::DOUBLE}, LogicalType::DOUBLE,\n\t                      ScalarFunction::UnaryFunction<double, double, ATanOperator>);\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:1166": "struct ATanOperator {\n\ttemplate <class TA, class TR>\n\tstatic inline TR Operation(TA input) {\n\t\treturn (double)std::atan(input);\n\t}\n}"
+        },
+        "Class&Functions": [
+            "AtanFun",
+            "ATanOperator"
+        ]
+    },
+    "atanh": {
+        "Name": "atanh",
+        "Parameters": "x",
+        "Description": "Computes the inverse hyperbolic tan of x",
+        "Example": "atanh(0.5)",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:1304": "ScalarFunction AtanhFun::GetFunction() {\n\tScalarFunction function({LogicalType::DOUBLE}, LogicalType::DOUBLE,\n\t                        ScalarFunction::UnaryFunction<double, double, AtanhOperator>);\n\tBaseScalarFunction::SetReturnsError(function);\n\treturn function;\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:1291": "struct AtanhOperator {\n\ttemplate <class TA, class TR>\n\tstatic inline TR Operation(TA input) {\n\t\tif (input < -1 || input > 1) {\n\t\t\tthrow InvalidInputException(\"ATANH is undefined outside [-1,1]\");\n\t\t}\n\t\tif (input == -1 || input == 1) {\n\t\t\treturn INFINITY;\n\t\t}\n\t\treturn (double)std::atanh(input);\n\t}\n}"
+        },
+        "Class&Functions": [
+            "AtanhFun",
+            "AtanhOperator"
+        ]
+    },
+    "cbrt": {
+        "Name": "cbrt",
+        "Parameters": "x",
+        "Description": "Returns the cube root of x",
+        "Example": "cbrt(8)",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:836": "ScalarFunction CbrtFun::GetFunction() {\n\treturn ScalarFunction({LogicalType::DOUBLE}, LogicalType::DOUBLE,\n\t                      ScalarFunction::UnaryFunction<double, double, CbRtOperator>);\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:829": "struct CbRtOperator {\n\ttemplate <class TA, class TR>\n\tstatic inline TR Operation(TA left) {\n\t\treturn std::cbrt(left);\n\t}\n}"
+        },
+        "Class&Functions": [
+            "CbrtFun",
+            "CbRtOperator"
+        ]
+    },
+    "cos": {
+        "Name": "cos",
+        "Parameters": "x",
+        "Description": "Computes the cos of x",
+        "Example": "cos(90)",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:1119": "ScalarFunction CosFun::GetFunction() {\n\tScalarFunction function({LogicalType::DOUBLE}, LogicalType::DOUBLE,\n\t                        ScalarFunction::UnaryFunction<double, double, NoInfiniteDoubleWrapper<CosOperator>>);\n\tBaseScalarFunction::SetReturnsError(function);\n\treturn function;\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:1112": "struct CosOperator {\n\ttemplate <class TA, class TR>\n\tstatic inline TR Operation(TA input) {\n\t\treturn (double)std::cos(input);\n\t}\n}"
+        },
+        "Class&Functions": [
+            "CosOperator",
+            "CosFun"
+        ]
+    },
+    "cot": {
+        "Name": "cot",
+        "Parameters": "x",
+        "Description": "Computes the cotangent of x",
+        "Example": "cot(0.5)",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:1338": "ScalarFunction CotFun::GetFunction() {\n\tScalarFunction function({LogicalType::DOUBLE}, LogicalType::DOUBLE,\n\t                        ScalarFunction::UnaryFunction<double, double, NoInfiniteNoZeroDoubleWrapper<CotOperator>>);\n\tBaseScalarFunction::SetReturnsError(function);\n\treturn function;\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:1331": "struct CotOperator {\n\ttemplate <class TA, class TR>\n\tstatic inline TR Operation(TA input) {\n\t\treturn 1.0 / (double)std::tan(input);\n\t}\n}"
+        },
+        "Class&Functions": [
+            "CotOperator",
+            "CotFun"
+        ]
+    },
+    "degrees": {
+        "Name": "degrees",
+        "Parameters": "x",
+        "Description": "Converts radians to degrees",
+        "Example": "degrees(pi())",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:960": "ScalarFunction DegreesFun::GetFunction() {\n\treturn ScalarFunction({LogicalType::DOUBLE}, LogicalType::DOUBLE,\n\t                      ScalarFunction::UnaryFunction<double, double, DegreesOperator>);\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:953": "struct DegreesOperator {\n\ttemplate <class TA, class TR>\n\tstatic inline TR Operation(TA left) {\n\t\treturn left * (180 / PI);\n\t}\n}"
+        },
+        "Class&Functions": [
+            "DegreesFun",
+            "DegreesOperator"
+        ]
+    },
+    "even": {
+        "Name": "even",
+        "Parameters": "x",
+        "Description": "Rounds x to next even number by rounding away from zero",
+        "Example": "even(2.9)",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:1431": "ScalarFunction EvenFun::GetFunction() {\n\treturn ScalarFunction({LogicalType::DOUBLE}, LogicalType::DOUBLE,\n\t                      ScalarFunction::UnaryFunction<double, double, EvenOperator>);\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:1411": "struct EvenOperator {\n\ttemplate <class TA, class TR>\n\tstatic inline TR Operation(TA left) {\n\t\tdouble value;\n\t\tif (left >= 0) {\n\t\t\tvalue = std::ceil(left);\n\t\t} else {\n\t\t\tvalue = std::ceil(-left);\n\t\t\tvalue = -value;\n\t\t}\n\t\tif (std::floor(value / 2) * 2 != value) {\n\t\t\tif (left >= 0) {\n\t\t\t\treturn value += 1;\n\t\t\t}\n\t\t\treturn value -= 1;\n\t\t}\n\t\treturn value;\n\t}\n}"
+        },
+        "Class&Functions": [
+            "EvenOperator",
+            "EvenFun"
+        ]
+    },
+    "exp": {
+        "Name": "exp",
+        "Parameters": "x",
+        "Description": "Computes e to the power of x",
+        "Example": "exp(1)",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:786": "ScalarFunction ExpFun::GetFunction() {\n\treturn ScalarFunction({LogicalType::DOUBLE}, LogicalType::DOUBLE,\n\t                      ScalarFunction::UnaryFunction<double, double, ExpOperator>);\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:779": "struct ExpOperator {\n\ttemplate <class TA, class TR>\n\tstatic inline TR Operation(TA left) {\n\t\treturn std::exp(left);\n\t}\n}"
+        },
+        "Class&Functions": [
+            "ExpOperator",
+            "ExpFun"
+        ]
+    },
+    "factorial": {
+        "Name": "!__postfix",
+        "Parameters": "x",
+        "Description": "Factorial of x. Computes the product of the current integer and all integers below it",
+        "Example": "4!",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:1401": "ScalarFunction FactorialOperatorFun::GetFunction() {\n\tScalarFunction function({LogicalType::INTEGER}, LogicalType::HUGEINT,\n\t                        ScalarFunction::UnaryFunction<int32_t, hugeint_t, FactorialOperator>);\n\tBaseScalarFunction::SetReturnsError(function);\n\treturn function;\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:1388": "struct FactorialOperator {\n\ttemplate <class TA, class TR>\n\tstatic inline TR Operation(TA left) {\n\t\tTR ret = 1;\n\t\tfor (TA i = 2; i <= left; i++) {\n\t\t\tif (!TryMultiplyOperator::Operation(ret, TR(i), ret)) {\n\t\t\t\tthrow OutOfRangeException(\"Value out of range\");\n\t\t\t}\n\t\t}\n\t\treturn ret;\n\t}\n}",
+            "./duckdb-1.3.0/src/include/duckdb/common/operator/multiply.hpp:40": "struct TryMultiplyOperator {\n\ttemplate <class TA, class TB, class TR>\n\tstatic inline bool Operation(TA left, TB right, TR &result) {\n\t\tthrow InternalException(\"Unimplemented type for TryMultiplyOperator\");\n\t}\n}"
+        },
+        "Class&Functions": [
+            "FactorialOperatorFun",
+            "TryMultiplyOperator",
+            "FactorialOperator"
+        ]
+    },
+    "gamma": {
+        "Name": "gamma",
+        "Parameters": "x",
+        "Description": "Interpolation of (x-1) factorial (so decimal inputs are allowed)",
+        "Example": "gamma(5.5)",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:1358": "ScalarFunction GammaFun::GetFunction() {\n\tauto func = ScalarFunction({LogicalType::DOUBLE}, LogicalType::DOUBLE,\n\t                           ScalarFunction::UnaryFunction<double, double, GammaOperator>);\n\tBaseScalarFunction::SetReturnsError(func);\n\treturn func;\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:1348": "struct GammaOperator {\n\ttemplate <class TA, class TR>\n\tstatic inline TR Operation(TA input) {\n\t\tif (input == 0) {\n\t\t\tthrow OutOfRangeException(\"cannot take gamma of zero\");\n\t\t}\n\t\treturn std::tgamma(input);\n\t}\n}"
+        },
+        "Class&Functions": [
+            "GammaOperator",
+            "GammaFun"
+        ]
+    },
+    "gcd": {
+        "Name": "greatest_common_divisor",
+        "Parameters": "x,y",
+        "Description": "Computes the greatest common divisor of x and y",
+        "Example": "greatest_common_divisor(42, 57)",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:1473": "ScalarFunctionSet GreatestCommonDivisorFun::GetFunctions() {\n\tScalarFunctionSet funcs;\n\tfuncs.AddFunction(\n\t    ScalarFunction({LogicalType::BIGINT, LogicalType::BIGINT}, LogicalType::BIGINT,\n\t                   ScalarFunction::BinaryFunction<int64_t, int64_t, int64_t, GreatestCommonDivisorOperator>));\n\tfuncs.AddFunction(\n\t    ScalarFunction({LogicalType::HUGEINT, LogicalType::HUGEINT}, LogicalType::HUGEINT,\n\t                   ScalarFunction::BinaryFunction<hugeint_t, hugeint_t, hugeint_t, GreatestCommonDivisorOperator>));\n\treturn funcs;\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:1466": "struct GreatestCommonDivisorOperator {\n\ttemplate <class TA, class TB, class TR>\n\tstatic inline TR Operation(TA left, TB right) {\n\t\treturn GreatestCommonDivisor(left, right);\n\t}\n}"
+        },
+        "Class&Functions": [
+            "GreatestCommonDivisorOperator",
+            "GreatestCommonDivisorFun"
+        ]
+    },
+    "greatest_common_divisor": {
+        "Name": "greatest_common_divisor",
+        "Parameters": "x,y",
+        "Description": "Computes the greatest common divisor of x and y",
+        "Example": "greatest_common_divisor(42, 57)",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:1473": "ScalarFunctionSet GreatestCommonDivisorFun::GetFunctions() {\n\tScalarFunctionSet funcs;\n\tfuncs.AddFunction(\n\t    ScalarFunction({LogicalType::BIGINT, LogicalType::BIGINT}, LogicalType::BIGINT,\n\t                   ScalarFunction::BinaryFunction<int64_t, int64_t, int64_t, GreatestCommonDivisorOperator>));\n\tfuncs.AddFunction(\n\t    ScalarFunction({LogicalType::HUGEINT, LogicalType::HUGEINT}, LogicalType::HUGEINT,\n\t                   ScalarFunction::BinaryFunction<hugeint_t, hugeint_t, hugeint_t, GreatestCommonDivisorOperator>));\n\treturn funcs;\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:1466": "struct GreatestCommonDivisorOperator {\n\ttemplate <class TA, class TB, class TR>\n\tstatic inline TR Operation(TA left, TB right) {\n\t\treturn GreatestCommonDivisor(left, right);\n\t}\n}"
+        },
+        "Class&Functions": [
+            "GreatestCommonDivisorOperator",
+            "GreatestCommonDivisorFun"
+        ]
+    },
+    "isnan": {
+        "Name": "isnan",
+        "Parameters": "x",
+        "Description": "Returns true if the floating point value is not a number, false otherwise",
+        "Example": "isnan('NaN'::FLOAT)",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:990": "ScalarFunctionSet IsNanFun::GetFunctions() {\n\tScalarFunctionSet funcs;\n\tfuncs.AddFunction(ScalarFunction({LogicalType::FLOAT}, LogicalType::BOOLEAN,\n\t                                 ScalarFunction::UnaryFunction<float, bool, IsNanOperator>));\n\tfuncs.AddFunction(ScalarFunction({LogicalType::DOUBLE}, LogicalType::BOOLEAN,\n\t                                 ScalarFunction::UnaryFunction<double, bool, IsNanOperator>));\n\treturn funcs;\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:983": "struct IsNanOperator {\n\ttemplate <class TA, class TR>\n\tstatic inline TR Operation(TA input) {\n\t\treturn Value::IsNan(input);\n\t}\n}"
+        },
+        "Class&Functions": [
+            "IsNanOperator",
+            "IsNanFun"
+        ]
+    },
+    "lcm": {
+        "Name": "least_common_multiple",
+        "Parameters": "x,y",
+        "Description": "Computes the least common multiple of x and y",
+        "Example": "least_common_multiple(42, 57)",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:1503": "ScalarFunctionSet LeastCommonMultipleFun::GetFunctions() {\n\tScalarFunctionSet funcs;\n\n\tfuncs.AddFunction(\n\t    ScalarFunction({LogicalType::BIGINT, LogicalType::BIGINT}, LogicalType::BIGINT,\n\t                   ScalarFunction::BinaryFunction<int64_t, int64_t, int64_t, LeastCommonMultipleOperator>));\n\tfuncs.AddFunction(\n\t    ScalarFunction({LogicalType::HUGEINT, LogicalType::HUGEINT}, LogicalType::HUGEINT,\n\t                   ScalarFunction::BinaryFunction<hugeint_t, hugeint_t, hugeint_t, LeastCommonMultipleOperator>));\n\tfor (auto &function : funcs.functions) {\n\t\tBaseScalarFunction::SetReturnsError(function);\n\t}\n\treturn funcs;\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:1489": "struct LeastCommonMultipleOperator {\n\ttemplate <class TA, class TB, class TR>\n\tstatic inline TR Operation(TA left, TB right) {\n\t\tif (left == 0 || right == 0) {\n\t\t\treturn 0;\n\t\t}\n\t\tTR result;\n\t\tif (!TryMultiplyOperator::Operation<TA, TB, TR>(left, right / GreatestCommonDivisor(left, right), result)) {\n\t\t\tthrow OutOfRangeException(\"lcm value is out of range\");\n\t\t}\n\t\treturn TryAbsOperator::Operation<TR, TR>(result);\n\t}\n}",
+            "./duckdb-1.3.0/src/include/duckdb/common/operator/abs.hpp:41": "struct TryAbsOperator {\n\ttemplate <class TA, class TR>\n\tstatic inline TR Operation(TA input) {\n\t\treturn AbsOperator::Operation<TA, TR>(input);\n\t}\n}",
+            "./duckdb-1.3.0/src/include/duckdb/common/operator/abs.hpp:18": "struct AbsOperator {\n\ttemplate <class TA, class TR>\n\tstatic inline TR Operation(TA input) {\n\t\treturn input < 0 ? -input : input;\n\t}\n}",
+            "./duckdb-1.3.0/src/include/duckdb/common/operator/multiply.hpp:40": "struct TryMultiplyOperator {\n\ttemplate <class TA, class TB, class TR>\n\tstatic inline bool Operation(TA left, TB right, TR &result) {\n\t\tthrow InternalException(\"Unimplemented type for TryMultiplyOperator\");\n\t}\n}"
+        },
+        "Class&Functions": [
+            "TryMultiplyOperator",
+            "LeastCommonMultipleFun",
+            "AbsOperator",
+            "LeastCommonMultipleOperator",
+            "TryAbsOperator"
+        ]
+    },
+    "least_common_multiple": {
+        "Name": "least_common_multiple",
+        "Parameters": "x,y",
+        "Description": "Computes the least common multiple of x and y",
+        "Example": "least_common_multiple(42, 57)",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:1503": "ScalarFunctionSet LeastCommonMultipleFun::GetFunctions() {\n\tScalarFunctionSet funcs;\n\n\tfuncs.AddFunction(\n\t    ScalarFunction({LogicalType::BIGINT, LogicalType::BIGINT}, LogicalType::BIGINT,\n\t                   ScalarFunction::BinaryFunction<int64_t, int64_t, int64_t, LeastCommonMultipleOperator>));\n\tfuncs.AddFunction(\n\t    ScalarFunction({LogicalType::HUGEINT, LogicalType::HUGEINT}, LogicalType::HUGEINT,\n\t                   ScalarFunction::BinaryFunction<hugeint_t, hugeint_t, hugeint_t, LeastCommonMultipleOperator>));\n\tfor (auto &function : funcs.functions) {\n\t\tBaseScalarFunction::SetReturnsError(function);\n\t}\n\treturn funcs;\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:1489": "struct LeastCommonMultipleOperator {\n\ttemplate <class TA, class TB, class TR>\n\tstatic inline TR Operation(TA left, TB right) {\n\t\tif (left == 0 || right == 0) {\n\t\t\treturn 0;\n\t\t}\n\t\tTR result;\n\t\tif (!TryMultiplyOperator::Operation<TA, TB, TR>(left, right / GreatestCommonDivisor(left, right), result)) {\n\t\t\tthrow OutOfRangeException(\"lcm value is out of range\");\n\t\t}\n\t\treturn TryAbsOperator::Operation<TR, TR>(result);\n\t}\n}",
+            "./duckdb-1.3.0/src/include/duckdb/common/operator/abs.hpp:41": "struct TryAbsOperator {\n\ttemplate <class TA, class TR>\n\tstatic inline TR Operation(TA input) {\n\t\treturn AbsOperator::Operation<TA, TR>(input);\n\t}\n}",
+            "./duckdb-1.3.0/src/include/duckdb/common/operator/abs.hpp:18": "struct AbsOperator {\n\ttemplate <class TA, class TR>\n\tstatic inline TR Operation(TA input) {\n\t\treturn input < 0 ? -input : input;\n\t}\n}",
+            "./duckdb-1.3.0/src/include/duckdb/common/operator/multiply.hpp:40": "struct TryMultiplyOperator {\n\ttemplate <class TA, class TB, class TR>\n\tstatic inline bool Operation(TA left, TB right, TR &result) {\n\t\tthrow InternalException(\"Unimplemented type for TryMultiplyOperator\");\n\t}\n}"
+        },
+        "Class&Functions": [
+            "TryMultiplyOperator",
+            "LeastCommonMultipleFun",
+            "AbsOperator",
+            "LeastCommonMultipleOperator",
+            "TryAbsOperator"
+        ]
+    },
+    "lgamma": {
+        "Name": "lgamma",
+        "Parameters": "x",
+        "Description": "Computes the log of the gamma function",
+        "Example": "lgamma(2)",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:1378": "ScalarFunction LogGammaFun::GetFunction() {\n\tScalarFunction function({LogicalType::DOUBLE}, LogicalType::DOUBLE,\n\t                        ScalarFunction::UnaryFunction<double, double, LogGammaOperator>);\n\tBaseScalarFunction::SetReturnsError(function);\n\treturn function;\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:1368": "struct LogGammaOperator {\n\ttemplate <class TA, class TR>\n\tstatic inline TR Operation(TA input) {\n\t\tif (input == 0) {\n\t\t\tthrow OutOfRangeException(\"cannot take log gamma of zero\");\n\t\t}\n\t\treturn std::lgamma(input);\n\t}\n}"
+        },
+        "Class&Functions": [
+            "LogGammaFun",
+            "LogGammaOperator"
+        ]
+    },
+    "ln": {
+        "Name": "ln",
+        "Parameters": "x",
+        "Description": "Computes the natural logarithm of x",
+        "Example": "ln(2)",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:858": "ScalarFunction LnFun::GetFunction() {\n\tScalarFunction function({LogicalType::DOUBLE}, LogicalType::DOUBLE,\n\t                        ScalarFunction::UnaryFunction<double, double, LnOperator>);\n\tBaseScalarFunction::SetReturnsError(function);\n\treturn function;\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:845": "struct LnOperator {\n\ttemplate <class TA, class TR>\n\tstatic inline TR Operation(TA input) {\n\t\tif (input < 0) {\n\t\t\tthrow OutOfRangeException(\"cannot take logarithm of a negative number\");\n\t\t}\n\t\tif (input == 0) {\n\t\t\tthrow OutOfRangeException(\"cannot take logarithm of zero\");\n\t\t}\n\t\treturn std::log(input);\n\t}\n}"
+        },
+        "Class&Functions": [
+            "LnFun",
+            "LnOperator"
+        ]
+    },
+    "log": {
+        "Name": "log",
+        "Parameters": "b, x",
+        "Description": "Computes the logarithm of x to base b. b may be omitted, in which case the default 10",
+        "Example": "log(2, 64)",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:902": "ScalarFunctionSet LogFun::GetFunctions() {\n\tScalarFunctionSet funcs;\n\tfuncs.AddFunction(ScalarFunction({LogicalType::DOUBLE}, LogicalType::DOUBLE,\n\t                                 ScalarFunction::UnaryFunction<double, double, Log10Operator>));\n\tfuncs.AddFunction(ScalarFunction({LogicalType::DOUBLE, LogicalType::DOUBLE}, LogicalType::DOUBLE,\n\t                                 ScalarFunction::BinaryFunction<double, double, double, LogBaseOperator>));\n\tfor (auto &function : funcs.functions) {\n\t\tBaseScalarFunction::SetReturnsError(function);\n\t}\n\treturn funcs;\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:868": "struct Log10Operator {\n\ttemplate <class TA, class TR>\n\tstatic inline TR Operation(TA input) {\n\t\tif (input < 0) {\n\t\t\tthrow OutOfRangeException(\"cannot take logarithm of a negative number\");\n\t\t}\n\t\tif (input == 0) {\n\t\t\tthrow OutOfRangeException(\"cannot take logarithm of zero\");\n\t\t}\n\t\treturn std::log10(input);\n\t}\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:891": "struct LogBaseOperator {\n\ttemplate <class TA, class TB, class TR>\n\tstatic inline TR Operation(TA b, TB x) {\n\t\tauto divisor = Log10Operator::Operation<TA, TR>(b);\n\t\tif (divisor == 0) {\n\t\t\tthrow OutOfRangeException(\"divison by zero in based logarithm\");\n\t\t}\n\t\treturn Log10Operator::Operation<TB, TR>(x) / divisor;\n\t}\n}"
+        },
+        "Class&Functions": [
+            "LogBaseOperator",
+            "Log10Operator",
+            "LogFun"
+        ]
+    },
+    "log10": {
+        "Name": "log10",
+        "Parameters": "x",
+        "Description": "Computes the 10-log of x",
+        "Example": "log10(1000)",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:881": "ScalarFunction Log10Fun::GetFunction() {\n\tScalarFunction function({LogicalType::DOUBLE}, LogicalType::DOUBLE,\n\t                        ScalarFunction::UnaryFunction<double, double, Log10Operator>);\n\tBaseScalarFunction::SetReturnsError(function);\n\treturn function;\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:868": "struct Log10Operator {\n\ttemplate <class TA, class TR>\n\tstatic inline TR Operation(TA input) {\n\t\tif (input < 0) {\n\t\t\tthrow OutOfRangeException(\"cannot take logarithm of a negative number\");\n\t\t}\n\t\tif (input == 0) {\n\t\t\tthrow OutOfRangeException(\"cannot take logarithm of zero\");\n\t\t}\n\t\treturn std::log10(input);\n\t}\n}"
+        },
+        "Class&Functions": [
+            "Log10Operator",
+            "Log10Fun"
+        ]
+    },
+    "log2": {
+        "Name": "log2",
+        "Parameters": "x",
+        "Description": "Computes the 2-log of x",
+        "Example": "log2(8)",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:930": "ScalarFunction Log2Fun::GetFunction() {\n\tScalarFunction function({LogicalType::DOUBLE}, LogicalType::DOUBLE,\n\t                        ScalarFunction::UnaryFunction<double, double, Log2Operator>);\n\tBaseScalarFunction::SetReturnsError(function);\n\treturn function;\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:917": "struct Log2Operator {\n\ttemplate <class TA, class TR>\n\tstatic inline TR Operation(TA input) {\n\t\tif (input < 0) {\n\t\t\tthrow OutOfRangeException(\"cannot take logarithm of a negative number\");\n\t\t}\n\t\tif (input == 0) {\n\t\t\tthrow OutOfRangeException(\"cannot take logarithm of zero\");\n\t\t}\n\t\treturn std::log2(input);\n\t}\n}"
+        },
+        "Class&Functions": [
+            "Log2Operator",
+            "Log2Fun"
+        ]
+    },
+    "multiply": {
+        "Name": "*",
+        "Code": {
+            "./duckdb-1.3.0/src/function/scalar/operator/arithmetic.cpp:864": "ScalarFunctionSet OperatorMultiplyFun::GetFunctions() {\n\tScalarFunctionSet multiply(\"*\");\n\tfor (auto &type : LogicalType::Numeric()) {\n\t\tif (type.id() == LogicalTypeId::DECIMAL) {\n\t\t\tScalarFunction function({type, type}, type, nullptr, BindDecimalMultiply);\n\t\t\tfunction.serialize = SerializeDecimalArithmetic;\n\t\t\tfunction.deserialize = DeserializeDecimalArithmetic<MultiplyOperator, DecimalMultiplyOverflowCheck>;\n\t\t\tmultiply.AddFunction(function);\n\t\t} else if (TypeIsIntegral(type.InternalType())) {\n\t\t\tmultiply.AddFunction(ScalarFunction(\n\t\t\t    {type, type}, type, GetScalarIntegerFunction<MultiplyOperatorOverflowCheck>(type.InternalType()),\n\t\t\t    nullptr, nullptr,\n\t\t\t    PropagateNumericStats<TryMultiplyOperator, MultiplyPropagateStatistics, MultiplyOperator>));\n\t\t} else {\n\t\t\tmultiply.AddFunction(\n\t\t\t    ScalarFunction({type, type}, type, GetScalarBinaryFunction<MultiplyOperator>(type.InternalType())));\n\t\t}\n\t}\n\tmultiply.AddFunction(\n\t    ScalarFunction({LogicalType::INTERVAL, LogicalType::DOUBLE}, LogicalType::INTERVAL,\n\t                   ScalarFunction::BinaryFunction<interval_t, double, interval_t, MultiplyOperator>));\n\tmultiply.AddFunction(\n\t    ScalarFunction({LogicalType::BIGINT, LogicalType::INTERVAL}, LogicalType::INTERVAL,\n\t                   ScalarFunction::BinaryFunction<int64_t, interval_t, interval_t, MultiplyOperator>));\n\tfor (auto &func : multiply.functions) {\n\t\tScalarFunction::SetReturnsError(func);\n\t}\n\n\treturn multiply;\n}",
+            "./duckdb-1.3.0/src/include/duckdb/common/operator/multiply.hpp:20": "struct MultiplyOperator {\n\ttemplate <class TA, class TB, class TR>\n\tstatic inline TR Operation(TA left, TB right) {\n\t\treturn left * right;\n\t}\n}"
+        },
+        "Class&Functions": [
+            "MultiplyOperator",
+            "OperatorMultiplyFun"
+        ]
+    },
+    "nextafter": {
+        "Name": "nextafter",
+        "Parameters": "x, y",
+        "Description": "Returns the next floating point value after x in the direction of y",
+        "Example": "nextafter(1::float, 2::float)",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:71": "ScalarFunctionSet NextAfterFun::GetFunctions() {\n\tScalarFunctionSet next_after_fun;\n\tnext_after_fun.AddFunction(\n\t    ScalarFunction({LogicalType::DOUBLE, LogicalType::DOUBLE}, LogicalType::DOUBLE,\n\t                   ScalarFunction::BinaryFunction<double, double, double, NextAfterOperator>));\n\tnext_after_fun.AddFunction(ScalarFunction({LogicalType::FLOAT, LogicalType::FLOAT}, LogicalType::FLOAT,\n\t                                          ScalarFunction::BinaryFunction<float, float, float, NextAfterOperator>));\n\treturn next_after_fun;\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:55": "struct NextAfterOperator {\n\ttemplate <class TA, class TB, class TR>\n\tstatic inline TR Operation(TA base, TB exponent) {\n\t\tthrow NotImplementedException(\"Unimplemented type for NextAfter Function\");\n\t}\n\n\ttemplate <class TA, class TB, class TR>\n\tstatic inline double Operation(double input, double approximate_to) {\n\t\treturn nextafter(input, approximate_to);\n\t}\n\ttemplate <class TA, class TB, class TR>\n\tstatic inline float Operation(float input, float approximate_to) {\n\t\treturn nextafterf(input, approximate_to);\n\t}\n}"
+        },
+        "Class&Functions": [
+            "NextAfterFun",
+            "NextAfterOperator"
+        ]
+    },
+    "pow": {
+        "Name": "**",
+        "Parameters": "x,y",
+        "Description": "Computes x to the power of y",
+        "Example": "pow(2, 3)",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:801": "ScalarFunction PowOperatorFun::GetFunction() {\n\treturn ScalarFunction({LogicalType::DOUBLE, LogicalType::DOUBLE}, LogicalType::DOUBLE,\n\t                      ScalarFunction::BinaryFunction<double, double, double, PowOperator>);\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:794": "struct PowOperator {\n\ttemplate <class TA, class TB, class TR>\n\tstatic inline TR Operation(TA base, TB exponent) {\n\t\treturn std::pow(base, exponent);\n\t}\n}"
+        },
+        "Class&Functions": [
+            "PowOperatorFun",
+            "PowOperator"
+        ]
+    },
+    "power": {
+        "Name": "**",
+        "Parameters": "x,y",
+        "Description": "Computes x to the power of y",
+        "Example": "pow(2, 3)",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:801": "ScalarFunction PowOperatorFun::GetFunction() {\n\treturn ScalarFunction({LogicalType::DOUBLE, LogicalType::DOUBLE}, LogicalType::DOUBLE,\n\t                      ScalarFunction::BinaryFunction<double, double, double, PowOperator>);\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:794": "struct PowOperator {\n\ttemplate <class TA, class TB, class TR>\n\tstatic inline TR Operation(TA base, TB exponent) {\n\t\treturn std::pow(base, exponent);\n\t}\n}"
+        },
+        "Class&Functions": [
+            "PowOperatorFun",
+            "PowOperator"
+        ]
+    },
+    "radians": {
+        "Name": "radians",
+        "Parameters": "x",
+        "Description": "Converts degrees to radians",
+        "Example": "radians(90)",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:975": "ScalarFunction RadiansFun::GetFunction() {\n\treturn ScalarFunction({LogicalType::DOUBLE}, LogicalType::DOUBLE,\n\t                      ScalarFunction::UnaryFunction<double, double, RadiansOperator>);\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:968": "struct RadiansOperator {\n\ttemplate <class TA, class TR>\n\tstatic inline TR Operation(TA left) {\n\t\treturn left * (PI / 180);\n\t}\n}"
+        },
+        "Class&Functions": [
+            "RadiansOperator",
+            "RadiansFun"
+        ]
+    },
+    "signbit": {
+        "Name": "signbit",
+        "Parameters": "x",
+        "Description": "Returns whether the signbit is set or not",
+        "Example": "signbit(-0.0)",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:1009": "ScalarFunctionSet SignBitFun::GetFunctions() {\n\tScalarFunctionSet funcs;\n\tfuncs.AddFunction(ScalarFunction({LogicalType::FLOAT}, LogicalType::BOOLEAN,\n\t                                 ScalarFunction::UnaryFunction<float, bool, SignBitOperator>));\n\tfuncs.AddFunction(ScalarFunction({LogicalType::DOUBLE}, LogicalType::BOOLEAN,\n\t                                 ScalarFunction::UnaryFunction<double, bool, SignBitOperator>));\n\treturn funcs;\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:1002": "struct SignBitOperator {\n\ttemplate <class TA, class TR>\n\tstatic inline TR Operation(TA input) {\n\t\treturn std::signbit(input);\n\t}\n}"
+        },
+        "Class&Functions": [
+            "SignBitOperator",
+            "SignBitFun"
+        ]
+    },
+    "sin": {
+        "Name": "sin",
+        "Parameters": "x",
+        "Description": "Computes the sin of x",
+        "Example": "sin(90)",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:1102": "ScalarFunction SinFun::GetFunction() {\n\tScalarFunction function({LogicalType::DOUBLE}, LogicalType::DOUBLE,\n\t                        ScalarFunction::UnaryFunction<double, double, NoInfiniteDoubleWrapper<SinOperator>>);\n\tBaseScalarFunction::SetReturnsError(function);\n\treturn function;\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:1095": "struct SinOperator {\n\ttemplate <class TA, class TR>\n\tstatic inline TR Operation(TA input) {\n\t\treturn std::sin(input);\n\t}\n}"
+        },
+        "Class&Functions": [
+            "SinFun",
+            "SinOperator"
+        ]
+    },
+    "sqrt": {
+        "Name": "sqrt",
+        "Parameters": "x",
+        "Description": "Returns the square root of x",
+        "Example": "sqrt(4)",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:819": "ScalarFunction SqrtFun::GetFunction() {\n\tScalarFunction function({LogicalType::DOUBLE}, LogicalType::DOUBLE,\n\t                        ScalarFunction::UnaryFunction<double, double, SqrtOperator>);\n\tBaseScalarFunction::SetReturnsError(function);\n\treturn function;\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:809": "struct SqrtOperator {\n\ttemplate <class TA, class TR>\n\tstatic inline TR Operation(TA input) {\n\t\tif (input < 0) {\n\t\t\tthrow OutOfRangeException(\"cannot take square root of a negative number\");\n\t\t}\n\t\treturn std::sqrt(input);\n\t}\n}"
+        },
+        "Class&Functions": [
+            "SqrtOperator",
+            "SqrtFun"
+        ]
+    },
+    "tan": {
+        "Name": "tan",
+        "Parameters": "x",
+        "Description": "Computes the tan of x",
+        "Example": "tan(90)",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:1136": "ScalarFunction TanFun::GetFunction() {\n\tScalarFunction function({LogicalType::DOUBLE}, LogicalType::DOUBLE,\n\t                        ScalarFunction::UnaryFunction<double, double, NoInfiniteDoubleWrapper<TanOperator>>);\n\tBaseScalarFunction::SetReturnsError(function);\n\treturn function;\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/math/numeric.cpp:1129": "struct TanOperator {\n\ttemplate <class TA, class TR>\n\tstatic inline TR Operation(TA input) {\n\t\treturn (double)std::tan(input);\n\t}\n}"
+        },
+        "Class&Functions": [
+            "TanFun",
+            "TanOperator"
+        ]
+    },
+    "ascii": {
+        "Name": "ascii",
+        "Parameters": "string",
+        "Description": "Returns an integer that represents the Unicode code point of the first character of the string",
+        "Example": "ascii('Ω')",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/string/ascii.cpp:19": "ScalarFunction ASCIIFun::GetFunction() {\n\treturn ScalarFunction({LogicalType::VARCHAR}, LogicalType::INTEGER,\n\t                      ScalarFunction::UnaryFunction<string_t, int32_t, AsciiOperator>);\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/string/ascii.cpp:7": "struct AsciiOperator {\n\ttemplate <class TA, class TR>\n\tstatic inline TR Operation(const TA &input) {\n\t\tauto str = input.GetData();\n\t\tif (Utf8Proc::Analyze(str, input.GetSize()) == UnicodeType::ASCII) {\n\t\t\treturn str[0];\n\t\t}\n\t\tint utf8_bytes = 4;\n\t\treturn Utf8Proc::UTF8ToCodepoint(str, utf8_bytes);\n\t}\n}"
+        },
+        "Class&Functions": [
+            "AsciiOperator",
+            "ASCIIFun"
+        ]
+    },
+    "bin": {
+        "Name": "bin",
+        "Parameters": "value",
+        "Description": "Converts the value to binary representation",
+        "Example": "bin(42)",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/string/hex.cpp:416": "ScalarFunctionSet BinFun::GetFunctions() {\n\tScalarFunctionSet to_binary;\n\n\tto_binary.AddFunction(\n\t    ScalarFunction({LogicalType::VARCHAR}, LogicalType::VARCHAR, ToBinaryFunction<string_t, BinaryStrOperator>));\n\tto_binary.AddFunction(\n\t    ScalarFunction({LogicalType::VARINT}, LogicalType::VARCHAR, ToBinaryFunction<string_t, BinaryStrOperator>));\n\tto_binary.AddFunction(ScalarFunction({LogicalType::UBIGINT}, LogicalType::VARCHAR,\n\t                                     ToBinaryFunction<uint64_t, BinaryIntegralOperator>));\n\tto_binary.AddFunction(\n\t    ScalarFunction({LogicalType::BIGINT}, LogicalType::VARCHAR, ToBinaryFunction<int64_t, BinaryIntegralOperator>));\n\tto_binary.AddFunction(ScalarFunction({LogicalType::HUGEINT}, LogicalType::VARCHAR,\n\t                                     ToBinaryFunction<hugeint_t, BinaryHugeIntOperator>));\n\tto_binary.AddFunction(ScalarFunction({LogicalType::UHUGEINT}, LogicalType::VARCHAR,\n\t                                     ToBinaryFunction<uhugeint_t, BinaryUhugeIntOperator>));\n\treturn to_binary;\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/string/hex.cpp:234": "struct BinaryHugeIntOperator {\n\ttemplate <class INPUT_TYPE, class RESULT_TYPE>\n\tstatic RESULT_TYPE Operation(INPUT_TYPE input, Vector &result) {\n\t\tauto num_leading_zero = CountZeros<hugeint_t>::Leading(UnsafeNumericCast<hugeint_t>(input));\n\t\tidx_t buffer_size = sizeof(INPUT_TYPE) * 8 - num_leading_zero;\n\n\t\t// Special case: All bits are zero\n\t\tif (buffer_size == 0) {\n\t\t\tauto target = StringVector::EmptyString(result, 1);\n\t\t\tauto output = target.GetDataWriteable();\n\t\t\t*output = '0';\n\t\t\ttarget.Finalize();\n\t\t\treturn target;\n\t\t}\n\n\t\tauto target = StringVector::EmptyString(result, buffer_size);\n\t\tauto output = target.GetDataWriteable();\n\n\t\tWriteHugeIntBinBytes<hugeint_t>(input, output, buffer_size);\n\n\t\ttarget.Finalize();\n\t\treturn target;\n\t}\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/string/hex.cpp:204": "struct BinaryIntegralOperator {\n\ttemplate <class INPUT_TYPE, class RESULT_TYPE>\n\tstatic RESULT_TYPE Operation(INPUT_TYPE input, Vector &result) {\n\n\t\tauto num_leading_zero = CountZeros<uint64_t>::Leading(static_cast<uint64_t>(input));\n\t\tidx_t num_bits_to_check = 64 - num_leading_zero;\n\t\tD_ASSERT(num_bits_to_check <= sizeof(INPUT_TYPE) * 8);\n\n\t\tidx_t buffer_size = num_bits_to_check;\n\n\t\t// Special case: All bits are zero\n\t\tif (buffer_size == 0) {\n\t\t\tauto target = StringVector::EmptyString(result, 1);\n\t\t\tauto output = target.GetDataWriteable();\n\t\t\t*output = '0';\n\t\t\ttarget.Finalize();\n\t\t\treturn target;\n\t\t}\n\n\t\tD_ASSERT(buffer_size > 0);\n\t\tauto target = StringVector::EmptyString(result, buffer_size);\n\t\tauto output = target.GetDataWriteable();\n\n\t\tWriteBinBytes(static_cast<uint64_t>(input), output, buffer_size);\n\n\t\ttarget.Finalize();\n\t\treturn target;\n\t}\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/string/hex.cpp:181": "struct BinaryStrOperator {\n\ttemplate <class INPUT_TYPE, class RESULT_TYPE>\n\tstatic RESULT_TYPE Operation(INPUT_TYPE input, Vector &result) {\n\t\tauto data = input.GetData();\n\t\tauto size = input.GetSize();\n\n\t\t// Allocate empty space\n\t\tauto target = StringVector::EmptyString(result, size * 8);\n\t\tauto output = target.GetDataWriteable();\n\n\t\tfor (idx_t i = 0; i < size; ++i) {\n\t\t\tauto byte = static_cast<uint8_t>(data[i]);\n\t\t\tfor (idx_t i = 8; i >= 1; --i) {\n\t\t\t\t*output = ((byte >> (i - 1)) & 0x01) + '0';\n\t\t\t\toutput++;\n\t\t\t}\n\t\t}\n\n\t\ttarget.Finalize();\n\t\treturn target;\n\t}\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/string/hex.cpp:259": "struct BinaryUhugeIntOperator {\n\ttemplate <class INPUT_TYPE, class RESULT_TYPE>\n\tstatic RESULT_TYPE Operation(INPUT_TYPE input, Vector &result) {\n\t\tauto num_leading_zero = CountZeros<hugeint_t>::Leading(UnsafeNumericCast<uhugeint_t>(input));\n\t\tidx_t buffer_size = sizeof(INPUT_TYPE) * 8 - num_leading_zero;\n\n\t\t// Special case: All bits are zero\n\t\tif (buffer_size == 0) {\n\t\t\tauto target = StringVector::EmptyString(result, 1);\n\t\t\tauto output = target.GetDataWriteable();\n\t\t\t*output = '0';\n\t\t\ttarget.Finalize();\n\t\t\treturn target;\n\t\t}\n\n\t\tauto target = StringVector::EmptyString(result, buffer_size);\n\t\tauto output = target.GetDataWriteable();\n\n\t\tWriteHugeIntBinBytes<uhugeint_t>(input, output, buffer_size);\n\n\t\ttarget.Finalize();\n\t\treturn target;\n\t}\n}"
+        },
+        "Class&Functions": [
+            "BinaryIntegralOperator",
+            "BinaryUhugeIntOperator",
+            "BinaryStrOperator",
+            "BinFun",
+            "BinaryHugeIntOperator"
+        ]
+    },
+    "char_length": {
+        "Name": "length",
+        "Parameters": "string",
+        "Description": "Number of characters in `string`.",
+        "Example": "length('Hello🦆')",
+        "Code": {
+            "./duckdb-1.3.0/src/function/scalar/string/length.cpp:220": "ScalarFunctionSet LengthFun::GetFunctions() {\n\tScalarFunctionSet length(\"length\");\n\tlength.AddFunction(ScalarFunction({LogicalType::VARCHAR}, LogicalType::BIGINT,\n\t                                  ScalarFunction::UnaryFunction<string_t, int64_t, StringLengthOperator>, nullptr,\n\t                                  nullptr, LengthPropagateStats));\n\tlength.AddFunction(ScalarFunction({LogicalType::BIT}, LogicalType::BIGINT,\n\t                                  ScalarFunction::UnaryFunction<string_t, int64_t, BitStringLenOperator>));\n\tlength.AddFunction(\n\t    ScalarFunction({LogicalType::LIST(LogicalType::ANY)}, LogicalType::BIGINT, nullptr, ArrayOrListLengthBind));\n\treturn (length);\n}",
+            "./duckdb-1.3.0/src/function/scalar/string/length.cpp:51": "struct BitStringLenOperator {\n\ttemplate <class TA, class TR>\n\tstatic inline TR Operation(TA input) {\n\t\treturn UnsafeNumericCast<TR>(Bit::BitLength(input));\n\t}\n}"
+        },
+        "Class&Functions": [
+            "LengthFun",
+            "BitStringLenOperator"
+        ]
+    },
+    "character_length": {
+        "Name": "length",
+        "Parameters": "string",
+        "Description": "Number of characters in `string`.",
+        "Example": "length('Hello🦆')",
+        "Code": {
+            "./duckdb-1.3.0/src/function/scalar/string/length.cpp:220": "ScalarFunctionSet LengthFun::GetFunctions() {\n\tScalarFunctionSet length(\"length\");\n\tlength.AddFunction(ScalarFunction({LogicalType::VARCHAR}, LogicalType::BIGINT,\n\t                                  ScalarFunction::UnaryFunction<string_t, int64_t, StringLengthOperator>, nullptr,\n\t                                  nullptr, LengthPropagateStats));\n\tlength.AddFunction(ScalarFunction({LogicalType::BIT}, LogicalType::BIGINT,\n\t                                  ScalarFunction::UnaryFunction<string_t, int64_t, BitStringLenOperator>));\n\tlength.AddFunction(\n\t    ScalarFunction({LogicalType::LIST(LogicalType::ANY)}, LogicalType::BIGINT, nullptr, ArrayOrListLengthBind));\n\treturn (length);\n}",
+            "./duckdb-1.3.0/src/function/scalar/string/length.cpp:51": "struct BitStringLenOperator {\n\ttemplate <class TA, class TR>\n\tstatic inline TR Operation(TA input) {\n\t\treturn UnsafeNumericCast<TR>(Bit::BitLength(input));\n\t}\n}"
+        },
+        "Class&Functions": [
+            "LengthFun",
+            "BitStringLenOperator"
+        ]
+    },
+    "chr": {
+        "Name": "chr",
+        "Parameters": "code_point",
+        "Description": "Returns a character which is corresponding the ASCII code value or Unicode code point",
+        "Example": "chr(65)",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/string/chr.cpp:38": "ScalarFunction ChrFun::GetFunction() {\n\treturn ScalarFunction(\"chr\", {LogicalType::INTEGER}, LogicalType::VARCHAR,\n#ifdef DUCKDB_DEBUG_NO_INLINE\n\t                      ChrFunction\n#else\n\t                      ScalarFunction::UnaryFunction<int32_t, string_t, ChrOperator>\n#endif\n\t);\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/string/chr.cpp:7": "struct ChrOperator {\n\tstatic void GetCodepoint(int32_t input, char c[], int &utf8_bytes) {\n\t\tif (input < 0 || !Utf8Proc::CodepointToUtf8(input, utf8_bytes, &c[0])) {\n\t\t\tthrow InvalidInputException(\"Invalid UTF8 Codepoint %d\", input);\n\t\t}\n\t}\n\n\ttemplate <class TA, class TR>\n\tstatic inline TR Operation(const TA &input) {\n\t\tchar c[5] = {'\\0', '\\0', '\\0', '\\0', '\\0'};\n\t\tint utf8_bytes;\n\t\tGetCodepoint(input, c, utf8_bytes);\n\t\treturn string_t(&c[0], UnsafeNumericCast<uint32_t>(utf8_bytes));\n\t}\n}"
+        },
+        "Class&Functions": [
+            "ChrOperator",
+            "ChrFun"
+        ]
+    },
+    "ends_with": {
+        "Name": "suffix",
+        "Code": {
+            "./duckdb-1.3.0/src/function/scalar/string/suffix.cpp:36": "ScalarFunction SuffixFun::GetFunction() {\n\treturn ScalarFunction(\"suffix\",                                     // name of the function\n\t                      {LogicalType::VARCHAR, LogicalType::VARCHAR}, // argument list\n\t                      LogicalType::BOOLEAN,                         // return type\n\t                      ScalarFunction::BinaryFunction<string_t, string_t, bool, SuffixOperator>);\n}",
+            "./duckdb-1.3.0/src/function/scalar/string/suffix.cpp:10": "struct SuffixOperator {\n\ttemplate <class TA, class TB, class TR>\n\tstatic inline TR Operation(TA left, TB right) {\n\t\treturn SuffixFunction(left, right);\n\t}\n}"
+        },
+        "Class&Functions": [
+            "SuffixFun",
+            "SuffixOperator"
+        ]
+    },
+    "ilike_escape": {
+        "Name": "ilike_escape",
+        "Parameters": "string,like_specifier,escape_character",
+        "Description": "Returns true if the `string` matches the `like_specifier` (see Pattern Matching) using case-insensitive matching. `escape_character` is used to search for wildcard characters in the `string`.",
+        "Example": "ilike_escape('A%c', 'a$%C', '$')",
+        "Code": {
+            "./duckdb-1.3.0/src/function/scalar/string/like.cpp:566": "ScalarFunction IlikeEscapeFun::GetFunction() {\n\tScalarFunction ilike_escape(\"ilike_escape\", {LogicalType::VARCHAR, LogicalType::VARCHAR, LogicalType::VARCHAR},\n\t                            LogicalType::BOOLEAN, LikeEscapeFunction<ILikeEscapeOperator>);\n\tilike_escape.collation_handling = FunctionCollationHandling::PUSH_COMBINABLE_COLLATIONS;\n\treturn ilike_escape;\n}",
+            "./duckdb-1.3.0/src/function/scalar/string/like.cpp:424": "struct ILikeEscapeOperator {\n\ttemplate <class TA, class TB, class TC>\n\tstatic inline bool Operation(TA str, TB pattern, TC escape) {\n\t\tchar escape_char = GetEscapeChar(escape);\n\t\treturn ILikeOperatorFunction(str, pattern, escape_char);\n\t}\n}"
+        },
+        "Class&Functions": [
+            "ILikeEscapeOperator",
+            "IlikeEscapeFun"
+        ]
+    },
+    "like_escape": {
+        "Name": "like_escape",
+        "Parameters": "string,like_specifier,escape_character",
+        "Description": "Returns true if the `string` matches the `like_specifier` (see Pattern Matching) using case-sensitive matching. `escape_character` is used to search for wildcard characters in the `string`.",
+        "Example": "like_escape('a%c', 'a$%c', '$')",
+        "Code": {
+            "./duckdb-1.3.0/src/function/scalar/string/like.cpp:580": "ScalarFunction LikeEscapeFun::GetFunction() {\n\tScalarFunction like_escape(\"like_escape\", {LogicalType::VARCHAR, LogicalType::VARCHAR, LogicalType::VARCHAR},\n\t                           LogicalType::BOOLEAN, LikeEscapeFunction<LikeEscapeOperator>);\n\tlike_escape.collation_handling = FunctionCollationHandling::PUSH_COMBINABLE_COLLATIONS;\n\treturn like_escape;\n}",
+            "./duckdb-1.3.0/src/function/scalar/string/like.cpp:383": "struct LikeEscapeOperator {\n\ttemplate <class TA, class TB, class TC>\n\tstatic inline bool Operation(TA str, TB pattern, TC escape) {\n\t\tchar escape_char = GetEscapeChar(escape);\n\t\treturn LikeOperatorFunction(str.GetData(), str.GetSize(), pattern.GetData(), pattern.GetSize(), escape_char);\n\t}\n}"
+        },
+        "Class&Functions": [
+            "LikeEscapeFun",
+            "LikeEscapeOperator"
+        ]
+    },
+    "lpad": {
+        "Name": "lpad",
+        "Parameters": "string,count,character",
+        "Description": "Pads the string with the character from the left until it has count characters",
+        "Example": "lpad('hello', 10, '>')",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/string/pad.cpp:133": "ScalarFunction LpadFun::GetFunction() {\n\tScalarFunction func({LogicalType::VARCHAR, LogicalType::INTEGER, LogicalType::VARCHAR}, LogicalType::VARCHAR,\n\t                    PadFunction<LeftPadOperator>);\n\tBaseScalarFunction::SetReturnsError(func);\n\treturn func;\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/string/pad.cpp:83": "struct LeftPadOperator {\n\tstatic inline string_t Operation(const string_t &str, const int32_t len, const string_t &pad,\n\t                                 vector<char> &result) {\n\t\treturn LeftPadFunction(str, len, pad, result);\n\t}\n}"
+        },
+        "Class&Functions": [
+            "LpadFun",
+            "LeftPadOperator"
+        ]
+    },
+    "not_ilike_escape": {
+        "Name": "not_ilike_escape",
+        "Parameters": "string,like_specifier,escape_character",
+        "Description": "Returns false if the `string` matches the `like_specifier` (see Pattern Matching) using case-insensitive matching. `escape_character` is used to search for wildcard characters in the `string`.",
+        "Example": "not_ilike_escape('A%c', 'a$%C', '$')",
+        "Code": {
+            "./duckdb-1.3.0/src/function/scalar/string/like.cpp:573": "ScalarFunction NotIlikeEscapeFun::GetFunction() {\n\tScalarFunction not_ilike_escape(\"not_ilike_escape\",\n\t                                {LogicalType::VARCHAR, LogicalType::VARCHAR, LogicalType::VARCHAR},\n\t                                LogicalType::BOOLEAN, LikeEscapeFunction<NotILikeEscapeOperator>);\n\tnot_ilike_escape.collation_handling = FunctionCollationHandling::PUSH_COMBINABLE_COLLATIONS;\n\treturn not_ilike_escape;\n}",
+            "./duckdb-1.3.0/src/function/scalar/string/like.cpp:432": "struct NotILikeEscapeOperator {\n\ttemplate <class TA, class TB, class TC>\n\tstatic inline bool Operation(TA str, TB pattern, TC escape) {\n\t\treturn !ILikeEscapeOperator::Operation(str, pattern, escape);\n\t}\n}",
+            "./duckdb-1.3.0/src/function/scalar/string/like.cpp:424": "struct ILikeEscapeOperator {\n\ttemplate <class TA, class TB, class TC>\n\tstatic inline bool Operation(TA str, TB pattern, TC escape) {\n\t\tchar escape_char = GetEscapeChar(escape);\n\t\treturn ILikeOperatorFunction(str, pattern, escape_char);\n\t}\n}"
+        },
+        "Class&Functions": [
+            "NotIlikeEscapeFun",
+            "ILikeEscapeOperator",
+            "NotILikeEscapeOperator"
+        ]
+    },
+    "not_like_escape": {
+        "Name": "not_like_escape",
+        "Parameters": "string,like_specifier,escape_character",
+        "Description": "Returns false if the `string` matches the `like_specifier` (see Pattern Matching) using case-sensitive matching. `escape_character` is used to search for wildcard characters in the `string`.",
+        "Example": "not_like_escape('a%c', 'a$%c', '$')",
+        "Code": {
+            "./duckdb-1.3.0/src/function/scalar/string/like.cpp:558": "ScalarFunction NotLikeEscapeFun::GetFunction() {\n\tScalarFunction not_like_escape(\"not_like_escape\",\n\t                               {LogicalType::VARCHAR, LogicalType::VARCHAR, LogicalType::VARCHAR},\n\t                               LogicalType::BOOLEAN, LikeEscapeFunction<NotLikeEscapeOperator>);\n\tnot_like_escape.collation_handling = FunctionCollationHandling::PUSH_COMBINABLE_COLLATIONS;\n\treturn not_like_escape;\n}",
+            "./duckdb-1.3.0/src/function/scalar/string/like.cpp:391": "struct NotLikeEscapeOperator {\n\ttemplate <class TA, class TB, class TC>\n\tstatic inline bool Operation(TA str, TB pattern, TC escape) {\n\t\treturn !LikeEscapeOperator::Operation(str, pattern, escape);\n\t}\n}",
+            "./duckdb-1.3.0/src/function/scalar/string/like.cpp:383": "struct LikeEscapeOperator {\n\ttemplate <class TA, class TB, class TC>\n\tstatic inline bool Operation(TA str, TB pattern, TC escape) {\n\t\tchar escape_char = GetEscapeChar(escape);\n\t\treturn LikeOperatorFunction(str.GetData(), str.GetSize(), pattern.GetData(), pattern.GetSize(), escape_char);\n\t}\n}"
+        },
+        "Class&Functions": [
+            "NotLikeEscapeOperator",
+            "NotLikeEscapeFun",
+            "LikeEscapeOperator"
+        ]
+    },
+    "ord": {
+        "Name": "unicode",
+        "Parameters": "str",
+        "Description": "Returns the unicode codepoint of the first character of the string",
+        "Example": "unicode('ü')",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/string/unicode.cpp:23": "ScalarFunction UnicodeFun::GetFunction() {\n\treturn ScalarFunction({LogicalType::VARCHAR}, LogicalType::INTEGER,\n\t                      ScalarFunction::UnaryFunction<string_t, int32_t, UnicodeOperator>);\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/string/unicode.cpp:12": "struct UnicodeOperator {\n\ttemplate <class TA, class TR>\n\tstatic inline TR Operation(const TA &input) {\n\t\tauto str = reinterpret_cast<const utf8proc_uint8_t *>(input.GetData());\n\t\tauto len = input.GetSize();\n\t\tutf8proc_int32_t codepoint;\n\t\t(void)utf8proc_iterate(str, UnsafeNumericCast<utf8proc_ssize_t>(len), &codepoint);\n\t\treturn codepoint;\n\t}\n}"
+        },
+        "Class&Functions": [
+            "UnicodeFun",
+            "UnicodeOperator"
+        ]
+    },
+    "prefix": {
+        "Name": "prefix",
+        "Code": {
+            "./duckdb-1.3.0/src/function/scalar/string/prefix.cpp:61": "ScalarFunction PrefixFun::GetFunction() {\n\treturn ScalarFunction(\"prefix\",                                     // name of the function\n\t                      {LogicalType::VARCHAR, LogicalType::VARCHAR}, // argument list\n\t                      LogicalType::BOOLEAN,                         // return type\n\t                      ScalarFunction::BinaryFunction<string_t, string_t, bool, PrefixOperator>);\n}",
+            "./duckdb-1.3.0/src/function/scalar/string/prefix.cpp:10": "struct PrefixOperator {\n\ttemplate <class TA, class TB, class TR>\n\tstatic inline TR Operation(TA left, TB right) {\n\t\treturn PrefixFunction(left, right);\n\t}\n}"
+        },
+        "Class&Functions": [
+            "PrefixOperator",
+            "PrefixFun"
+        ]
+    },
+    "rpad": {
+        "Name": "rpad",
+        "Parameters": "string,count,character",
+        "Description": "Pads the string with the character from the right until it has count characters",
+        "Example": "rpad('hello', 10, '<')",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/string/pad.cpp:140": "ScalarFunction RpadFun::GetFunction() {\n\tScalarFunction func({LogicalType::VARCHAR, LogicalType::INTEGER, LogicalType::VARCHAR}, LogicalType::VARCHAR,\n\t                    PadFunction<RightPadOperator>);\n\tBaseScalarFunction::SetReturnsError(func);\n\treturn func;\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/string/pad.cpp:112": "struct RightPadOperator {\n\tstatic inline string_t Operation(const string_t &str, const int32_t len, const string_t &pad,\n\t                                 vector<char> &result) {\n\t\treturn RightPadFunction(str, len, pad, result);\n\t}\n}"
+        },
+        "Class&Functions": [
+            "RpadFun",
+            "RightPadOperator"
+        ]
+    },
+    "starts_with": {
+        "Name": "^@",
+        "Parameters": "string,search_string",
+        "Description": "Returns true if string begins with search_string",
+        "Example": "starts_with('abc','a')",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/string/starts_with.cpp:39": "ScalarFunction StartsWithOperatorFun::GetFunction() {\n\tScalarFunction starts_with({LogicalType::VARCHAR, LogicalType::VARCHAR}, LogicalType::BOOLEAN,\n\t                           ScalarFunction::BinaryFunction<string_t, string_t, bool, StartsWithOperator>);\n\tstarts_with.collation_handling = FunctionCollationHandling::PUSH_COMBINABLE_COLLATIONS;\n\treturn starts_with;\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/string/starts_with.cpp:32": "struct StartsWithOperator {\n\ttemplate <class TA, class TB, class TR>\n\tstatic inline TR Operation(TA left, TB right) {\n\t\treturn StartsWith(left, right);\n\t}\n}"
+        },
+        "Class&Functions": [
+            "StartsWithOperator",
+            "StartsWithOperatorFun"
+        ]
+    },
+    "strlen": {
+        "Name": "strlen",
+        "Parameters": "string",
+        "Description": "Number of bytes in `string`.",
+        "Example": "strlen('🦆')",
+        "Code": {
+            "./duckdb-1.3.0/src/function/scalar/string/length.cpp:252": "ScalarFunction StrlenFun::GetFunction() {\n\treturn ScalarFunction(\"strlen\", {LogicalType::VARCHAR}, LogicalType::BIGINT,\n\t                      ScalarFunction::UnaryFunction<string_t, int64_t, StrLenOperator>);\n}",
+            "./duckdb-1.3.0/src/function/scalar/string/length.cpp:28": "struct StrLenOperator {\n\ttemplate <class TA, class TR>\n\tstatic inline TR Operation(TA input) {\n\t\treturn UnsafeNumericCast<TR>(input.GetSize());\n\t}\n}"
+        },
+        "Class&Functions": [
+            "StrLenOperator",
+            "StrlenFun"
+        ]
+    },
+    "suffix": {
+        "Name": "suffix",
+        "Code": {
+            "./duckdb-1.3.0/src/function/scalar/string/suffix.cpp:36": "ScalarFunction SuffixFun::GetFunction() {\n\treturn ScalarFunction(\"suffix\",                                     // name of the function\n\t                      {LogicalType::VARCHAR, LogicalType::VARCHAR}, // argument list\n\t                      LogicalType::BOOLEAN,                         // return type\n\t                      ScalarFunction::BinaryFunction<string_t, string_t, bool, SuffixOperator>);\n}",
+            "./duckdb-1.3.0/src/function/scalar/string/suffix.cpp:10": "struct SuffixOperator {\n\ttemplate <class TA, class TB, class TR>\n\tstatic inline TR Operation(TA left, TB right) {\n\t\treturn SuffixFunction(left, right);\n\t}\n}"
+        },
+        "Class&Functions": [
+            "SuffixFun",
+            "SuffixOperator"
+        ]
+    },
+    "to_binary": {
+        "Name": "bin",
+        "Parameters": "value",
+        "Description": "Converts the value to binary representation",
+        "Example": "bin(42)",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/string/hex.cpp:416": "ScalarFunctionSet BinFun::GetFunctions() {\n\tScalarFunctionSet to_binary;\n\n\tto_binary.AddFunction(\n\t    ScalarFunction({LogicalType::VARCHAR}, LogicalType::VARCHAR, ToBinaryFunction<string_t, BinaryStrOperator>));\n\tto_binary.AddFunction(\n\t    ScalarFunction({LogicalType::VARINT}, LogicalType::VARCHAR, ToBinaryFunction<string_t, BinaryStrOperator>));\n\tto_binary.AddFunction(ScalarFunction({LogicalType::UBIGINT}, LogicalType::VARCHAR,\n\t                                     ToBinaryFunction<uint64_t, BinaryIntegralOperator>));\n\tto_binary.AddFunction(\n\t    ScalarFunction({LogicalType::BIGINT}, LogicalType::VARCHAR, ToBinaryFunction<int64_t, BinaryIntegralOperator>));\n\tto_binary.AddFunction(ScalarFunction({LogicalType::HUGEINT}, LogicalType::VARCHAR,\n\t                                     ToBinaryFunction<hugeint_t, BinaryHugeIntOperator>));\n\tto_binary.AddFunction(ScalarFunction({LogicalType::UHUGEINT}, LogicalType::VARCHAR,\n\t                                     ToBinaryFunction<uhugeint_t, BinaryUhugeIntOperator>));\n\treturn to_binary;\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/string/hex.cpp:234": "struct BinaryHugeIntOperator {\n\ttemplate <class INPUT_TYPE, class RESULT_TYPE>\n\tstatic RESULT_TYPE Operation(INPUT_TYPE input, Vector &result) {\n\t\tauto num_leading_zero = CountZeros<hugeint_t>::Leading(UnsafeNumericCast<hugeint_t>(input));\n\t\tidx_t buffer_size = sizeof(INPUT_TYPE) * 8 - num_leading_zero;\n\n\t\t// Special case: All bits are zero\n\t\tif (buffer_size == 0) {\n\t\t\tauto target = StringVector::EmptyString(result, 1);\n\t\t\tauto output = target.GetDataWriteable();\n\t\t\t*output = '0';\n\t\t\ttarget.Finalize();\n\t\t\treturn target;\n\t\t}\n\n\t\tauto target = StringVector::EmptyString(result, buffer_size);\n\t\tauto output = target.GetDataWriteable();\n\n\t\tWriteHugeIntBinBytes<hugeint_t>(input, output, buffer_size);\n\n\t\ttarget.Finalize();\n\t\treturn target;\n\t}\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/string/hex.cpp:204": "struct BinaryIntegralOperator {\n\ttemplate <class INPUT_TYPE, class RESULT_TYPE>\n\tstatic RESULT_TYPE Operation(INPUT_TYPE input, Vector &result) {\n\n\t\tauto num_leading_zero = CountZeros<uint64_t>::Leading(static_cast<uint64_t>(input));\n\t\tidx_t num_bits_to_check = 64 - num_leading_zero;\n\t\tD_ASSERT(num_bits_to_check <= sizeof(INPUT_TYPE) * 8);\n\n\t\tidx_t buffer_size = num_bits_to_check;\n\n\t\t// Special case: All bits are zero\n\t\tif (buffer_size == 0) {\n\t\t\tauto target = StringVector::EmptyString(result, 1);\n\t\t\tauto output = target.GetDataWriteable();\n\t\t\t*output = '0';\n\t\t\ttarget.Finalize();\n\t\t\treturn target;\n\t\t}\n\n\t\tD_ASSERT(buffer_size > 0);\n\t\tauto target = StringVector::EmptyString(result, buffer_size);\n\t\tauto output = target.GetDataWriteable();\n\n\t\tWriteBinBytes(static_cast<uint64_t>(input), output, buffer_size);\n\n\t\ttarget.Finalize();\n\t\treturn target;\n\t}\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/string/hex.cpp:181": "struct BinaryStrOperator {\n\ttemplate <class INPUT_TYPE, class RESULT_TYPE>\n\tstatic RESULT_TYPE Operation(INPUT_TYPE input, Vector &result) {\n\t\tauto data = input.GetData();\n\t\tauto size = input.GetSize();\n\n\t\t// Allocate empty space\n\t\tauto target = StringVector::EmptyString(result, size * 8);\n\t\tauto output = target.GetDataWriteable();\n\n\t\tfor (idx_t i = 0; i < size; ++i) {\n\t\t\tauto byte = static_cast<uint8_t>(data[i]);\n\t\t\tfor (idx_t i = 8; i >= 1; --i) {\n\t\t\t\t*output = ((byte >> (i - 1)) & 0x01) + '0';\n\t\t\t\toutput++;\n\t\t\t}\n\t\t}\n\n\t\ttarget.Finalize();\n\t\treturn target;\n\t}\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/string/hex.cpp:259": "struct BinaryUhugeIntOperator {\n\ttemplate <class INPUT_TYPE, class RESULT_TYPE>\n\tstatic RESULT_TYPE Operation(INPUT_TYPE input, Vector &result) {\n\t\tauto num_leading_zero = CountZeros<hugeint_t>::Leading(UnsafeNumericCast<uhugeint_t>(input));\n\t\tidx_t buffer_size = sizeof(INPUT_TYPE) * 8 - num_leading_zero;\n\n\t\t// Special case: All bits are zero\n\t\tif (buffer_size == 0) {\n\t\t\tauto target = StringVector::EmptyString(result, 1);\n\t\t\tauto output = target.GetDataWriteable();\n\t\t\t*output = '0';\n\t\t\ttarget.Finalize();\n\t\t\treturn target;\n\t\t}\n\n\t\tauto target = StringVector::EmptyString(result, buffer_size);\n\t\tauto output = target.GetDataWriteable();\n\n\t\tWriteHugeIntBinBytes<uhugeint_t>(input, output, buffer_size);\n\n\t\ttarget.Finalize();\n\t\treturn target;\n\t}\n}"
+        },
+        "Class&Functions": [
+            "BinaryIntegralOperator",
+            "BinaryUhugeIntOperator",
+            "BinaryStrOperator",
+            "BinFun",
+            "BinaryHugeIntOperator"
+        ]
+    },
+    "unicode": {
+        "Name": "unicode",
+        "Parameters": "str",
+        "Description": "Returns the unicode codepoint of the first character of the string",
+        "Example": "unicode('ü')",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/string/unicode.cpp:23": "ScalarFunction UnicodeFun::GetFunction() {\n\treturn ScalarFunction({LogicalType::VARCHAR}, LogicalType::INTEGER,\n\t                      ScalarFunction::UnaryFunction<string_t, int32_t, UnicodeOperator>);\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/string/unicode.cpp:12": "struct UnicodeOperator {\n\ttemplate <class TA, class TR>\n\tstatic inline TR Operation(const TA &input) {\n\t\tauto str = reinterpret_cast<const utf8proc_uint8_t *>(input.GetData());\n\t\tauto len = input.GetSize();\n\t\tutf8proc_int32_t codepoint;\n\t\t(void)utf8proc_iterate(str, UnsafeNumericCast<utf8proc_ssize_t>(len), &codepoint);\n\t\treturn codepoint;\n\t}\n}"
+        },
+        "Class&Functions": [
+            "UnicodeFun",
+            "UnicodeOperator"
+        ]
+    },
+    "epoch_ms": {
+        "Name": "epoch_ms",
+        "Parameters": "temporal",
+        "Description": "Extract the epoch component in milliseconds from a temporal type",
+        "Example": "epoch_ms(timestamp '2021-08-03 11:59:44.123456')",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/date_part.cpp:2120": "ScalarFunctionSet EpochMsFun::GetFunctions() {\n\tusing OP = DatePart::EpochMillisOperator;\n\tauto operator_set = GetTimePartFunction<OP>();\n\n\t//\tTIMESTAMP WITH TIME ZONE has the same representation as TIMESTAMP so no need to defer to ICU\n\tauto tstz_func = DatePart::UnaryFunction<timestamp_t, int64_t, OP>;\n\tauto tstz_stats = OP::template PropagateStatistics<timestamp_t>;\n\toperator_set.AddFunction(\n\t    ScalarFunction({LogicalType::TIMESTAMP_TZ}, LogicalType::BIGINT, tstz_func, nullptr, nullptr, tstz_stats));\n\n\t//\tLegacy inverse BIGINT => TIMESTAMP\n\toperator_set.AddFunction(\n\t    ScalarFunction({LogicalType::BIGINT}, LogicalType::TIMESTAMP, DatePart::EpochMillisOperator::Inverse));\n\n\treturn operator_set;\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/date_part.cpp:401": "struct EpochMillisOperator {\n\t\ttemplate <class TA, class TR>\n\t\tstatic inline TR Operation(TA input) {\n\t\t\treturn Cast::Operation<TA, TR>(input);\n\t\t}\n\n\t\ttemplate <class T>\n\t\tstatic unique_ptr<BaseStatistics> PropagateStatistics(ClientContext &context, FunctionStatisticsInput &input) {\n\t\t\treturn PropagateDatePartStatistics<T, EpochMillisOperator>(input.child_stats);\n\t\t}\n\n\t\tstatic void Inverse(DataChunk &input, ExpressionState &state, Vector &result) {\n\t\t\tD_ASSERT(input.ColumnCount() == 1);\n\n\t\t\tUnaryExecutor::Execute<int64_t, timestamp_t>(input.data[0], result, input.size(), [&](int64_t input) {\n\t\t\t\t// millisecond amounts provided to epoch_ms should never be considered infinite\n\t\t\t\t// instead such values will just throw when converted to microseconds\n\t\t\t\treturn Timestamp::FromEpochMsPossiblyInfinite(input);\n\t\t\t});\n\t\t}\n\t}"
+        },
+        "Class&Functions": [
+            "EpochMsFun",
+            "EpochMillisOperator"
+        ]
+    },
+    "epoch_ns": {
+        "Name": "epoch_ns",
+        "Parameters": "temporal",
+        "Description": "Extract the epoch component in nanoseconds from a temporal type",
+        "Example": "epoch_ns(timestamp '2021-08-03 11:59:44.123456')",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/date_part.cpp:2093": "ScalarFunctionSet EpochNsFun::GetFunctions() {\n\tusing OP = DatePart::EpochNanosecondsOperator;\n\tauto operator_set = GetTimePartFunction<OP>();\n\n\t//\tTIMESTAMP WITH TIME ZONE has the same representation as TIMESTAMP so no need to defer to ICU\n\tauto tstz_func = DatePart::UnaryFunction<timestamp_t, int64_t, OP>;\n\tauto tstz_stats = OP::template PropagateStatistics<timestamp_t>;\n\toperator_set.AddFunction(\n\t    ScalarFunction({LogicalType::TIMESTAMP_TZ}, LogicalType::BIGINT, tstz_func, nullptr, nullptr, tstz_stats));\n\n\toperator_set.AddFunction(\n\t    ScalarFunction({LogicalType::TIMESTAMP_NS}, LogicalType::BIGINT, ExecuteGetNanosFromTimestampNs));\n\treturn operator_set;\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/date_part.cpp:377": "struct EpochNanosecondsOperator {\n\t\ttemplate <class TA, class TR>\n\t\tstatic inline TR Operation(TA input) {\n\t\t\treturn Timestamp::GetEpochNanoSeconds(input);\n\t\t}\n\n\t\ttemplate <class T>\n\t\tstatic unique_ptr<BaseStatistics> PropagateStatistics(ClientContext &context, FunctionStatisticsInput &input) {\n\t\t\treturn PropagateDatePartStatistics<T, EpochNanosecondsOperator>(input.child_stats);\n\t\t}\n\t}"
+        },
+        "Class&Functions": [
+            "EpochNsFun",
+            "EpochNanosecondsOperator"
+        ]
+    },
+    "epoch_us": {
+        "Name": "epoch_us",
+        "Parameters": "temporal",
+        "Description": "Extract the epoch component in microseconds from a temporal type",
+        "Example": "epoch_us(timestamp '2021-08-03 11:59:44.123456')",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/date_part.cpp:2108": "ScalarFunctionSet EpochUsFun::GetFunctions() {\n\tusing OP = DatePart::EpochMicrosecondsOperator;\n\tauto operator_set = GetTimePartFunction<OP>();\n\n\t//\tTIMESTAMP WITH TIME ZONE has the same representation as TIMESTAMP so no need to defer to ICU\n\tauto tstz_func = DatePart::UnaryFunction<timestamp_t, int64_t, OP>;\n\tauto tstz_stats = OP::template PropagateStatistics<timestamp_t>;\n\toperator_set.AddFunction(\n\t    ScalarFunction({LogicalType::TIMESTAMP_TZ}, LogicalType::BIGINT, tstz_func, nullptr, nullptr, tstz_stats));\n\treturn operator_set;\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/date/date_part.cpp:389": "struct EpochMicrosecondsOperator {\n\t\ttemplate <class TA, class TR>\n\t\tstatic inline TR Operation(TA input) {\n\t\t\treturn Timestamp::GetEpochMicroSeconds(input);\n\t\t}\n\n\t\ttemplate <class T>\n\t\tstatic unique_ptr<BaseStatistics> PropagateStatistics(ClientContext &context, FunctionStatisticsInput &input) {\n\t\t\treturn PropagateDatePartStatistics<T, EpochMicrosecondsOperator>(input.child_stats);\n\t\t}\n\t}"
+        },
+        "Class&Functions": [
+            "EpochMicrosecondsOperator",
+            "EpochUsFun"
+        ]
+    },
+    "currval": {
+        "Name": "currval",
+        "Parameters": "'sequence_name'",
+        "Description": "Return the current value of the sequence. Note that nextval must be called at least once prior to calling currval.",
+        "Example": "currval('my_sequence_name')",
+        "Code": {
+            "./duckdb-1.3.0/src/function/scalar/sequence/nextval.cpp:149": "ScalarFunction CurrvalFun::GetFunction() {\n\tScalarFunction curr_val(\"currval\", {LogicalType::VARCHAR}, LogicalType::BIGINT,\n\t                        NextValFunction<CurrentSequenceValueOperator>, nullptr, nullptr);\n\tcurr_val.bind_extended = NextValBind;\n\tcurr_val.stability = FunctionStability::VOLATILE;\n\tcurr_val.serialize = Serialize;\n\tcurr_val.deserialize = Deserialize;\n\tcurr_val.init_local_state = NextValLocalFunction;\n\tBaseScalarFunction::SetReturnsError(curr_val);\n\treturn curr_val;\n}",
+            "./duckdb-1.3.0/src/function/scalar/sequence/nextval.cpp:20": "struct CurrentSequenceValueOperator {\n\tstatic int64_t Operation(DuckTransaction &, SequenceCatalogEntry &seq) {\n\t\treturn seq.CurrentValue();\n\t}\n}"
+        },
+        "Class&Functions": [
+            "CurrentSequenceValueOperator",
+            "CurrvalFun"
+        ]
+    },
+    "error": {
+        "Name": "error",
+        "Parameters": "message",
+        "Description": "Throws the given error message",
+        "Example": "error('access_mode')",
+        "Code": {
+            "./duckdb-1.3.0/src/function/scalar/generic/error.cpp:14": "ScalarFunction ErrorFun::GetFunction() {\n\tauto fun = ScalarFunction(\"error\", {LogicalType::VARCHAR}, LogicalType::SQLNULL,\n\t                          ScalarFunction::UnaryFunction<string_t, int32_t, ErrorOperator>);\n\t// Set the function with side effects to avoid the optimization.\n\tfun.stability = FunctionStability::VOLATILE;\n\tBaseScalarFunction::SetReturnsError(fun);\n\treturn fun;\n}",
+            "./duckdb-1.3.0/src/function/scalar/generic/error.cpp:7": "struct ErrorOperator {\n\ttemplate <class TA, class TR>\n\tstatic inline TR Operation(const TA &input) {\n\t\tthrow InvalidInputException(input.GetString());\n\t}\n}"
+        },
+        "Class&Functions": [
+            "ErrorOperator",
+            "ErrorFun"
+        ]
+    },
+    "nextval": {
+        "Name": "nextval",
+        "Parameters": "'sequence_name'",
+        "Description": "Return the following value of the sequence.",
+        "Example": "nextval('my_sequence_name')",
+        "Code": {
+            "./duckdb-1.3.0/src/function/scalar/sequence/nextval.cpp:136": "ScalarFunction NextvalFun::GetFunction() {\n\tScalarFunction next_val(\"nextval\", {LogicalType::VARCHAR}, LogicalType::BIGINT,\n\t                        NextValFunction<NextSequenceValueOperator>, nullptr, nullptr);\n\tnext_val.bind_extended = NextValBind;\n\tnext_val.stability = FunctionStability::VOLATILE;\n\tnext_val.serialize = Serialize;\n\tnext_val.deserialize = Deserialize;\n\tnext_val.get_modified_databases = NextValModifiedDatabases;\n\tnext_val.init_local_state = NextValLocalFunction;\n\tBaseScalarFunction::SetReturnsError(next_val);\n\treturn next_val;\n}",
+            "./duckdb-1.3.0/src/function/scalar/sequence/nextval.cpp:26": "struct NextSequenceValueOperator {\n\tstatic int64_t Operation(DuckTransaction &transaction, SequenceCatalogEntry &seq) {\n\t\treturn seq.NextValue(transaction);\n\t}\n}"
+        },
+        "Class&Functions": [
+            "NextvalFun",
+            "NextSequenceValueOperator"
+        ]
+    },
+    "uuid_extract_timestamp": {
+        "Name": "uuid_extract_timestamp",
+        "Parameters": "uuid",
+        "Description": "Extract the timestamp for the given UUID v7.",
+        "Example": "uuid_extract_timestamp('019482e4-1441-7aad-8127-eec99573b0a0')",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/random/random.cpp:140": "ScalarFunction UUIDExtractTimestampFun::GetFunction() {\n\treturn ScalarFunction({LogicalType::UUID}, LogicalType::TIMESTAMP_TZ,\n\t                      ExtractTimestampFunction<hugeint_t, ExtractTimestampUuidOperator>);\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/random/random.cpp:22": "struct ExtractTimestampUuidOperator {\n\ttemplate <typename INPUT_TYPE, typename RESULT_TYPE>\n\tstatic RESULT_TYPE Operation(INPUT_TYPE input, Vector &result) {\n\t\t// Validate whether the given UUID is v7.\n\t\tconst uint8_t version = (static_cast<uint8_t>((input.upper) >> 8) & 0xf0) >> 4;\n\t\tif (version != 7) {\n\t\t\tthrow InvalidInputException(\"Given UUID is with version %u, not version 7.\", version);\n\t\t}\n\n\t\t// UUID v7 begins with a 48 bit big-endian Unix Epoch timestamp with millisecond granularity.\n\t\tconst int64_t upper = input.upper;\n\t\tint64_t unix_ts_milli = upper;\n\t\tunix_ts_milli = unix_ts_milli >> 16;\n\n\t\tstatic constexpr int64_t kMilliToMicro = 1000;\n\t\tconst int64_t unix_ts_ms = kMilliToMicro * unix_ts_milli;\n\t\treturn timestamp_t {unix_ts_ms};\n\t}\n}"
+        },
+        "Class&Functions": [
+            "ExtractTimestampUuidOperator",
+            "UUIDExtractTimestampFun"
+        ]
+    },
+    "uuid_extract_version": {
+        "Name": "uuid_extract_version",
+        "Parameters": "uuid",
+        "Description": "Extract a version for the given UUID.",
+        "Example": "uuid_extract_version('019482e4-1441-7aad-8127-eec99573b0a0')",
+        "Code": {
+            "./duckdb-1.3.0/extension/core_functions/scalar/random/random.cpp:135": "ScalarFunction UUIDExtractVersionFun::GetFunction() {\n\treturn ScalarFunction({LogicalType::UUID}, LogicalType::UINTEGER,\n\t                      ExtractVersionFunction<hugeint_t, ExtractVersionUuidOperator>);\n}",
+            "./duckdb-1.3.0/extension/core_functions/scalar/random/random.cpp:12": "struct ExtractVersionUuidOperator {\n\ttemplate <typename INPUT_TYPE, typename RESULT_TYPE>\n\tstatic RESULT_TYPE Operation(INPUT_TYPE input, Vector &result) {\n\t\tchar uuid[36]; // Intentionally no initialize.\n\t\tBaseUUID::ToString(input, uuid);\n\t\t// UUIDv4 and UUIDv7 stores version as the 15-th uint8_t.\n\t\treturn uuid[14] - '0';\n\t}\n}"
+        },
+        "Class&Functions": [
+            "ExtractVersionUuidOperator",
+            "UUIDExtractVersionFun"
+        ]
+    }
+}

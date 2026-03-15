@@ -1,0 +1,127 @@
+{
+    "TEST_FUNC": {
+        "zName": 0,
+        "xFunc": -1,
+        "nArg": 1,
+        "iArg": 2,
+        "mFlags": 3
+    },
+    "FUNCTION": {
+        "zName": 0,
+        "xFunc": 4,
+        "nArg": 1,
+        "iArg": 2,
+        "bNC": 3
+    },
+    "SFUNCTION": {
+        "zName": 0,
+        "xFunc": 4,
+        "nArg": 1,
+        "iArg": 2,
+        "bNC": 3
+    },
+    "DFUNCTION": {
+        "zName": 0,
+        "xFunc": 4,
+        "nArg": 1,
+        "iArg": 2,
+        "bNC": 3
+    },
+    "INLINE_FUNC": {
+        "zName": 0,
+        "xFunc": -1,
+        "nArg": 1,
+        "iArg": 2,
+        "mFlags": 3
+    },
+    "WAGGREGATE": {
+        "zName": 0,
+        "xFunc": -1,
+        "nArg": 1,
+        "arg": 2,
+        "nc": 3,
+        "xStep": 4,
+        "xFinal": 5,
+        "xValue": 6,
+        "xInverse": 7,
+        "f": 8
+    },
+    "FUNCTION2": {
+        "zName": 0,
+        "xFunc": 4,
+        "nArg": 1,
+        "iArg": 2,
+        "bNC": 3,
+        "extraFlags": 5
+    },
+    "VFUNCTION": {
+        "zName": 0,
+        "xFunc": 4,
+        "nArg": 1,
+        "iArg": 2,
+        "bNC": 3
+    },
+    "LIKEFUNC": {
+        "zName": 0,
+        "xFunc": -1,
+        "nArg": 1,
+        "arg": 2,
+        "flags": 3
+    },
+    "MFUNCTION": {
+        "zName": 0,
+        "xFunc": 3,
+        "nArg": 1,
+        "xPtr": 2
+    },
+    "JFUNCTION": {
+        "zName": 0,
+        "xFunc": 7,
+        "nArg": 1,
+        "bUseCache": 2,
+        "bWS": 3,
+        "bRS": 4,
+        "bJsonB": 5,
+        "iArg": 6
+    },
+    "INTERNAL_FUNCTION": {
+        "zName": 0,
+        "xFunc": 2,
+        "nArg": 1
+    },
+    "WINDOWFUNCX": {
+        "zName": -1,
+        "xFunc": -1,
+        "name": 0,
+        "nArg": 1,
+        "extra": 2
+    },
+    "WINDOWFUNCALL": {
+        "zName": -1,
+        "xFunc": -1,
+        "name": 0,
+        "nArg": 1,
+        "extra": 2
+    },
+    "WINDOWFUNCNOOP": {
+        "zName": -1,
+        "xFunc": -1,
+        "name": 0,
+        "nArg": 1,
+        "extra": 2
+    },
+    "PURE_DATE": {
+        "zName": 0,
+        "xFunc": 4,
+        "nArg": 1,
+        "iArg": 2,
+        "bNC": 3
+    },
+    "STR_FUNCTION": {
+        "zName": 0,
+        "xFunc": 4,
+        "nArg": 1,
+        "pArg": 2,
+        "bNC": 3
+    }
+}

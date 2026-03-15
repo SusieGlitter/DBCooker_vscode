@@ -1,0 +1,38 @@
+{
+  "task": {
+    "database": "postgresql",
+    "db_name": {
+      "postgresql": "PostgreSQL",
+      "sqlite": "SQLite",
+      "duckdb": "DuckDB"
+    },
+    "directory": "/data/qikang/code/code_agent_sqlite5532",
+    "func_name": "date_trunc",
+    "category": "Date/Time",
+    "description": "Truncate timestamp to specified precision",
+    "example": "SQL: SELECT date_trunc('hour', '2001-02-16 20:38:40'::timestamp)\nExpected: 2001-02-16 20:00:00\n\nSQL: SELECT date_trunc('day', '2023-10-27 15:00:00'::timestamp)\nExpected: 2023-10-27 00:00:00",
+    "file_path": "",
+    "compile_folder": "/data/qikang/code/code_agent_sqlite5532",
+    "result_folder": "/data/qikang/program/DBCode/results/postgresql/code_agent_",
+    "backup_folder": "/data/qikang/source/sqlite",
+    "origin_code": {},
+    "spec_file": {
+      "postgresql": "/data/qikang/program/DBCode/data/benchmark/postgresql/postgresql_functions_with_testcase_code_understand.json",
+      "sqlite": "/data/qikang/program/DBCode/data/benchmark/sqlite/sqlite_functions_with_testcase_code_understand.json",
+      "duckdb": "/data/qikang/program/DBCode/data/benchmark/duckdb/duckdb_functions_with_testcase_code_understand.json"
+    }
+  },
+  "start_time": "2026-03-14T17:00:36.097615",
+  "end_time": "",
+  "llm_interactions": [],
+  "agent_steps": [],
+  "success": false,
+  "final_result": null,
+  "execution_time": 0.0,
+  "code_agent": {
+    "start_time": "2026-03-14T17:00:36.097391",
+    "provider": "doubao",
+    "model": "qwen3-coder-next",
+    "max_steps": 100
+  }
+}

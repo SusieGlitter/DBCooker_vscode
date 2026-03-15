@@ -1,0 +1,706 @@
+{
+    "gcd": {
+        "FuncDef": "MFUNCTION(gcd, 2, 0, gcdFunc)",
+        "FuncFrom": {
+            "DB": "duckdb",
+            "Category": "Numeric Functions"
+        },
+        "FuncType": {
+            "Type": "aBuiltinFunc",
+            "Category": "Core functions",
+            "Pos": {
+                "zName": 0,
+                "xFunc": 3,
+                "nArg": 1,
+                "xPtr": 2
+            }
+        },
+        "FuncDesc": "Computes the greatest common divisor of x and y",
+        "FuncExample": {
+            "Example": "SELECT gcd(8, 12);",
+            "ExampleResult": "4"
+        }
+    },
+    "lcm": {
+        "FuncDef": "MFUNCTION(lcm, 2, 0, lcmFunc)",
+        "FuncFrom": {
+            "DB": "duckdb",
+            "Category": "Numeric Functions"
+        },
+        "FuncType": {
+            "Type": "aBuiltinFunc",
+            "Category": "Core functions",
+            "Pos": {
+                "zName": 0,
+                "xFunc": 3,
+                "nArg": 1,
+                "xPtr": 2
+            }
+        },
+        "FuncDesc": "Computes the least common multiple of x and y",
+        "FuncExample": {
+            "Example": "SELECT lcm(8, 12);",
+            "ExampleResult": "24"
+        }
+    },
+    "even": {
+        "FuncDef": "MFUNCTION(even, 1, 0, evenFunc)",
+        "FuncFrom": {
+            "DB": "duckdb",
+            "Category": "Numeric Functions"
+        },
+        "FuncType": {
+            "Type": "aBuiltinFunc",
+            "Category": "Core functions",
+            "Pos": {
+                "zName": 0,
+                "xFunc": 3,
+                "nArg": 1,
+                "xPtr": 2
+            }
+        },
+        "FuncDesc": "Rounds x to next even number by rounding away from zero",
+        "FuncExample": {
+            "Example": "SELECT even(2.6);",
+            "ExampleResult": "4"
+        }
+    },
+    "gamma": {
+        "FuncDef": "MFUNCTION(gamma, 1, 0, gammaFunc)",
+        "FuncFrom": {
+            "DB": "duckdb",
+            "Category": "Numeric Functions"
+        },
+        "FuncType": {
+            "Type": "aBuiltinFunc",
+            "Category": "Core functions",
+            "Pos": {
+                "zName": 0,
+                "xFunc": 3,
+                "nArg": 1,
+                "xPtr": 2
+            }
+        },
+        "FuncDesc": "Interpolation of (x-1) factorial (so decimal inputs are allowed)",
+        "FuncExample": {
+            "Example": "SELECT gamma(5.5);",
+            "ExampleResult": "52.34277778455352"
+        }
+    },
+    "lgamma": {
+        "FuncDef": "MFUNCTION(lgamma, 1, 0, lgammaFunc)",
+        "FuncFrom": {
+            "DB": "duckdb",
+            "Category": "Numeric Functions"
+        },
+        "FuncType": {
+            "Type": "aBuiltinFunc",
+            "Category": "Core functions",
+            "Pos": {
+                "zName": 0,
+                "xFunc": 3,
+                "nArg": 1,
+                "xPtr": 2
+            }
+        },
+        "FuncDesc": "Computes the log of the gamma function",
+        "FuncExample": {
+            "Example": "SELECT lgamma(2);",
+            "ExampleResult": "0"
+        }
+    },
+    "nextafter": {
+        "FuncDef": "MFUNCTION(nextafter, 2, 0, nextafterFunc)",
+        "FuncFrom": {
+            "DB": "duckdb",
+            "Category": "Numeric Functions"
+        },
+        "FuncType": {
+            "Type": "aBuiltinFunc",
+            "Category": "Core functions",
+            "Pos": {
+                "zName": 0,
+                "xFunc": 3,
+                "nArg": 1,
+                "xPtr": 2
+            }
+        },
+        "FuncDesc": "Returns the next floating point value after x in the direction of y",
+        "FuncExample": {
+            "Example": "SELECT nextafter(1.0, 2.0);",
+            "ExampleResult": "1.0000001"
+        }
+    },
+    "left": {
+        "FuncDef": "FUNCTION(left, 2, 0, 0, leftFunc)",
+        "FuncFrom": {
+            "DB": "postgreSQL",
+            "Category": "string functions and operators"
+        },
+        "FuncType": {
+            "Type": "aBuiltinFunc",
+            "Category": "Core functions",
+            "Pos": {
+                "zName": 0,
+                "xFunc": 4,
+                "nArg": 1,
+                "iArg": 2,
+                "bNC": 3
+            }
+        },
+        "FuncDesc": "Returns first n characters in the string, or when n is negative, returns all but last | n | characters.",
+        "FuncExample": {
+            "Example": "SELECT left('abcdef', 2);",
+            "ExampleResult": "ab"
+        }
+    },
+    "right": {
+        "FuncDef": "FUNCTION(right, 2, 0, 0, rightFunc)",
+        "FuncFrom": {
+            "DB": "postgreSQL",
+            "Category": "string functions and operators"
+        },
+        "FuncType": {
+            "Type": "aBuiltinFunc",
+            "Category": "Core functions",
+            "Pos": {
+                "zName": 0,
+                "xFunc": 4,
+                "nArg": 1,
+                "iArg": 2,
+                "bNC": 3
+            }
+        },
+        "FuncDesc": "Returns last n characters in the string, or when n is negative, returns all but first | n | characters.",
+        "FuncExample": {
+            "Example": "SELECT right('abcdef', 2);",
+            "ExampleResult": "ef"
+        }
+    },
+    "lpad": {
+        "FuncDef": "FUNCTION(lpad, 3, 0, 0, lpadFunc)",
+        "FuncFrom": {
+            "DB": "postgreSQL",
+            "Category": "string functions and operators"
+        },
+        "FuncType": {
+            "Type": "aBuiltinFunc",
+            "Category": "Core functions",
+            "Pos": {
+                "zName": 0,
+                "xFunc": 4,
+                "nArg": 1,
+                "iArg": 2,
+                "bNC": 3
+            }
+        },
+        "FuncDesc": "Extends the string to length length by prepending the characters fill (a space by default). If the string is already longer than length then it is truncated (on the right).",
+        "FuncExample": {
+            "Example": "SELECT lpad('cs', 5, 'xy');",
+            "ExampleResult": "xyxcs"
+        }
+    },
+    "rpad": {
+        "FuncDef": "FUNCTION(rpad, 3, 0, 0, rpadFunc)",
+        "FuncFrom": {
+            "DB": "postgreSQL",
+            "Category": "string functions and operators"
+        },
+        "FuncType": {
+            "Type": "aBuiltinFunc",
+            "Category": "Core functions",
+            "Pos": {
+                "zName": 0,
+                "xFunc": 4,
+                "nArg": 1,
+                "iArg": 2,
+                "bNC": 3
+            }
+        },
+        "FuncDesc": "Extends the string to length length by appending the characters fill (a space by default). If the string is already longer than length then it is truncated.",
+        "FuncExample": {
+            "Example": "SELECT rpad('cs', 5, 'xy');",
+            "ExampleResult": "csxyx"
+        }
+    },
+    "regexp_split_to_array": {
+        "FuncDef": "FUNCTION(regexp_split_to_array, 2, 0, 0, regexpSplitToArrayFunc)",
+        "FuncFrom": {
+            "DB": "postgreSQL",
+            "Category": "string functions and operators"
+        },
+        "FuncType": {
+            "Type": "aBuiltinFunc",
+            "Category": "Core functions",
+            "Pos": {
+                "zName": 0,
+                "xFunc": 4,
+                "nArg": 1,
+                "iArg": 2,
+                "bNC": 3
+            }
+        },
+        "FuncDesc": "Splits string using a POSIX regular expression as the delimiter, producing an array of results; see Section 9.7.3 .",
+        "FuncExample": {
+            "Example": "SELECT regexp_split_to_array('a,b,c', ',');",
+            "ExampleResult": "{a,b,c}"
+        }
+    },
+    "repeat": {
+        "FuncDef": "FUNCTION(repeat, 2, 0, 0, repeatFunc)",
+        "FuncFrom": {
+            "DB": "postgreSQL",
+            "Category": "string functions and operators"
+        },
+        "FuncType": {
+            "Type": "aBuiltinFunc",
+            "Category": "Core functions",
+            "Pos": {
+                "zName": 0,
+                "xFunc": 4,
+                "nArg": 1,
+                "iArg": 2,
+                "bNC": 3
+            }
+        },
+        "FuncDesc": "Repeats string the specified number of times.",
+        "FuncExample": {
+            "Example": "SELECT repeat('abc', 3);",
+            "ExampleResult": "abcabcabc"
+        }
+    },
+    "reverse": {
+        "FuncDef": "FUNCTION(reverse, 1, 0, 0, reverseFunc)",
+        "FuncFrom": {
+            "DB": "postgreSQL",
+            "Category": "string functions and operators"
+        },
+        "FuncType": {
+            "Type": "aBuiltinFunc",
+            "Category": "Core functions",
+            "Pos": {
+                "zName": 0,
+                "xFunc": 4,
+                "nArg": 1,
+                "iArg": 2,
+                "bNC": 3
+            }
+        },
+        "FuncDesc": "Reverses the order of the characters in the string.",
+        "FuncExample": {
+            "Example": "SELECT reverse('abcdef');",
+            "ExampleResult": "fedcba"
+        }
+    },
+    "strpos": {
+        "FuncDef": "FUNCTION(strpos, 2, 0, 0, strposFunc)",
+        "FuncFrom": {
+            "DB": "postgreSQL",
+            "Category": "string functions and operators"
+        },
+        "FuncType": {
+            "Type": "aBuiltinFunc",
+            "Category": "Core functions",
+            "Pos": {
+                "zName": 0,
+                "xFunc": 4,
+                "nArg": 1,
+                "iArg": 2,
+                "bNC": 3
+            }
+        },
+        "FuncDesc": "",
+        "FuncExample": {
+            "Example": "SELECT strpos('abcdef', 'cd');",
+            "ExampleResult": "3"
+        }
+    },
+    "to_ascii": {
+        "FuncDef": "FUNCTION(to_ascii, 1, 0, 0, toAsciiFunc)",
+        "FuncFrom": {
+            "DB": "postgreSQL",
+            "Category": "string functions and operators"
+        },
+        "FuncType": {
+            "Type": "aBuiltinFunc",
+            "Category": "Core functions",
+            "Pos": {
+                "zName": 0,
+                "xFunc": 4,
+                "nArg": 1,
+                "iArg": 2,
+                "bNC": 3
+            }
+        },
+        "FuncDesc": "",
+        "FuncExample": {
+            "Example": "SELECT to_ascii('xyz');",
+            "ExampleResult": "120"
+        }
+    },
+    "to_hex": {
+        "FuncDef": "FUNCTION(to_hex, 1, 0, 0, toHexFunc)",
+        "FuncFrom": {
+            "DB": "postgreSQL",
+            "Category": "string functions and operators"
+        },
+        "FuncType": {
+            "Type": "aBuiltinFunc",
+            "Category": "Core functions",
+            "Pos": {
+                "zName": 0,
+                "xFunc": 4,
+                "nArg": 1,
+                "iArg": 2,
+                "bNC": 3
+            }
+        },
+        "FuncDesc": "Converts the number to its equivalent hexadecimal representation.",
+        "FuncExample": {
+            "Example": "SELECT to_hex(2147483647);",
+            "ExampleResult": "7fffffff"
+        }
+    },
+    "century": {
+        "FuncDef": "DFUNCTION(century, 1, 0, 0, centuryFunc)",
+        "FuncFrom": {
+            "DB": "duckdb",
+            "Category": "Date Part Functions"
+        },
+        "FuncType": {
+            "Type": "aDateTimeFuncs",
+            "Category": "Date And Time functions",
+            "Pos": {
+                "zName": 0,
+                "xFunc": 4,
+                "nArg": 1,
+                "iArg": 2,
+                "bNC": 3
+            }
+        },
+        "FuncDesc": "Extract the century component from a date or timestamp",
+        "FuncExample": {
+            "Example": "SELECT century('2025-01-01');",
+            "ExampleResult": "21"
+        }
+    },
+    "monthname": {
+        "FuncDef": "DFUNCTION(monthname, 1, 0, 0, monthnameFunc)",
+        "FuncFrom": {
+            "DB": "duckdb",
+            "Category": "Date Functions"
+        },
+        "FuncType": {
+            "Type": "aDateTimeFuncs",
+            "Category": "Date And Time functions",
+            "Pos": {
+                "zName": 0,
+                "xFunc": 4,
+                "nArg": 1,
+                "iArg": 2,
+                "bNC": 3
+            }
+        },
+        "FuncDesc": "The (English) name of the month",
+        "FuncExample": {
+            "Example": "SELECT monthname('2025-01-01');",
+            "ExampleResult": "January"
+        }
+    },
+    "dayname": {
+        "FuncDef": "DFUNCTION(dayname, 1, 0, 0, daynameFunc)",
+        "FuncFrom": {
+            "DB": "duckdb",
+            "Category": "Date Functions"
+        },
+        "FuncType": {
+            "Type": "aDateTimeFuncs",
+            "Category": "Date And Time functions",
+            "Pos": {
+                "zName": 0,
+                "xFunc": 4,
+                "nArg": 1,
+                "iArg": 2,
+                "bNC": 3
+            }
+        },
+        "FuncDesc": "The (English) name of the weekday",
+        "FuncExample": {
+            "Example": "SELECT dayname('2025-01-01');",
+            "ExampleResult": "Wednesday"
+        }
+    },
+    "yearweek": {
+        "FuncDef": "DFUNCTION(yearweek, 1, 0, 0, yearweekFunc)",
+        "FuncFrom": {
+            "DB": "duckdb",
+            "Category": "Date Part Functions"
+        },
+        "FuncType": {
+            "Type": "aDateTimeFuncs",
+            "Category": "Date And Time functions",
+            "Pos": {
+                "zName": 0,
+                "xFunc": 4,
+                "nArg": 1,
+                "iArg": 2,
+                "bNC": 3
+            }
+        },
+        "FuncDesc": "Extract the yearweek component from a date or timestamp",
+        "FuncExample": {
+            "Example": "SELECT yearweek('2025-02-05');",
+            "ExampleResult": "202506"
+        }
+    },
+    "last_day": {
+        "FuncDef": "DFUNCTION(last_day, 1, 0, 0, lastDayFunc)",
+        "FuncFrom": {
+            "DB": "duckdb",
+            "Category": "Date Functions"
+        },
+        "FuncType": {
+            "Type": "aDateTimeFuncs",
+            "Category": "Date And Time functions",
+            "Pos": {
+                "zName": 0,
+                "xFunc": 4,
+                "nArg": 1,
+                "iArg": 2,
+                "bNC": 3
+            }
+        },
+        "FuncDesc": "Returns the last day of the month",
+        "FuncExample": {
+            "Example": "SELECT last_day('2024-02-01');",
+            "ExampleResult": "2024-02-29"
+        }
+    },
+    "corr": {
+        "FuncDef": "WAGGREGATE(corr, 2, 0, 0, corrStep, corrFinal, corrValue, corrInverse, 0)",
+        "FuncFrom": {
+            "DB": "postgreSQL",
+            "Category": "aggregate functions"
+        },
+        "FuncType": {
+            "Type": "aBuiltinFunc",
+            "Category": "Aggregate functions",
+            "Pos": {
+                "zName": 0,
+                "xFunc": -1,
+                "nArg": 1,
+                "arg": 2,
+                "nc": 3,
+                "xStep": 4,
+                "xFinal": 5,
+                "xValue": 6,
+                "xInverse": 7,
+                "f": 8
+            }
+        },
+        "FuncDesc": "Computes the correlation coefficient.",
+        "FuncExample": {
+            "Example": "",
+            "ExampleResult": ""
+        }
+    },
+    "covar_pop": {
+        "FuncDef": "WAGGREGATE(covar_pop, 2, 0, 0, covarPopStep, covarPopFinal, covarPopValue, covarPopInverse, 0)",
+        "FuncFrom": {
+            "DB": "postgreSQL",
+            "Category": "aggregate functions"
+        },
+        "FuncType": {
+            "Type": "aBuiltinFunc",
+            "Category": "Aggregate functions",
+            "Pos": {
+                "zName": 0,
+                "xFunc": -1,
+                "nArg": 1,
+                "arg": 2,
+                "nc": 3,
+                "xStep": 4,
+                "xFinal": 5,
+                "xValue": 6,
+                "xInverse": 7,
+                "f": 8
+            }
+        },
+        "FuncDesc": "Computes the population covariance.",
+        "FuncExample": {
+            "Example": "",
+            "ExampleResult": ""
+        }
+    },
+    "translate": {
+        "FuncDef": "FUNCTION(translate, 3, 0, 0, translateFunc)",
+        "FuncFrom": {
+            "DB": "postgreSQL",
+            "Category": "string functions and operators"
+        },
+        "FuncType": {
+            "Type": "aBuiltinFunc",
+            "Category": "Core functions",
+            "Pos": {
+                "zName": 0,
+                "xFunc": 4,
+                "nArg": 1,
+                "iArg": 2,
+                "bNC": 3
+            }
+        },
+        "FuncDesc": "Replaces each character in string that matches a character in the from set with the corresponding character in the to set. If from is longer than to , occurrences of the extra characters in from are deleted.",
+        "FuncExample": {
+            "Example": "SELECT TRANSLATE('12345', '134', 'ax')",
+            "ExampleResult": "a2x5"
+        }
+    },
+    "starts_with": {
+        "FuncDef": "FUNCTION(starts_with, 2, 0, 0, startsWithFunc)",
+        "FuncFrom": {
+            "DB": "duckdb",
+            "Category": "Text Functions"
+        },
+        "FuncType": {
+            "Type": "aBuiltinFunc",
+            "Category": "Core functions",
+            "Pos": {
+                "zName": 0,
+                "xFunc": 4,
+                "nArg": 1,
+                "iArg": 2,
+                "bNC": 3
+            }
+        },
+        "FuncDesc": "Returns true if string begins with search_string",
+        "FuncExample": {
+            "Example": "SELECT starts_with('abcdef', 'abc');",
+            "ExampleResult": "true"
+        }
+    },
+    "ends_with": {
+        "FuncDef": "FUNCTION(ends_with, 2, 0, 0, endsWithFunc)",
+        "FuncFrom": {
+            "DB": "duckdb",
+            "Category": "Text Functions"
+        },
+        "FuncType": {
+            "Type": "aBuiltinFunc",
+            "Category": "Core functions",
+            "Pos": {
+                "zName": 0,
+                "xFunc": 4,
+                "nArg": 1,
+                "iArg": 2,
+                "bNC": 3
+            }
+        },
+        "FuncDesc": "Description Returns true if string ends with search_string . Note that collations are not supported. Example ends_with('abc', 'bc') Result true Alias suffix",
+        "FuncExample": {
+            "Example": "SELECT ends_with('abcdef', 'cde');",
+            "ExampleResult": "false"
+        }
+    },
+    "ord": {
+        "FuncDef": "FUNCTION(ord, 1, 0, 0, ordFunc)",
+        "FuncFrom": {
+            "DB": "duckdb",
+            "Category": "Text Functions"
+        },
+        "FuncType": {
+            "Type": "aBuiltinFunc",
+            "Category": "Core functions",
+            "Pos": {
+                "zName": 0,
+                "xFunc": 4,
+                "nArg": 1,
+                "iArg": 2,
+                "bNC": 3
+            }
+        },
+        "FuncDesc": "Returns the unicode codepoint of the first character of the string",
+        "FuncExample": {
+            "Example": "SELECT ord('A');",
+            "ExampleResult": "65"
+        }
+    },
+    "bool_and": {
+        "FuncDef": "WAGGREGATE(bool_and, 1, 0, 0, boolAndStep, boolAndFinal, boolAndValue, boolAndInverse, 0)",
+        "FuncFrom": {
+            "DB": "postgreSQL",
+            "Category": "aggregate functions"
+        },
+        "FuncType": {
+            "Type": "aBuiltinFunc",
+            "Category": "Aggregate functions",
+            "Pos": {
+                "zName": 0,
+                "xFunc": -1,
+                "nArg": 1,
+                "arg": 2,
+                "nc": 3,
+                "xStep": 4,
+                "xFinal": 5,
+                "xValue": 6,
+                "xInverse": 7,
+                "f": 8
+            }
+        },
+        "FuncDesc": "Returns true if all non-null input values are true, otherwise false.",
+        "FuncExample": {
+            "Example": "",
+            "ExampleResult": ""
+        }
+    },
+    "bool_or": {
+        "FuncDef": "WAGGREGATE(bool_or, 1, 0, 0, boolOrStep, boolOrFinal, boolOrValue, boolOrInverse, 0)",
+        "FuncFrom": {
+            "DB": "postgreSQL",
+            "Category": "aggregate functions"
+        },
+        "FuncType": {
+            "Type": "aBuiltinFunc",
+            "Category": "Aggregate functions",
+            "Pos": {
+                "zName": 0,
+                "xFunc": -1,
+                "nArg": 1,
+                "arg": 2,
+                "nc": 3,
+                "xStep": 4,
+                "xFinal": 5,
+                "xValue": 6,
+                "xInverse": 7,
+                "f": 8
+            }
+        },
+        "FuncDesc": "Returns true if any non-null input value is true, otherwise false.",
+        "FuncExample": {
+            "Example": "",
+            "ExampleResult": ""
+        }
+    },
+    "row_to_json": {
+        "FuncDef": "FUNCTION(row_to_json, 2, 0, 0, rowToJsonFunc)",
+        "FuncFrom": {
+            "DB": "postgreSQL",
+            "Category": "json functions and operators"
+        },
+        "FuncType": {
+            "Type": "aBuiltinFunc",
+            "Category": "Core functions",
+            "Pos": {
+                "zName": 0,
+                "xFunc": 4,
+                "nArg": 1,
+                "iArg": 2,
+                "bNC": 3
+            }
+        },
+        "FuncDesc": "Converts an SQL composite value to a JSON object. The behavior is the same as to_json except that line feeds will be added between top-level elements if the optional boolean parameter is true.",
+        "FuncExample": {
+            "Example": "SELECT row_to_json(1, 'a', 'b', 'c');",
+            "ExampleResult": "{\"id\":1,\"name\":\"a\",\"age\":\"b\",\"city\":\"c\"}"
+        }
+    }
+}

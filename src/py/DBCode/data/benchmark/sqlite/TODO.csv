@@ -1,0 +1,30 @@
+gcd,duckdb,Numeric Functions,Core functions,aBuiltinFunc,"MFUNCTION(gcd, 2, 0, gcdFunc)",Computes the greatest common divisor of x and y
+lcm,duckdb,Numeric Functions,Core functions,aBuiltinFunc,"MFUNCTION(lcm, 2, 0, lcmFunc)",Computes the least common multiple of x and y
+even,duckdb,Numeric Functions,Core functions,aBuiltinFunc,"MFUNCTION(even, 1, 0, evenFunc)",Rounds x to next even number by rounding away from zero
+gamma,duckdb,Numeric Functions,Core functions,aBuiltinFunc,"MFUNCTION(gamma, 1, 0, gammaFunc)",Interpolation of (x-1) factorial (so decimal inputs are allowed)
+lgamma,duckdb,Numeric Functions,Core functions,aBuiltinFunc,"MFUNCTION(lgamma, 1, 0, lgammaFunc)",Computes the log of the gamma function
+nextafter,duckdb,Numeric Functions,Core functions,aBuiltinFunc,"MFUNCTION(nextafter, 2, 0, nextafterFunc)",Returns the next floating point value after x in the direction of y
+left,postgreSQL,string functions and operators,Core functions,aBuiltinFunc,"FUNCTION(left, 2, 0, 0, leftFunc)","Returns first n characters in the string, or when n is negative, returns all but last | n | characters."
+right,postgreSQL,string functions and operators,Core functions,aBuiltinFunc,"FUNCTION(right, 2, 0, 0, rightFunc)","Returns last n characters in the string, or when n is negative, returns all but first | n | characters."
+lpad,postgreSQL,string functions and operators,Core functions,aBuiltinFunc,"FUNCTION(lpad, 3, 0, 0, lpadFunc)",Extends the string to length length by prepending the characters fill (a space by default). If the string is already longer than length then it is truncated (on the right).
+rpad,postgreSQL,string functions and operators,Core functions,aBuiltinFunc,"FUNCTION(rpad, 3, 0, 0, rpadFunc)",Extends the string to length length by appending the characters fill (a space by default). If the string is already longer than length then it is truncated.
+regexp_split_to_array,postgreSQL,string functions and operators,Core functions,aBuiltinFunc,"FUNCTION(regexp_split_to_array, 2, 0, 0, regexpSplitToArrayFunc)","Splits string using a POSIX regular expression as the delimiter, producing an array of results; see Section 9.7.3 ."
+repeat,postgreSQL,string functions and operators,Core functions,aBuiltinFunc,"FUNCTION(repeat, 2, 0, 0, repeatFunc)",Repeats string the specified number of times.
+reverse,postgreSQL,string functions and operators,Core functions,aBuiltinFunc,"FUNCTION(reverse, 1, 0, 0, reverseFunc)",Reverses the order of the characters in the string.
+strpos,postgreSQL,string functions and operators,Core functions,aBuiltinFunc,"FUNCTION(strpos, 2, 0, 0, strposFunc)",
+to_ascii,postgreSQL,string functions and operators,Core functions,aBuiltinFunc,"FUNCTION(to_ascii, 1, 0, 0, toAsciiFunc)",
+to_hex,postgreSQL,string functions and operators,Core functions,aBuiltinFunc,"FUNCTION(to_hex, 1, 0, 0, toHexFunc)",Converts the number to its equivalent hexadecimal representation.
+century,duckdb,Date Part Functions,Date And Time functions,aDateTimeFuncs,"DFUNCTION(century, 1, 0, 0, centuryFunc)",Extract the century component from a date or timestamp
+monthname,duckdb,Date Functions,Date And Time functions,aDateTimeFuncs,"DFUNCTION(monthname, 1, 0, 0, monthnameFunc)",The (English) name of the month
+dayname,duckdb,Date Functions,Date And Time functions,aDateTimeFuncs,"DFUNCTION(dayname, 1, 0, 0, daynameFunc)",The (English) name of the weekday
+yearweek,duckdb,Date Part Functions,Date And Time functions,aDateTimeFuncs,"DFUNCTION(yearweek, 1, 0, 0, yearweekFunc)",Extract the yearweek component from a date or timestamp
+last_day,duckdb,Date Functions,Date And Time functions,aDateTimeFuncs,"DFUNCTION(last_day, 1, 0, 0, lastDayFunc)",Returns the last day of the month
+corr,postgreSQL,aggregate functions,Aggregate functions,aBuiltinFunc,"WAGGREGATE(corr, 2, 0, 0, corrStep, corrFinal, corrValue, corrInverse, 0)",Computes the correlation coefficient.
+covar_pop,postgreSQL,aggregate functions,Aggregate functions,aBuiltinFunc,"WAGGREGATE(covar_pop, 2, 0, 0, covarPopStep, covarPopFinal, covarPopValue, covarPopInverse, 0)",Computes the population covariance.
+translate,postgreSQL,string functions and operators,Core functions,aBuiltinFunc,"FUNCTION(translate, 3, 0, 0, translateFunc)","Replaces each character in string that matches a character in the from set with the corresponding character in the to set. If from is longer than to , occurrences of the extra characters in from are deleted."
+starts_with,duckdb,Text Functions,Core functions,aBuiltinFunc,"FUNCTION(starts_with, 2, 0, 0, startsWithFunc)",Returns true if string begins with search_string
+ends_with,duckdb,Text Functions,Core functions,aBuiltinFunc,"FUNCTION(ends_with, 2, 0, 0, endsWithFunc)","Description Returns true if string ends with search_string . Note that collations are not supported. Example ends_with('abc', 'bc') Result true Alias suffix"
+ord,duckdb,Text Functions,Core functions,aBuiltinFunc,"FUNCTION(ord, 1, 0, 0, ordFunc)",Returns the unicode codepoint of the first character of the string
+bool_and,postgreSQL,aggregate functions,Aggregate functions,aBuiltinFunc,"WAGGREGATE(bool_and, 1, 0, 0, boolAndStep, boolAndFinal, boolAndValue, boolAndInverse, 0)","Returns true if all non-null input values are true, otherwise false."
+bool_or,postgreSQL,aggregate functions,Aggregate functions,aBuiltinFunc,"WAGGREGATE(bool_or, 1, 0, 0, boolOrStep, boolOrFinal, boolOrValue, boolOrInverse, 0)","Returns true if any non-null input value is true, otherwise false."
+row_to_json,postgreSQL,json functions and operators,Core functions,aBuiltinFunc,"FUNCTION(row_to_json, 2, 0, 0, rowToJsonFunc)",Converts an SQL composite value to a JSON object. The behavior is the same as to_json except that line feeds will be added between top-level elements if the optional boolean parameter is true.

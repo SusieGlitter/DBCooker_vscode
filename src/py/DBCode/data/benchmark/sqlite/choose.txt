@@ -1,0 +1,240 @@
+函数名
+源数据库
+注册位置
+使用宏
+函数类型
+测例
+输出
+-
+gcd
+duckdb
+aBuiltinFunc
+MFUNCTION(gcd, 2, 0, gcdFunc)
+Core functions
+SELECT gcd(8, 12);
+4
+-
+lcm
+duckdb
+aBuiltinFunc
+MFUNCTION(lcm, 2, 0, lcmFunc)
+Core functions
+SELECT lcm(8, 12);
+24
+-
+even
+duckdb
+aBuiltinFunc
+MFUNCTION(even, 1, 0, evenFunc)
+Core functions
+SELECT even(2.6);
+4
+-
+gamma
+duckdb
+aBuiltinFunc
+MFUNCTION(gamma, 1, 0, gammaFunc)
+Core functions
+SELECT gamma(5.5);
+52.34277778455352
+-
+lgamma
+duckdb
+aBuiltinFunc
+MFUNCTION(lgamma, 1, 0, lgammaFunc)
+Core functions
+SELECT lgamma(2);
+0
+-
+nextafter
+duckdb
+aBuiltinFunc
+MFUNCTION(nextafter, 2, 0, nextafterFunc)
+Core functions
+SELECT nextafter(1.0, 2.0);
+1.0000001
+-
+left
+postgreSQL
+aBuiltinFunc
+FUNCTION(left, 2, 0, 0, leftFunc)
+Core functions
+SELECT left('abcdef', 2);
+ab
+-
+right
+postgreSQL
+aBuiltinFunc
+FUNCTION(right, 2, 0, 0, rightFunc)
+Core functions
+SELECT right('abcdef', 2);
+ef
+-
+lpad
+postgreSQL
+aBuiltinFunc
+FUNCTION(lpad, 3, 0, 0, lpadFunc)
+Core functions
+SELECT lpad('cs', 5, 'xy');
+xyxcs
+-
+rpad
+postgreSQL
+aBuiltinFunc
+FUNCTION(rpad, 3, 0, 0, rpadFunc)
+Core functions
+SELECT rpad('cs', 5, 'xy');
+csxyx
+-
+regexp_split_to_array
+postgreSQL
+aBuiltinFunc
+FUNCTION(regexp_split_to_array, 2, 0, 0, regexpSplitToArrayFunc)
+Core functions
+SELECT regexp_split_to_array('a,b,c', ',');
+{a,b,c}
+-
+repeat
+postgreSQL
+aBuiltinFunc
+FUNCTION(repeat, 2, 0, 0, repeatFunc)
+Core functions
+SELECT repeat('abc', 3);
+abcabcabc
+-
+reverse
+postgreSQL
+aBuiltinFunc
+FUNCTION(reverse, 1, 0, 0, reverseFunc)
+Core functions
+SELECT reverse('abcdef');
+fedcba
+-
+strpos
+postgreSQL
+aBuiltinFunc
+FUNCTION(strpos, 2, 0, 0, strposFunc)
+Core functions
+SELECT strpos('abcdef', 'cd');
+3
+-
+to_ascii
+postgreSQL
+aBuiltinFunc
+FUNCTION(to_ascii, 1, 0, 0, toAsciiFunc)
+Core functions
+SELECT to_ascii('xyz');
+120
+-
+to_hex
+postgreSQL
+aBuiltinFunc
+FUNCTION(to_hex, 1, 0, 0, toHexFunc)
+Core functions
+SELECT to_hex(2147483647);
+7fffffff
+-
+century
+duckdb
+aDateTimeFuncs
+DFUNCTION(century, 1, 0, 0, centuryFunc)
+Date And Time functions
+SELECT century('2025-01-01');
+21
+-
+monthname
+duckdb
+aDateTimeFuncs
+DFUNCTION(monthname, 1, 0, 0, monthnameFunc)
+Date And Time functions
+SELECT monthname('2025-01-01');
+January
+-
+dayname
+duckdb
+aDateTimeFuncs
+DFUNCTION(dayname, 1, 0, 0, daynameFunc)
+Date And Time functions
+SELECT dayname('2025-01-01');
+Wednesday
+-
+yearweek
+duckdb
+aDateTimeFuncs
+DFUNCTION(yearweek, 1, 0, 0, yearweekFunc)
+Date And Time functions
+SELECT yearweek('2025-02-05');
+202506
+-
+last_day
+duckdb
+aDateTimeFuncs
+DFUNCTION(last_day, 1, 0, 0, lastDayFunc)
+Date And Time functions
+SELECT last_day('2024-02-01');
+2024-02-29
+-
+corr
+postgreSQL
+aBuiltinFunc
+WAGGREGATE(corr, 2, 0, 0, corrStep, corrFinal, corrValue, corrInverse, 0)
+Aggregate functions
+-
+covar_pop
+postgreSQL
+aBuiltinFunc
+WAGGREGATE(covar_pop, 2, 0, 0, covarPopStep, covarPopFinal, covarPopValue, covarPopInverse, 0)
+Aggregate functions
+-
+translate
+postgreSQL
+aBuiltinFunc
+FUNCTION(translate, 3, 0, 0, translateFunc)
+Core functions
+SELECT TRANSLATE('12345', '134', 'ax')
+a2x5
+-
+starts_with
+duckdb
+aBuiltinFunc
+FUNCTION(starts_with, 2, 0, 0, startsWithFunc)
+Core functions
+SELECT starts_with('abcdef', 'abc');
+true
+-
+ends_with
+duckdb
+aBuiltinFunc
+FUNCTION(ends_with, 2, 0, 0, endsWithFunc)
+Core functions
+SELECT ends_with('abcdef', 'cde');
+false
+-
+ord
+duckdb
+aBuiltinFunc
+FUNCTION(ord, 1, 0, 0, ordFunc)
+Core functions
+SELECT ord('A');
+65
+-
+bool_and
+postgreSQL
+aBuiltinFunc
+WAGGREGATE(bool_and, 1, 0, 0, boolAndStep, boolAndFinal, boolAndValue, boolAndInverse, 0)
+Aggregate functions
+-
+bool_or
+postgreSQL
+aBuiltinFunc
+WAGGREGATE(bool_or, 1, 0, 0, boolOrStep, boolOrFinal, boolOrValue, boolOrInverse, 0)
+Aggregate functions
+-
+row_to_json
+postgreSQL
+aBuiltinFunc
+FUNCTION(row_to_json, 2, 0, 0, rowToJsonFunc)
+Core functions
+SELECT row_to_json(1, 'a', 'b', 'c');
+{"id":1,"name":"a","age":"b","city":"c"}
+-

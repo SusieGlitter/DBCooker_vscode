@@ -1,0 +1,938 @@
+{
+    "implies_nonnull_row": {
+        "category": "aBuiltinFunc",
+        "impl_function": null,
+        "code": {},
+        "error": "no xFunc"
+    },
+    "expr_compare": {
+        "category": "aBuiltinFunc",
+        "impl_function": null,
+        "code": {},
+        "error": "no xFunc"
+    },
+    "expr_implies_expr": {
+        "category": "aBuiltinFunc",
+        "impl_function": null,
+        "code": {},
+        "error": "no xFunc"
+    },
+    "affinity": {
+        "category": "aBuiltinFunc",
+        "impl_function": null,
+        "code": {},
+        "error": "no xFunc"
+    },
+    "soundex": {
+        "category": "aBuiltinFunc",
+        "impl_function": null,
+        "code": {},
+        "error": "no xFunc"
+    },
+    "load_extension": {
+        "category": "aBuiltinFunc",
+        "impl_function": "loadExt",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/func.c:1820": "static void loadExt(sqlite3_context *context, int argc, sqlite3_value **argv){\n  const char *zFile = (const char *)sqlite3_value_text(argv[0]);\n  const char *zProc;\n  sqlite3 *db = sqlite3_context_db_handle(context);\n  char *zErrMsg = 0;\n\n  /* Disallow the load_extension() SQL function unless the SQLITE_LoadExtFunc\n  ** flag is set.  See the sqlite3_enable_load_extension() API.\n  */\n  if( (db->flags & SQLITE_LoadExtFunc)==0 ){\n    sqlite3_result_error(context, \"not authorized\", -1);\n    return;\n  }\n\n  if( argc==2 ){\n    zProc = (const char *)sqlite3_value_text(argv[1]);\n  }else{\n    zProc = 0;\n  }\n  if( zFile && sqlite3_load_extension(db, zFile, zProc, &zErrMsg) ){\n    sqlite3_result_error(context, zErrMsg, -1);\n    sqlite3_free(zErrMsg);\n  }\n}\n"
+        }
+    },
+    "sqlite_compileoption_used": {
+        "category": "aBuiltinFunc",
+        "impl_function": "compileoptionusedFunc",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/func.c:1042": "static void compileoptionusedFunc(\n  sqlite3_context *context,\n  int argc,\n  sqlite3_value **argv\n){\n  const char *zOptName;\n  assert( argc==1 );\n  UNUSED_PARAMETER(argc);\n  /* IMP: R-39564-36305 The sqlite_compileoption_used() SQL\n  ** function is a wrapper around the sqlite3_compileoption_used() C/C++\n  ** function.\n  */\n  if( (zOptName = (const char*)sqlite3_value_text(argv[0]))!=0 ){\n    sqlite3_result_int(context, sqlite3_compileoption_used(zOptName));\n  }\n}\n"
+        }
+    },
+    "sqlite_compileoption_get": {
+        "category": "aBuiltinFunc",
+        "impl_function": "compileoptiongetFunc",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/func.c:1066": "static void compileoptiongetFunc(\n  sqlite3_context *context,\n  int argc,\n  sqlite3_value **argv\n){\n  int n;\n  assert( argc==1 );\n  UNUSED_PARAMETER(argc);\n  /* IMP: R-04922-24076 The sqlite_compileoption_get() SQL function\n  ** is a wrapper around the sqlite3_compileoption_get() C/C++ function.\n  */\n  n = sqlite3_value_int(argv[0]);\n  sqlite3_result_text(context, sqlite3_compileoption_get(n), -1, SQLITE_STATIC);\n}\n"
+        }
+    },
+    "unlikely": {
+        "category": "aBuiltinFunc",
+        "impl_function": null,
+        "code": {},
+        "error": "no xFunc"
+    },
+    "likelihood": {
+        "category": "aBuiltinFunc",
+        "impl_function": null,
+        "code": {},
+        "error": "no xFunc"
+    },
+    "likely": {
+        "category": "aBuiltinFunc",
+        "impl_function": null,
+        "code": {},
+        "error": "no xFunc"
+    },
+    "sqlite_offset": {
+        "category": "aBuiltinFunc",
+        "impl_function": null,
+        "code": {},
+        "error": "no xFunc"
+    },
+    "ltrim": {
+        "category": "aBuiltinFunc",
+        "impl_function": "trimFunc",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/func.c:1576": "static void trimFunc(\n  sqlite3_context *context,\n  int argc,\n  sqlite3_value **argv\n){\n  const unsigned char *zIn;         /* Input string */\n  const unsigned char *zCharSet;    /* Set of characters to trim */\n  unsigned int nIn;                 /* Number of bytes in input */\n  int flags;                        /* 1: trimleft  2: trimright  3: trim */\n  int i;                            /* Loop counter */\n  unsigned int *aLen = 0;           /* Length of each character in zCharSet */\n  unsigned char **azChar = 0;       /* Individual characters in zCharSet */\n  int nChar;                        /* Number of characters in zCharSet */\n\n  if( sqlite3_value_type(argv[0])==SQLITE_NULL ){\n    return;\n  }\n  zIn = sqlite3_value_text(argv[0]);\n  if( zIn==0 ) return;\n  nIn = (unsigned)sqlite3_value_bytes(argv[0]);\n  assert( zIn==sqlite3_value_text(argv[0]) );\n  if( argc==1 ){\n    static const unsigned lenOne[] = { 1 };\n    static unsigned char * const azOne[] = { (u8*)\" \" };\n    nChar = 1;\n    aLen = (unsigned*)lenOne;\n    azChar = (unsigned char **)azOne;\n    zCharSet = 0;\n  }else if( (zCharSet = sqlite3_value_text(argv[1]))==0 ){\n    return;\n  }else{\n    const unsigned char *z;\n    for(z=zCharSet, nChar=0; *z; nChar++){\n      SQLITE_SKIP_UTF8(z);\n    }\n    if( nChar>0 ){\n      azChar = contextMalloc(context,\n                     ((i64)nChar)*(sizeof(char*)+sizeof(unsigned)));\n      if( azChar==0 ){\n        return;\n      }\n      aLen = (unsigned*)&azChar[nChar];\n      for(z=zCharSet, nChar=0; *z; nChar++){\n        azChar[nChar] = (unsigned char *)z;\n        SQLITE_SKIP_UTF8(z);\n        aLen[nChar] = (unsigned)(z - azChar[nChar]);\n      }\n    }\n  }\n  if( nChar>0 ){\n    flags = SQLITE_PTR_TO_INT(sqlite3_user_data(context));\n    if( flags & 1 ){\n      while( nIn>0 ){\n        unsigned int len = 0;\n        for(i=0; i<nChar; i++){\n          len = aLen[i];\n          if( len<=nIn && memcmp(zIn, azChar[i], len)==0 ) break;\n        }\n        if( i>=nChar ) break;\n        zIn += len;\n        nIn -= len;\n      }\n    }\n    if( flags & 2 ){\n      while( nIn>0 ){\n        unsigned int len = 0;\n        for(i=0; i<nChar; i++){\n          len = aLen[i];\n          if( len<=nIn && memcmp(&zIn[nIn-len],azChar[i],len)==0 ) break;\n        }\n        if( i>=nChar ) break;\n        nIn -= len;\n      }\n    }\n    if( zCharSet ){\n      sqlite3_free(azChar);\n    }\n  }\n  sqlite3_result_text(context, (char*)zIn, nIn, SQLITE_TRANSIENT);\n}\n"
+        }
+    },
+    "rtrim": {
+        "category": "aBuiltinFunc",
+        "impl_function": "trimFunc",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/func.c:1576": "static void trimFunc(\n  sqlite3_context *context,\n  int argc,\n  sqlite3_value **argv\n){\n  const unsigned char *zIn;         /* Input string */\n  const unsigned char *zCharSet;    /* Set of characters to trim */\n  unsigned int nIn;                 /* Number of bytes in input */\n  int flags;                        /* 1: trimleft  2: trimright  3: trim */\n  int i;                            /* Loop counter */\n  unsigned int *aLen = 0;           /* Length of each character in zCharSet */\n  unsigned char **azChar = 0;       /* Individual characters in zCharSet */\n  int nChar;                        /* Number of characters in zCharSet */\n\n  if( sqlite3_value_type(argv[0])==SQLITE_NULL ){\n    return;\n  }\n  zIn = sqlite3_value_text(argv[0]);\n  if( zIn==0 ) return;\n  nIn = (unsigned)sqlite3_value_bytes(argv[0]);\n  assert( zIn==sqlite3_value_text(argv[0]) );\n  if( argc==1 ){\n    static const unsigned lenOne[] = { 1 };\n    static unsigned char * const azOne[] = { (u8*)\" \" };\n    nChar = 1;\n    aLen = (unsigned*)lenOne;\n    azChar = (unsigned char **)azOne;\n    zCharSet = 0;\n  }else if( (zCharSet = sqlite3_value_text(argv[1]))==0 ){\n    return;\n  }else{\n    const unsigned char *z;\n    for(z=zCharSet, nChar=0; *z; nChar++){\n      SQLITE_SKIP_UTF8(z);\n    }\n    if( nChar>0 ){\n      azChar = contextMalloc(context,\n                     ((i64)nChar)*(sizeof(char*)+sizeof(unsigned)));\n      if( azChar==0 ){\n        return;\n      }\n      aLen = (unsigned*)&azChar[nChar];\n      for(z=zCharSet, nChar=0; *z; nChar++){\n        azChar[nChar] = (unsigned char *)z;\n        SQLITE_SKIP_UTF8(z);\n        aLen[nChar] = (unsigned)(z - azChar[nChar]);\n      }\n    }\n  }\n  if( nChar>0 ){\n    flags = SQLITE_PTR_TO_INT(sqlite3_user_data(context));\n    if( flags & 1 ){\n      while( nIn>0 ){\n        unsigned int len = 0;\n        for(i=0; i<nChar; i++){\n          len = aLen[i];\n          if( len<=nIn && memcmp(zIn, azChar[i], len)==0 ) break;\n        }\n        if( i>=nChar ) break;\n        zIn += len;\n        nIn -= len;\n      }\n    }\n    if( flags & 2 ){\n      while( nIn>0 ){\n        unsigned int len = 0;\n        for(i=0; i<nChar; i++){\n          len = aLen[i];\n          if( len<=nIn && memcmp(&zIn[nIn-len],azChar[i],len)==0 ) break;\n        }\n        if( i>=nChar ) break;\n        nIn -= len;\n      }\n    }\n    if( zCharSet ){\n      sqlite3_free(azChar);\n    }\n  }\n  sqlite3_result_text(context, (char*)zIn, nIn, SQLITE_TRANSIENT);\n}\n"
+        }
+    },
+    "trim": {
+        "category": "aBuiltinFunc",
+        "impl_function": "trimFunc",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/func.c:1576": "static void trimFunc(\n  sqlite3_context *context,\n  int argc,\n  sqlite3_value **argv\n){\n  const unsigned char *zIn;         /* Input string */\n  const unsigned char *zCharSet;    /* Set of characters to trim */\n  unsigned int nIn;                 /* Number of bytes in input */\n  int flags;                        /* 1: trimleft  2: trimright  3: trim */\n  int i;                            /* Loop counter */\n  unsigned int *aLen = 0;           /* Length of each character in zCharSet */\n  unsigned char **azChar = 0;       /* Individual characters in zCharSet */\n  int nChar;                        /* Number of characters in zCharSet */\n\n  if( sqlite3_value_type(argv[0])==SQLITE_NULL ){\n    return;\n  }\n  zIn = sqlite3_value_text(argv[0]);\n  if( zIn==0 ) return;\n  nIn = (unsigned)sqlite3_value_bytes(argv[0]);\n  assert( zIn==sqlite3_value_text(argv[0]) );\n  if( argc==1 ){\n    static const unsigned lenOne[] = { 1 };\n    static unsigned char * const azOne[] = { (u8*)\" \" };\n    nChar = 1;\n    aLen = (unsigned*)lenOne;\n    azChar = (unsigned char **)azOne;\n    zCharSet = 0;\n  }else if( (zCharSet = sqlite3_value_text(argv[1]))==0 ){\n    return;\n  }else{\n    const unsigned char *z;\n    for(z=zCharSet, nChar=0; *z; nChar++){\n      SQLITE_SKIP_UTF8(z);\n    }\n    if( nChar>0 ){\n      azChar = contextMalloc(context,\n                     ((i64)nChar)*(sizeof(char*)+sizeof(unsigned)));\n      if( azChar==0 ){\n        return;\n      }\n      aLen = (unsigned*)&azChar[nChar];\n      for(z=zCharSet, nChar=0; *z; nChar++){\n        azChar[nChar] = (unsigned char *)z;\n        SQLITE_SKIP_UTF8(z);\n        aLen[nChar] = (unsigned)(z - azChar[nChar]);\n      }\n    }\n  }\n  if( nChar>0 ){\n    flags = SQLITE_PTR_TO_INT(sqlite3_user_data(context));\n    if( flags & 1 ){\n      while( nIn>0 ){\n        unsigned int len = 0;\n        for(i=0; i<nChar; i++){\n          len = aLen[i];\n          if( len<=nIn && memcmp(zIn, azChar[i], len)==0 ) break;\n        }\n        if( i>=nChar ) break;\n        zIn += len;\n        nIn -= len;\n      }\n    }\n    if( flags & 2 ){\n      while( nIn>0 ){\n        unsigned int len = 0;\n        for(i=0; i<nChar; i++){\n          len = aLen[i];\n          if( len<=nIn && memcmp(&zIn[nIn-len],azChar[i],len)==0 ) break;\n        }\n        if( i>=nChar ) break;\n        nIn -= len;\n      }\n    }\n    if( zCharSet ){\n      sqlite3_free(azChar);\n    }\n  }\n  sqlite3_result_text(context, (char*)zIn, nIn, SQLITE_TRANSIENT);\n}\n"
+        }
+    },
+    "min": {
+        "category": "aBuiltinFunc",
+        "impl_function": null,
+        "code": {},
+        "error": "no xFunc"
+    },
+    "max": {
+        "category": "aBuiltinFunc",
+        "impl_function": null,
+        "code": {},
+        "error": "no xFunc"
+    },
+    "typeof": {
+        "category": "aBuiltinFunc",
+        "impl_function": "typeofFunc",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/func.c:79": "static void typeofFunc(\n  sqlite3_context *context,\n  int NotUsed,\n  sqlite3_value **argv\n){\n  static const char *azType[] = { \"integer\", \"real\", \"text\", \"blob\", \"null\" };\n  int i = sqlite3_value_type(argv[0]) - 1;\n  UNUSED_PARAMETER(NotUsed);\n  assert( i>=0 && i<ArraySize(azType) );\n  assert( SQLITE_INTEGER==1 );\n  assert( SQLITE_FLOAT==2 );\n  assert( SQLITE_TEXT==3 );\n  assert( SQLITE_BLOB==4 );\n  assert( SQLITE_NULL==5 );\n  /* EVIDENCE-OF: R-01470-60482 The sqlite3_value_type(V) interface returns\n  ** the datatype code for the initial datatype of the sqlite3_value object\n  ** V. The returned value is one of SQLITE_INTEGER, SQLITE_FLOAT,\n  ** SQLITE_TEXT, SQLITE_BLOB, or SQLITE_NULL. */\n  sqlite3_result_text(context, azType[i], -1, SQLITE_STATIC);\n}\n"
+        }
+    },
+    "subtype": {
+        "category": "aBuiltinFunc",
+        "impl_function": "subtypeFunc",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/func.c:104": "static void subtypeFunc(\n  sqlite3_context *context,\n  int argc,\n  sqlite3_value **argv\n){\n  UNUSED_PARAMETER(argc);\n  sqlite3_result_int(context, sqlite3_value_subtype(argv[0]));\n}\n"
+        }
+    },
+    "length": {
+        "category": "aBuiltinFunc",
+        "impl_function": "lengthFunc",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/func.c:116": "static void lengthFunc(\n  sqlite3_context *context,\n  int argc,\n  sqlite3_value **argv\n){\n  assert( argc==1 );\n  UNUSED_PARAMETER(argc);\n  switch( sqlite3_value_type(argv[0]) ){\n    case SQLITE_BLOB:\n    case SQLITE_INTEGER:\n    case SQLITE_FLOAT: {\n      sqlite3_result_int(context, sqlite3_value_bytes(argv[0]));\n      break;\n    }\n    case SQLITE_TEXT: {\n      const unsigned char *z = sqlite3_value_text(argv[0]);\n      const unsigned char *z0;\n      unsigned char c;\n      if( z==0 ) return;\n      z0 = z;\n      while( (c = *z)!=0 ){\n        z++;\n        if( c>=0xc0 ){\n          while( (*z & 0xc0)==0x80 ){ z++; z0++; }\n        }\n      }\n      sqlite3_result_int(context, (int)(z-z0));\n      break;\n    }\n    default: {\n      sqlite3_result_null(context);\n      break;\n    }\n  }\n}\n"
+        }
+    },
+    "octet_length": {
+        "category": "aBuiltinFunc",
+        "impl_function": "bytelengthFunc",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/func.c:155": "static void bytelengthFunc(\n  sqlite3_context *context,\n  int argc,\n  sqlite3_value **argv\n){\n  assert( argc==1 );\n  UNUSED_PARAMETER(argc);\n  switch( sqlite3_value_type(argv[0]) ){\n    case SQLITE_BLOB: {\n      sqlite3_result_int(context, sqlite3_value_bytes(argv[0]));\n      break;\n    }\n    case SQLITE_INTEGER:\n    case SQLITE_FLOAT: {\n      i64 m = sqlite3_context_db_handle(context)->enc<=SQLITE_UTF8 ? 1 : 2;\n      sqlite3_result_int64(context, sqlite3_value_bytes(argv[0])*m);\n      break;\n    }\n    case SQLITE_TEXT: {\n      if( sqlite3_value_encoding(argv[0])<=SQLITE_UTF8 ){\n        sqlite3_result_int(context, sqlite3_value_bytes(argv[0]));\n      }else{\n        sqlite3_result_int(context, sqlite3_value_bytes16(argv[0]));\n      }\n      break;\n    }\n    default: {\n      sqlite3_result_null(context);\n      break;\n    }\n  }\n}\n"
+        }
+    },
+    "instr": {
+        "category": "aBuiltinFunc",
+        "impl_function": "instrFunc",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/func.c:243": "static void instrFunc(\n  sqlite3_context *context,\n  int argc,\n  sqlite3_value **argv\n){\n  const unsigned char *zHaystack;\n  const unsigned char *zNeedle;\n  int nHaystack;\n  int nNeedle;\n  int typeHaystack, typeNeedle;\n  int N = 1;\n  int isText;\n  unsigned char firstChar;\n  sqlite3_value *pC1 = 0;\n  sqlite3_value *pC2 = 0;\n\n  UNUSED_PARAMETER(argc);\n  typeHaystack = sqlite3_value_type(argv[0]);\n  typeNeedle = sqlite3_value_type(argv[1]);\n  if( typeHaystack==SQLITE_NULL || typeNeedle==SQLITE_NULL ) return;\n  nHaystack = sqlite3_value_bytes(argv[0]);\n  nNeedle = sqlite3_value_bytes(argv[1]);\n  if( nNeedle>0 ){\n    if( typeHaystack==SQLITE_BLOB && typeNeedle==SQLITE_BLOB ){\n      zHaystack = sqlite3_value_blob(argv[0]);\n      zNeedle = sqlite3_value_blob(argv[1]);\n      isText = 0;\n    }else if( typeHaystack!=SQLITE_BLOB && typeNeedle!=SQLITE_BLOB ){\n      zHaystack = sqlite3_value_text(argv[0]);\n      zNeedle = sqlite3_value_text(argv[1]);\n      isText = 1;\n    }else{\n      pC1 = sqlite3_value_dup(argv[0]);\n      zHaystack = sqlite3_value_text(pC1);\n      if( zHaystack==0 ) goto endInstrOOM;\n      nHaystack = sqlite3_value_bytes(pC1);\n      pC2 = sqlite3_value_dup(argv[1]);\n      zNeedle = sqlite3_value_text(pC2);\n      if( zNeedle==0 ) goto endInstrOOM;\n      nNeedle = sqlite3_value_bytes(pC2);\n      isText = 1;\n    }\n    if( zNeedle==0 || (nHaystack && zHaystack==0) ) goto endInstrOOM;\n    firstChar = zNeedle[0];\n    while( nNeedle<=nHaystack\n       && (zHaystack[0]!=firstChar || memcmp(zHaystack, zNeedle, nNeedle)!=0)\n    ){\n      N++;\n      do{\n        nHaystack--;\n        zHaystack++;\n      }while( isText && (zHaystack[0]&0xc0)==0x80 );\n    }\n    if( nNeedle>nHaystack ) N = 0;\n  }\n  sqlite3_result_int(context, N);\nendInstr:\n  sqlite3_value_free(pC1);\n  sqlite3_value_free(pC2);\n  return;\nendInstrOOM:\n  sqlite3_result_error_nomem(context);\n  goto endInstr;\n}\n"
+        }
+    },
+    "printf": {
+        "category": "aBuiltinFunc",
+        "impl_function": "printfFunc",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/func.c:311": "static void printfFunc(\n  sqlite3_context *context,\n  int argc,\n  sqlite3_value **argv\n){\n  PrintfArguments x;\n  StrAccum str;\n  const char *zFormat;\n  int n;\n  sqlite3 *db = sqlite3_context_db_handle(context);\n\n  if( argc>=1 && (zFormat = (const char*)sqlite3_value_text(argv[0]))!=0 ){\n    x.nArg = argc-1;\n    x.nUsed = 0;\n    x.apArg = argv+1;\n    sqlite3StrAccumInit(&str, db, 0, 0, db->aLimit[SQLITE_LIMIT_LENGTH]);\n    str.printfFlags = SQLITE_PRINTF_SQLFUNC;\n    sqlite3_str_appendf(&str, zFormat, &x);\n    n = str.nChar;\n    sqlite3_result_text(context, sqlite3StrAccumFinish(&str), n,\n                        SQLITE_DYNAMIC);\n  }\n}\n"
+        }
+    },
+    "format": {
+        "category": "aBuiltinFunc",
+        "impl_function": "printfFunc",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/func.c:311": "static void printfFunc(\n  sqlite3_context *context,\n  int argc,\n  sqlite3_value **argv\n){\n  PrintfArguments x;\n  StrAccum str;\n  const char *zFormat;\n  int n;\n  sqlite3 *db = sqlite3_context_db_handle(context);\n\n  if( argc>=1 && (zFormat = (const char*)sqlite3_value_text(argv[0]))!=0 ){\n    x.nArg = argc-1;\n    x.nUsed = 0;\n    x.apArg = argv+1;\n    sqlite3StrAccumInit(&str, db, 0, 0, db->aLimit[SQLITE_LIMIT_LENGTH]);\n    str.printfFlags = SQLITE_PRINTF_SQLFUNC;\n    sqlite3_str_appendf(&str, zFormat, &x);\n    n = str.nChar;\n    sqlite3_result_text(context, sqlite3StrAccumFinish(&str), n,\n                        SQLITE_DYNAMIC);\n  }\n}\n"
+        }
+    },
+    "unicode": {
+        "category": "aBuiltinFunc",
+        "impl_function": "unicodeFunc",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/func.c:1284": "static void unicodeFunc(\n  sqlite3_context *context,\n  int argc,\n  sqlite3_value **argv\n){\n  const unsigned char *z = sqlite3_value_text(argv[0]);\n  (void)argc;\n  if( z && z[0] ) sqlite3_result_int(context, sqlite3Utf8Read(&z));\n}\n"
+        }
+    },
+    "char": {
+        "category": "aBuiltinFunc",
+        "impl_function": "charFunc",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/func.c:1299": "static void charFunc(\n  sqlite3_context *context,\n  int argc,\n  sqlite3_value **argv\n){\n  unsigned char *z, *zOut;\n  int i;\n  zOut = z = sqlite3_malloc64( argc*4+1 );\n  if( z==0 ){\n    sqlite3_result_error_nomem(context);\n    return;\n  }\n  for(i=0; i<argc; i++){\n    sqlite3_int64 x;\n    unsigned c;\n    x = sqlite3_value_int64(argv[i]);\n    if( x<0 || x>0x10ffff ) x = 0xfffd;\n    c = (unsigned)(x & 0x1fffff);\n    if( c<0x00080 ){\n      *zOut++ = (u8)(c&0xFF);\n    }else if( c<0x00800 ){\n      *zOut++ = 0xC0 + (u8)((c>>6)&0x1F);\n      *zOut++ = 0x80 + (u8)(c & 0x3F);\n    }else if( c<0x10000 ){\n      *zOut++ = 0xE0 + (u8)((c>>12)&0x0F);\n      *zOut++ = 0x80 + (u8)((c>>6) & 0x3F);\n      *zOut++ = 0x80 + (u8)(c & 0x3F);\n    }else{\n      *zOut++ = 0xF0 + (u8)((c>>18) & 0x07);\n      *zOut++ = 0x80 + (u8)((c>>12) & 0x3F);\n      *zOut++ = 0x80 + (u8)((c>>6) & 0x3F);\n      *zOut++ = 0x80 + (u8)(c & 0x3F);\n    }                                                    \\\n  }\n  *zOut = 0;\n  sqlite3_result_text64(context, (char*)z, zOut-z, sqlite3_free, SQLITE_UTF8);\n}\n"
+        }
+    },
+    "abs": {
+        "category": "aBuiltinFunc",
+        "impl_function": "absFunc",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/func.c:194": "static void absFunc(sqlite3_context *context, int argc, sqlite3_value **argv){\n  assert( argc==1 );\n  UNUSED_PARAMETER(argc);\n  switch( sqlite3_value_type(argv[0]) ){\n    case SQLITE_INTEGER: {\n      i64 iVal = sqlite3_value_int64(argv[0]);\n      if( iVal<0 ){\n        if( iVal==SMALLEST_INT64 ){\n          /* IMP: R-31676-45509 If X is the integer -9223372036854775808\n          ** then abs(X) throws an integer overflow error since there is no\n          ** equivalent positive 64-bit two complement value. */\n          sqlite3_result_error(context, \"integer overflow\", -1);\n          return;\n        }\n        iVal = -iVal;\n      }\n      sqlite3_result_int64(context, iVal);\n      break;\n    }\n    case SQLITE_NULL: {\n      /* IMP: R-37434-19929 Abs(X) returns NULL if X is NULL. */\n      sqlite3_result_null(context);\n      break;\n    }\n    default: {\n      /* Because sqlite3_value_double() returns 0.0 if the argument is not\n      ** something that can be converted into a number, we have:\n      ** IMP: R-01992-00519 Abs(X) returns 0.0 if X is a string or blob\n      ** that cannot be converted to a numeric value.\n      */\n      double rVal = sqlite3_value_double(argv[0]);\n      if( rVal<0 ) rVal = -rVal;\n      sqlite3_result_double(context, rVal);\n      break;\n    }\n  }\n}\n"
+        }
+    },
+    "fpdecode": {
+        "category": "aBuiltinFunc",
+        "impl_function": null,
+        "code": {},
+        "error": "no xFunc"
+    },
+    "parseuri": {
+        "category": "aBuiltinFunc",
+        "impl_function": null,
+        "code": {},
+        "error": "no xFunc"
+    },
+    "round": {
+        "category": "aBuiltinFunc",
+        "impl_function": "roundFunc",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/func.c:442": "static void roundFunc(sqlite3_context *context, int argc, sqlite3_value **argv){\n  i64 n = 0;\n  double r;\n  char *zBuf;\n  assert( argc==1 || argc==2 );\n  if( argc==2 ){\n    if( SQLITE_NULL==sqlite3_value_type(argv[1]) ) return;\n    n = sqlite3_value_int64(argv[1]);\n    if( n>30 ) n = 30;\n    if( n<0 ) n = 0;\n  }\n  if( sqlite3_value_type(argv[0])==SQLITE_NULL ) return;\n  r = sqlite3_value_double(argv[0]);\n  /* If Y==0 and X will fit in a 64-bit int,\n  ** handle the rounding directly,\n  ** otherwise use printf.\n  */\n  if( r<-4503599627370496.0 || r>+4503599627370496.0 ){\n    /* The value has no fractional part so there is nothing to round */\n  }else if( n==0 ){ \n    r = (double)((sqlite_int64)(r+(r<0?-0.5:+0.5)));\n  }else{\n    zBuf = sqlite3_mprintf(\"%!.*f\",(int)n,r);\n    if( zBuf==0 ){\n      sqlite3_result_error_nomem(context);\n      return;\n    }\n    sqlite3AtoF(zBuf, &r, sqlite3Strlen30(zBuf), SQLITE_UTF8);\n    sqlite3_free(zBuf);\n  }\n  sqlite3_result_double(context, r);\n}\n"
+        }
+    },
+    "upper": {
+        "category": "aBuiltinFunc",
+        "impl_function": "upperFunc",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/func.c:504": "static void upperFunc(sqlite3_context *context, int argc, sqlite3_value **argv){\n  char *z1;\n  const char *z2;\n  int i, n;\n  UNUSED_PARAMETER(argc);\n  z2 = (char*)sqlite3_value_text(argv[0]);\n  n = sqlite3_value_bytes(argv[0]);\n  /* Verify that the call to _bytes() does not invalidate the _text() pointer */\n  assert( z2==(char*)sqlite3_value_text(argv[0]) );\n  if( z2 ){\n    z1 = contextMalloc(context, ((i64)n)+1);\n    if( z1 ){\n      for(i=0; i<n; i++){\n        z1[i] = (char)sqlite3Toupper(z2[i]);\n      }\n      sqlite3_result_text(context, z1, n, sqlite3_free);\n    }\n  }\n}\n"
+        }
+    },
+    "lower": {
+        "category": "aBuiltinFunc",
+        "impl_function": "lowerFunc",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/func.c:523": "static void lowerFunc(sqlite3_context *context, int argc, sqlite3_value **argv){\n  char *z1;\n  const char *z2;\n  int i, n;\n  UNUSED_PARAMETER(argc);\n  z2 = (char*)sqlite3_value_text(argv[0]);\n  n = sqlite3_value_bytes(argv[0]);\n  /* Verify that the call to _bytes() does not invalidate the _text() pointer */\n  assert( z2==(char*)sqlite3_value_text(argv[0]) );\n  if( z2 ){\n    z1 = contextMalloc(context, ((i64)n)+1);\n    if( z1 ){\n      for(i=0; i<n; i++){\n        z1[i] = sqlite3Tolower(z2[i]);\n      }\n      sqlite3_result_text(context, z1, n, sqlite3_free);\n    }\n  }\n}\n"
+        }
+    },
+    "hex": {
+        "category": "aBuiltinFunc",
+        "impl_function": "hexFunc",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/func.c:1341": "static void hexFunc(\n  sqlite3_context *context,\n  int argc,\n  sqlite3_value **argv\n){\n  int i, n;\n  const unsigned char *pBlob;\n  char *zHex, *z;\n  assert( argc==1 );\n  UNUSED_PARAMETER(argc);\n  pBlob = sqlite3_value_blob(argv[0]);\n  n = sqlite3_value_bytes(argv[0]);\n  assert( pBlob==sqlite3_value_blob(argv[0]) );  /* No encoding change */\n  z = zHex = contextMalloc(context, ((i64)n)*2 + 1);\n  if( zHex ){\n    for(i=0; i<n; i++, pBlob++){\n      unsigned char c = *pBlob;\n      *(z++) = hexdigits[(c>>4)&0xf];\n      *(z++) = hexdigits[c&0xf];\n    }\n    *z = 0;\n    sqlite3_result_text64(context, zHex, (u64)(z-zHex),\n                          sqlite3_free, SQLITE_UTF8);\n  }\n}\n"
+        }
+    },
+    "unhex": {
+        "category": "aBuiltinFunc",
+        "impl_function": "unhexFunc",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/func.c:1403": "static void unhexFunc(\n  sqlite3_context *pCtx,\n  int argc,\n  sqlite3_value **argv\n){\n  const u8 *zPass = (const u8*)\"\";\n  int nPass = 0;\n  const u8 *zHex = sqlite3_value_text(argv[0]);\n  int nHex = sqlite3_value_bytes(argv[0]);\n#ifdef SQLITE_DEBUG\n  const u8 *zEnd = zHex ? &zHex[nHex] : 0;\n#endif\n  u8 *pBlob = 0;\n  u8 *p = 0;\n\n  assert( argc==1 || argc==2 );\n  if( argc==2 ){\n    zPass = sqlite3_value_text(argv[1]);\n    nPass = sqlite3_value_bytes(argv[1]);\n  }\n  if( !zHex || !zPass ) return;\n\n  p = pBlob = contextMalloc(pCtx, (nHex/2)+1);\n  if( pBlob ){\n    u8 c;                         /* Most significant digit of next byte */\n    u8 d;                         /* Least significant digit of next byte */\n\n    while( (c = *zHex)!=0x00 ){\n      while( !sqlite3Isxdigit(c) ){\n        u32 ch = Utf8Read(zHex);\n        assert( zHex<=zEnd );\n        if( !strContainsChar(zPass, nPass, ch) ) goto unhex_null;\n        c = *zHex;\n        if( c==0x00 ) goto unhex_done;\n      }\n      zHex++;\n      assert( *zEnd==0x00 );\n      assert( zHex<=zEnd );\n      d = *(zHex++);\n      if( !sqlite3Isxdigit(d) ) goto unhex_null;\n      *(p++) = (sqlite3HexToInt(c)<<4) | sqlite3HexToInt(d);\n    }\n  }\n\n unhex_done:\n  sqlite3_result_blob(pCtx, pBlob, (p - pBlob), sqlite3_free);\n  return;\n\n unhex_null:\n  sqlite3_free(pBlob);\n  return;\n}\n"
+        }
+    },
+    "concat": {
+        "category": "aBuiltinFunc",
+        "impl_function": "concatFunc",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/func.c:1706": "static void concatFunc(\n  sqlite3_context *context,\n  int argc,\n  sqlite3_value **argv\n){\n  concatFuncCore(context, argc, argv, 0, \"\");\n}\n"
+        }
+    },
+    "concat_ws": {
+        "category": "aBuiltinFunc",
+        "impl_function": "concatwsFunc",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/func.c:1721": "static void concatwsFunc(\n  sqlite3_context *context,\n  int argc,\n  sqlite3_value **argv\n){\n  int nSep = sqlite3_value_bytes(argv[0]);\n  const char *zSep = (const char*)sqlite3_value_text(argv[0]);\n  if( zSep==0 ) return;\n  concatFuncCore(context, argc-1, argv+1, nSep, zSep);\n}\n"
+        }
+    },
+    "ifnull": {
+        "category": "aBuiltinFunc",
+        "impl_function": null,
+        "code": {},
+        "error": "no xFunc"
+    },
+    "random": {
+        "category": "aBuiltinFunc",
+        "impl_function": "randomFunc",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/test/speedtest1.c:692": "static void randomFunc(\n  sqlite3_context *context,\n  int NotUsed,\n  sqlite3_value **NotUsed2\n){\n  sqlite3_result_int64(context, (sqlite3_int64)speedtest1_random());\n}\n"
+        }
+    },
+    "randomblob": {
+        "category": "aBuiltinFunc",
+        "impl_function": "randomBlob",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/func.c:582": "static void randomBlob(\n  sqlite3_context *context,\n  int argc,\n  sqlite3_value **argv\n){\n  sqlite3_int64 n;\n  unsigned char *p;\n  assert( argc==1 );\n  UNUSED_PARAMETER(argc);\n  n = sqlite3_value_int64(argv[0]);\n  if( n<1 ){\n    n = 1;\n  }\n  p = contextMalloc(context, n);\n  if( p ){\n    sqlite3_randomness(n, p);\n    sqlite3_result_blob(context, (char*)p, n, sqlite3_free);\n  }\n}\n"
+        }
+    },
+    "nullif": {
+        "category": "aBuiltinFunc",
+        "impl_function": "nullifFunc",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/func.c:978": "static void nullifFunc(\n  sqlite3_context *context,\n  int NotUsed,\n  sqlite3_value **argv\n){\n  CollSeq *pColl = sqlite3GetFuncCollSeq(context);\n  UNUSED_PARAMETER(NotUsed);\n  if( sqlite3MemCompare(argv[0], argv[1], pColl)!=0 ){\n    sqlite3_result_value(context, argv[0]);\n  }\n}\n"
+        }
+    },
+    "sqlite_version": {
+        "category": "aBuiltinFunc",
+        "impl_function": "versionFunc",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/func.c:994": "static void versionFunc(\n  sqlite3_context *context,\n  int NotUsed,\n  sqlite3_value **NotUsed2\n){\n  UNUSED_PARAMETER2(NotUsed, NotUsed2);\n  /* IMP: R-48699-48617 This function is an SQL wrapper around the\n  ** sqlite3_libversion() C-interface. */\n  sqlite3_result_text(context, sqlite3_libversion(), -1, SQLITE_STATIC);\n}\n"
+        }
+    },
+    "sqlite_source_id": {
+        "category": "aBuiltinFunc",
+        "impl_function": "sourceidFunc",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/func.c:1010": "static void sourceidFunc(\n  sqlite3_context *context,\n  int NotUsed,\n  sqlite3_value **NotUsed2\n){\n  UNUSED_PARAMETER2(NotUsed, NotUsed2);\n  /* IMP: R-24470-31136 This function is an SQL wrapper around the\n  ** sqlite3_sourceid() C interface. */\n  sqlite3_result_text(context, sqlite3_sourceid(), -1, SQLITE_STATIC);\n}\n"
+        }
+    },
+    "sqlite_log": {
+        "category": "aBuiltinFunc",
+        "impl_function": "errlogFunc",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/func.c:1026": "static void errlogFunc(\n  sqlite3_context *context,\n  int argc,\n  sqlite3_value **argv\n){\n  UNUSED_PARAMETER(argc);\n  UNUSED_PARAMETER(context);\n  sqlite3_log(sqlite3_value_int(argv[0]), \"%s\", sqlite3_value_text(argv[1]));\n}\n"
+        }
+    },
+    "unistr": {
+        "category": "aBuiltinFunc",
+        "impl_function": "unistrFunc",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/func.c:1181": "static void unistrFunc(\n  sqlite3_context *context,\n  int argc,\n  sqlite3_value **argv\n){\n  char *zOut;\n  const char *zIn;\n  int nIn;\n  int i, j, n;\n  u32 v;\n\n  assert( argc==1 );\n  UNUSED_PARAMETER( argc );\n  zIn = (const char*)sqlite3_value_text(argv[0]);\n  if( zIn==0 ) return;\n  nIn = sqlite3_value_bytes(argv[0]);\n  zOut = sqlite3_malloc64(nIn+1);\n  if( zOut==0 ){\n    sqlite3_result_error_nomem(context);\n    return;\n  }\n  i = j = 0;\n  while( i<nIn ){\n    char *z = strchr(&zIn[i],'\\\\');\n    if( z==0 ){\n      n = nIn - i;\n      memmove(&zOut[j], &zIn[i], n);\n      j += n;\n      break;\n    }\n    n = z - &zIn[i];\n    if( n>0 ){\n      memmove(&zOut[j], &zIn[i], n);\n      j += n;\n      i += n;\n    }\n    if( zIn[i+1]=='\\\\' ){\n      i += 2;\n      zOut[j++] = '\\\\';\n    }else if( sqlite3Isxdigit(zIn[i+1]) ){\n      if( !isNHex(&zIn[i+1], 4, &v) ) goto unistr_error;\n      i += 5;\n      j += sqlite3AppendOneUtf8Character(&zOut[j], v);\n    }else if( zIn[i+1]=='+' ){\n      if( !isNHex(&zIn[i+2], 6, &v) ) goto unistr_error;\n      i += 8;\n      j += sqlite3AppendOneUtf8Character(&zOut[j], v);\n    }else if( zIn[i+1]=='u' ){\n      if( !isNHex(&zIn[i+2], 4, &v) ) goto unistr_error;\n      i += 6;\n      j += sqlite3AppendOneUtf8Character(&zOut[j], v);\n    }else if( zIn[i+1]=='U' ){\n      if( !isNHex(&zIn[i+2], 8, &v) ) goto unistr_error;\n      i += 10;\n      j += sqlite3AppendOneUtf8Character(&zOut[j], v);\n    }else{\n      goto unistr_error;\n    }\n  }\n  zOut[j] = 0;\n  sqlite3_result_text64(context, zOut, j, sqlite3_free, SQLITE_UTF8);\n  return;\n\nunistr_error:\n  sqlite3_free(zOut);\n  sqlite3_result_error(context, \"invalid Unicode escape\", -1);\n  return;\n}\n"
+        }
+    },
+    "quote": {
+        "category": "aBuiltinFunc",
+        "impl_function": "quoteFunc",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/func.c:1265": "static void quoteFunc(sqlite3_context *context, int argc, sqlite3_value **argv){\n  sqlite3_str str;\n  sqlite3 *db = sqlite3_context_db_handle(context);\n  assert( argc==1 );\n  UNUSED_PARAMETER(argc);\n  sqlite3StrAccumInit(&str, db, 0, 0, db->aLimit[SQLITE_LIMIT_LENGTH]);\n  sqlite3QuoteValue(&str,argv[0],SQLITE_PTR_TO_INT(sqlite3_user_data(context)));\n  sqlite3_result_text(context, sqlite3StrAccumFinish(&str), str.nChar,\n                      SQLITE_DYNAMIC);\n  if( str.accError!=SQLITE_OK ){\n    sqlite3_result_null(context);\n    sqlite3_result_error_code(context, str.accError);\n  }\n}\n"
+        }
+    },
+    "unistr_quote": {
+        "category": "aBuiltinFunc",
+        "impl_function": "quoteFunc",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/func.c:1265": "static void quoteFunc(sqlite3_context *context, int argc, sqlite3_value **argv){\n  sqlite3_str str;\n  sqlite3 *db = sqlite3_context_db_handle(context);\n  assert( argc==1 );\n  UNUSED_PARAMETER(argc);\n  sqlite3StrAccumInit(&str, db, 0, 0, db->aLimit[SQLITE_LIMIT_LENGTH]);\n  sqlite3QuoteValue(&str,argv[0],SQLITE_PTR_TO_INT(sqlite3_user_data(context)));\n  sqlite3_result_text(context, sqlite3StrAccumFinish(&str), str.nChar,\n                      SQLITE_DYNAMIC);\n  if( str.accError!=SQLITE_OK ){\n    sqlite3_result_null(context);\n    sqlite3_result_error_code(context, str.accError);\n  }\n}\n"
+        }
+    },
+    "last_insert_rowid": {
+        "category": "aBuiltinFunc",
+        "impl_function": "last_insert_rowid",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/func.c:606": "static void last_insert_rowid(\n  sqlite3_context *context,\n  int NotUsed,\n  sqlite3_value **NotUsed2\n){\n  sqlite3 *db = sqlite3_context_db_handle(context);\n  UNUSED_PARAMETER2(NotUsed, NotUsed2);\n  /* IMP: R-51513-12026 The last_insert_rowid() SQL function is a\n  ** wrapper around the sqlite3_last_insert_rowid() C/C++ interface\n  ** function. */\n  sqlite3_result_int64(context, sqlite3_last_insert_rowid(db));\n}\n"
+        }
+    },
+    "changes": {
+        "category": "aBuiltinFunc",
+        "impl_function": "changes",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/func.c:626": "static void changes(\n  sqlite3_context *context,\n  int NotUsed,\n  sqlite3_value **NotUsed2\n){\n  sqlite3 *db = sqlite3_context_db_handle(context);\n  UNUSED_PARAMETER2(NotUsed, NotUsed2);\n  sqlite3_result_int64(context, sqlite3_changes64(db));\n}\n"
+        }
+    },
+    "total_changes": {
+        "category": "aBuiltinFunc",
+        "impl_function": "total_changes",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/func.c:640": "static void total_changes(\n  sqlite3_context *context,\n  int NotUsed,\n  sqlite3_value **NotUsed2\n){\n  sqlite3 *db = sqlite3_context_db_handle(context);\n  UNUSED_PARAMETER2(NotUsed, NotUsed2);\n  /* IMP: R-11217-42568 This function is a wrapper around the\n  ** sqlite3_total_changes64() C/C++ interface. */\n  sqlite3_result_int64(context, sqlite3_total_changes64(db));\n}\n"
+        }
+    },
+    "replace": {
+        "category": "aBuiltinFunc",
+        "impl_function": "replaceFunc",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/func.c:1483": "static void replaceFunc(\n  sqlite3_context *context,\n  int argc,\n  sqlite3_value **argv\n){\n  const unsigned char *zStr;        /* The input string A */\n  const unsigned char *zPattern;    /* The pattern string B */\n  const unsigned char *zRep;        /* The replacement string C */\n  unsigned char *zOut;              /* The output */\n  int nStr;                /* Size of zStr */\n  int nPattern;            /* Size of zPattern */\n  int nRep;                /* Size of zRep */\n  i64 nOut;                /* Maximum size of zOut */\n  int loopLimit;           /* Last zStr[] that might match zPattern[] */\n  int i, j;                /* Loop counters */\n  unsigned cntExpand;      /* Number zOut expansions */\n  sqlite3 *db = sqlite3_context_db_handle(context);\n\n  assert( argc==3 );\n  UNUSED_PARAMETER(argc);\n  zStr = sqlite3_value_text(argv[0]);\n  if( zStr==0 ) return;\n  nStr = sqlite3_value_bytes(argv[0]);\n  assert( zStr==sqlite3_value_text(argv[0]) );  /* No encoding change */\n  zPattern = sqlite3_value_text(argv[1]);\n  if( zPattern==0 ){\n    assert( sqlite3_value_type(argv[1])==SQLITE_NULL\n            || sqlite3_context_db_handle(context)->mallocFailed );\n    return;\n  }\n  if( zPattern[0]==0 ){\n    assert( sqlite3_value_type(argv[1])!=SQLITE_NULL );\n    sqlite3_result_text(context, (const char*)zStr, nStr, SQLITE_TRANSIENT);\n    return;\n  }\n  nPattern = sqlite3_value_bytes(argv[1]);\n  assert( zPattern==sqlite3_value_text(argv[1]) );  /* No encoding change */\n  zRep = sqlite3_value_text(argv[2]);\n  if( zRep==0 ) return;\n  nRep = sqlite3_value_bytes(argv[2]);\n  assert( zRep==sqlite3_value_text(argv[2]) );\n  nOut = nStr + 1;\n  assert( nOut<SQLITE_MAX_LENGTH );\n  zOut = contextMalloc(context, nOut);\n  if( zOut==0 ){\n    return;\n  }\n  loopLimit = nStr - nPattern; \n  cntExpand = 0;\n  for(i=j=0; i<=loopLimit; i++){\n    if( zStr[i]!=zPattern[0] || memcmp(&zStr[i], zPattern, nPattern) ){\n      zOut[j++] = zStr[i];\n    }else{\n      if( nRep>nPattern ){\n        nOut += nRep - nPattern;\n        testcase( nOut-1==db->aLimit[SQLITE_LIMIT_LENGTH] );\n        testcase( nOut-2==db->aLimit[SQLITE_LIMIT_LENGTH] );\n        if( nOut-1>db->aLimit[SQLITE_LIMIT_LENGTH] ){\n          sqlite3_result_error_toobig(context);\n          sqlite3_free(zOut);\n          return;\n        }\n        cntExpand++;\n        if( (cntExpand&(cntExpand-1))==0 ){\n          /* Grow the size of the output buffer only on substitutions\n          ** whose index is a power of two: 1, 2, 4, 8, 16, 32, ... */\n          u8 *zOld;\n          zOld = zOut;\n          zOut = sqlite3Realloc(zOut, (int)nOut + (nOut - nStr - 1));\n          if( zOut==0 ){\n            sqlite3_result_error_nomem(context);\n            sqlite3_free(zOld);\n            return;\n          }\n        }\n      }\n      memcpy(&zOut[j], zRep, nRep);\n      j += nRep;\n      i += nPattern-1;\n    }\n  }\n  assert( j+nStr-i+1<=nOut );\n  memcpy(&zOut[j], &zStr[i], nStr-i);\n  j += nStr - i;\n  assert( j<=nOut );\n  zOut[j] = 0;\n  sqlite3_result_text(context, (char*)zOut, j, sqlite3_free);\n}\n"
+        }
+    },
+    "zeroblob": {
+        "category": "aBuiltinFunc",
+        "impl_function": "zeroblobFunc",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/func.c:1460": "static void zeroblobFunc(\n  sqlite3_context *context,\n  int argc,\n  sqlite3_value **argv\n){\n  i64 n;\n  int rc;\n  assert( argc==1 );\n  UNUSED_PARAMETER(argc);\n  n = sqlite3_value_int64(argv[0]);\n  if( n<0 ) n = 0;\n  rc = sqlite3_result_zeroblob64(context, n); /* IMP: R-00293-64994 */\n  if( rc ){\n    sqlite3_result_error_code(context, rc);\n  }\n}\n"
+        }
+    },
+    "substr": {
+        "category": "aBuiltinFunc",
+        "impl_function": "substrFunc",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/func.c:347": "static void substrFunc(\n  sqlite3_context *context,\n  int argc,\n  sqlite3_value **argv\n){\n  const unsigned char *z;\n  const unsigned char *z2;\n  int len;\n  int p0type;\n  i64 p1, p2;\n\n  assert( argc==3 || argc==2 );\n  p0type = sqlite3_value_type(argv[0]);\n  p1 = sqlite3_value_int64(argv[1]);\n  if( p0type==SQLITE_BLOB ){\n    len = sqlite3_value_bytes(argv[0]);\n    z = sqlite3_value_blob(argv[0]);\n    if( z==0 ) return;\n    assert( len==sqlite3_value_bytes(argv[0]) );\n  }else{\n    z = sqlite3_value_text(argv[0]);\n    if( z==0 ) return;\n    len = 0;\n    if( p1<0 ){\n      for(z2=z; *z2; len++){\n        SQLITE_SKIP_UTF8(z2);\n      }\n    }\n  }\n  if( argc==3 ){\n    p2 = sqlite3_value_int64(argv[2]);\n    if( p2==0 && sqlite3_value_type(argv[2])==SQLITE_NULL ) return;\n  }else{\n    p2 = sqlite3_context_db_handle(context)->aLimit[SQLITE_LIMIT_LENGTH];\n  }\n  if( p1==0 ){\n#ifdef SQLITE_SUBSTR_COMPATIBILITY\n    /* If SUBSTR_COMPATIBILITY is defined then substr(X,0,N) work the same as\n    ** as substr(X,1,N) - it returns the first N characters of X.  This\n    ** is essentially a back-out of the bug-fix in check-in [5fc125d362df4b8]\n    ** from 2009-02-02 for compatibility of applications that exploited the\n    ** old buggy behavior. */\n    p1 = 1; /* <rdar://problem/6778339> */\n#endif\n    if( sqlite3_value_type(argv[1])==SQLITE_NULL ) return;\n  }\n  if( p1<0 ){\n    p1 += len;\n    if( p1<0 ){\n      if( p2<0 ){\n        p2 = 0;\n      }else{\n        p2 += p1;\n      }\n      p1 = 0;\n    }\n  }else if( p1>0 ){\n    p1--;\n  }else if( p2>0 ){\n    p2--;\n  }\n  if( p2<0 ){\n    if( p2<-p1 ){\n      p2 = p1;\n    }else{\n      p2 = -p2;\n    }\n    p1 -= p2;\n  }\n  assert( p1>=0 && p2>=0 );\n  if( p0type!=SQLITE_BLOB ){\n    while( *z && p1 ){\n      SQLITE_SKIP_UTF8(z);\n      p1--;\n    }\n    for(z2=z; *z2 && p2; p2--){\n      SQLITE_SKIP_UTF8(z2);\n    }\n    sqlite3_result_text64(context, (char*)z, z2-z, SQLITE_TRANSIENT,\n                          SQLITE_UTF8);\n  }else{\n    if( p1>=len ){\n      p1 = p2 = 0;\n    }else if( p2>len-p1 ){\n      p2 = len-p1;\n      assert( p2>0 );\n    }\n    sqlite3_result_blob64(context, (char*)&z[p1], (u64)p2, SQLITE_TRANSIENT);\n  }\n}\n"
+        }
+    },
+    "substring": {
+        "category": "aBuiltinFunc",
+        "impl_function": "substrFunc",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/func.c:347": "static void substrFunc(\n  sqlite3_context *context,\n  int argc,\n  sqlite3_value **argv\n){\n  const unsigned char *z;\n  const unsigned char *z2;\n  int len;\n  int p0type;\n  i64 p1, p2;\n\n  assert( argc==3 || argc==2 );\n  p0type = sqlite3_value_type(argv[0]);\n  p1 = sqlite3_value_int64(argv[1]);\n  if( p0type==SQLITE_BLOB ){\n    len = sqlite3_value_bytes(argv[0]);\n    z = sqlite3_value_blob(argv[0]);\n    if( z==0 ) return;\n    assert( len==sqlite3_value_bytes(argv[0]) );\n  }else{\n    z = sqlite3_value_text(argv[0]);\n    if( z==0 ) return;\n    len = 0;\n    if( p1<0 ){\n      for(z2=z; *z2; len++){\n        SQLITE_SKIP_UTF8(z2);\n      }\n    }\n  }\n  if( argc==3 ){\n    p2 = sqlite3_value_int64(argv[2]);\n    if( p2==0 && sqlite3_value_type(argv[2])==SQLITE_NULL ) return;\n  }else{\n    p2 = sqlite3_context_db_handle(context)->aLimit[SQLITE_LIMIT_LENGTH];\n  }\n  if( p1==0 ){\n#ifdef SQLITE_SUBSTR_COMPATIBILITY\n    /* If SUBSTR_COMPATIBILITY is defined then substr(X,0,N) work the same as\n    ** as substr(X,1,N) - it returns the first N characters of X.  This\n    ** is essentially a back-out of the bug-fix in check-in [5fc125d362df4b8]\n    ** from 2009-02-02 for compatibility of applications that exploited the\n    ** old buggy behavior. */\n    p1 = 1; /* <rdar://problem/6778339> */\n#endif\n    if( sqlite3_value_type(argv[1])==SQLITE_NULL ) return;\n  }\n  if( p1<0 ){\n    p1 += len;\n    if( p1<0 ){\n      if( p2<0 ){\n        p2 = 0;\n      }else{\n        p2 += p1;\n      }\n      p1 = 0;\n    }\n  }else if( p1>0 ){\n    p1--;\n  }else if( p2>0 ){\n    p2--;\n  }\n  if( p2<0 ){\n    if( p2<-p1 ){\n      p2 = p1;\n    }else{\n      p2 = -p2;\n    }\n    p1 -= p2;\n  }\n  assert( p1>=0 && p2>=0 );\n  if( p0type!=SQLITE_BLOB ){\n    while( *z && p1 ){\n      SQLITE_SKIP_UTF8(z);\n      p1--;\n    }\n    for(z2=z; *z2 && p2; p2--){\n      SQLITE_SKIP_UTF8(z2);\n    }\n    sqlite3_result_text64(context, (char*)z, z2-z, SQLITE_TRANSIENT,\n                          SQLITE_UTF8);\n  }else{\n    if( p1>=len ){\n      p1 = p2 = 0;\n    }else if( p2>len-p1 ){\n      p2 = len-p1;\n      assert( p2>0 );\n    }\n    sqlite3_result_blob64(context, (char*)&z[p1], (u64)p2, SQLITE_TRANSIENT);\n  }\n}\n"
+        }
+    },
+    "sum": {
+        "category": "aBuiltinFunc",
+        "impl_function": null,
+        "code": {},
+        "error": "no xFunc"
+    },
+    "total": {
+        "category": "aBuiltinFunc",
+        "impl_function": null,
+        "code": {},
+        "error": "no xFunc"
+    },
+    "avg": {
+        "category": "aBuiltinFunc",
+        "impl_function": null,
+        "code": {},
+        "error": "no xFunc"
+    },
+    "count": {
+        "category": "aBuiltinFunc",
+        "impl_function": null,
+        "code": {},
+        "error": "no xFunc"
+    },
+    "group_concat": {
+        "category": "aBuiltinFunc",
+        "impl_function": null,
+        "code": {},
+        "error": "no xFunc"
+    },
+    "string_agg": {
+        "category": "aBuiltinFunc",
+        "impl_function": null,
+        "code": {},
+        "error": "no xFunc"
+    },
+    "glob": {
+        "category": "aBuiltinFunc",
+        "impl_function": null,
+        "code": {},
+        "error": "no xFunc"
+    },
+    "like": {
+        "category": "aBuiltinFunc",
+        "impl_function": null,
+        "code": {},
+        "error": "no xFunc"
+    },
+    "unknown": {
+        "category": "aBuiltinFunc",
+        "impl_function": null,
+        "code": {},
+        "error": "no xFunc"
+    },
+    "ceil": {
+        "category": "aBuiltinFunc",
+        "impl_function": null,
+        "code": {},
+        "error": "no xFunc"
+    },
+    "ceiling": {
+        "category": "aBuiltinFunc",
+        "impl_function": null,
+        "code": {},
+        "error": "no xFunc"
+    },
+    "floor": {
+        "category": "aBuiltinFunc",
+        "impl_function": null,
+        "code": {},
+        "error": "no xFunc"
+    },
+    "trunc": {
+        "category": "aBuiltinFunc",
+        "impl_function": null,
+        "code": {},
+        "error": "no xFunc"
+    },
+    "ln": {
+        "category": "aBuiltinFunc",
+        "impl_function": null,
+        "code": {},
+        "error": "no xFunc"
+    },
+    "log": {
+        "category": "aBuiltinFunc",
+        "impl_function": null,
+        "code": {},
+        "error": "no xFunc"
+    },
+    "log10": {
+        "category": "aBuiltinFunc",
+        "impl_function": null,
+        "code": {},
+        "error": "no xFunc"
+    },
+    "log2": {
+        "category": "aBuiltinFunc",
+        "impl_function": null,
+        "code": {},
+        "error": "no xFunc"
+    },
+    "exp": {
+        "category": "aBuiltinFunc",
+        "impl_function": null,
+        "code": {},
+        "error": "no xFunc"
+    },
+    "pow": {
+        "category": "aBuiltinFunc",
+        "impl_function": null,
+        "code": {},
+        "error": "no xFunc"
+    },
+    "power": {
+        "category": "aBuiltinFunc",
+        "impl_function": null,
+        "code": {},
+        "error": "no xFunc"
+    },
+    "mod": {
+        "category": "aBuiltinFunc",
+        "impl_function": null,
+        "code": {},
+        "error": "no xFunc"
+    },
+    "acos": {
+        "category": "aBuiltinFunc",
+        "impl_function": null,
+        "code": {},
+        "error": "no xFunc"
+    },
+    "asin": {
+        "category": "aBuiltinFunc",
+        "impl_function": null,
+        "code": {},
+        "error": "no xFunc"
+    },
+    "atan": {
+        "category": "aBuiltinFunc",
+        "impl_function": null,
+        "code": {},
+        "error": "no xFunc"
+    },
+    "atan2": {
+        "category": "aBuiltinFunc",
+        "impl_function": null,
+        "code": {},
+        "error": "no xFunc"
+    },
+    "cos": {
+        "category": "aBuiltinFunc",
+        "impl_function": null,
+        "code": {},
+        "error": "no xFunc"
+    },
+    "sin": {
+        "category": "aBuiltinFunc",
+        "impl_function": null,
+        "code": {},
+        "error": "no xFunc"
+    },
+    "tan": {
+        "category": "aBuiltinFunc",
+        "impl_function": null,
+        "code": {},
+        "error": "no xFunc"
+    },
+    "cosh": {
+        "category": "aBuiltinFunc",
+        "impl_function": null,
+        "code": {},
+        "error": "no xFunc"
+    },
+    "sinh": {
+        "category": "aBuiltinFunc",
+        "impl_function": null,
+        "code": {},
+        "error": "no xFunc"
+    },
+    "tanh": {
+        "category": "aBuiltinFunc",
+        "impl_function": null,
+        "code": {},
+        "error": "no xFunc"
+    },
+    "acosh": {
+        "category": "aBuiltinFunc",
+        "impl_function": null,
+        "code": {},
+        "error": "no xFunc"
+    },
+    "asinh": {
+        "category": "aBuiltinFunc",
+        "impl_function": null,
+        "code": {},
+        "error": "no xFunc"
+    },
+    "atanh": {
+        "category": "aBuiltinFunc",
+        "impl_function": null,
+        "code": {},
+        "error": "no xFunc"
+    },
+    "sqrt": {
+        "category": "aBuiltinFunc",
+        "impl_function": null,
+        "code": {},
+        "error": "no xFunc"
+    },
+    "radians": {
+        "category": "aBuiltinFunc",
+        "impl_function": null,
+        "code": {},
+        "error": "no xFunc"
+    },
+    "degrees": {
+        "category": "aBuiltinFunc",
+        "impl_function": null,
+        "code": {},
+        "error": "no xFunc"
+    },
+    "pi": {
+        "category": "aBuiltinFunc",
+        "impl_function": null,
+        "code": {},
+        "error": "no xFunc"
+    },
+    "sign": {
+        "category": "aBuiltinFunc",
+        "impl_function": "signFunc",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/func.c:2624": "static void signFunc(\n  sqlite3_context *context,\n  int argc,\n  sqlite3_value **argv\n){\n  int type0;\n  double x;\n  UNUSED_PARAMETER(argc);\n  assert( argc==1 );\n  type0 = sqlite3_value_numeric_type(argv[0]);\n  if( type0!=SQLITE_INTEGER && type0!=SQLITE_FLOAT ) return;\n  x = sqlite3_value_double(argv[0]);\n  sqlite3_result_int(context, x<0.0 ? -1 : x>0.0 ? +1 : 0);\n}\n"
+        }
+    },
+    "coalesce": {
+        "category": "aBuiltinFunc",
+        "impl_function": null,
+        "code": {},
+        "error": "no xFunc"
+    },
+    "iif": {
+        "category": "aBuiltinFunc",
+        "impl_function": null,
+        "code": {},
+        "error": "no xFunc"
+    },
+    "if": {
+        "category": "aBuiltinFunc",
+        "impl_function": null,
+        "code": {},
+        "error": "no xFunc"
+    },
+    "json": {
+        "category": "aJsonFunc",
+        "impl_function": "jsonRemoveFunc",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/json.c:4365": "static void jsonRemoveFunc(\n  sqlite3_context *ctx,\n  int argc,\n  sqlite3_value **argv\n){\n  JsonParse *p;          /* The parse */\n  const char *zPath = 0; /* Path of element to be removed */\n  int i;                 /* Loop counter */\n  u32 rc;                /* Subroutine return code */\n\n  if( argc<1 ) return;\n  p = jsonParseFuncArg(ctx, argv[0], argc>1 ? JSON_EDITABLE : 0);\n  if( p==0 ) return;\n  for(i=1; i<argc; i++){\n    zPath = (const char*)sqlite3_value_text(argv[i]);\n    if( zPath==0 ){\n      goto json_remove_done;\n    }\n    if( zPath[0]!='$' ){\n      goto json_remove_patherror;\n    }\n    if( zPath[1]==0 ){\n      /* json_remove(j,'$') returns NULL */\n      goto json_remove_done;\n    }\n    p->eEdit = JEDIT_DEL;\n    p->delta = 0;\n    rc = jsonLookupStep(p, 0, zPath+1, 0);\n    if( JSON_LOOKUP_ISERROR(rc) ){\n      if( rc==JSON_LOOKUP_NOTFOUND ){\n        continue;  /* No-op */\n      }else if( rc==JSON_LOOKUP_PATHERROR ){\n        jsonBadPathError(ctx, zPath);\n      }else{\n        sqlite3_result_error(ctx, \"malformed JSON\", -1);\n      }\n      goto json_remove_done;\n    }\n  }\n  jsonReturnParse(ctx, p);\n  jsonParseFree(p);\n  return;\n\njson_remove_patherror:\n  jsonBadPathError(ctx, zPath);\n\njson_remove_done:\n  jsonParseFree(p);\n  return;\n}\n"
+        }
+    },
+    "jsonb": {
+        "category": "aJsonFunc",
+        "impl_function": "jsonRemoveFunc",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/json.c:4365": "static void jsonRemoveFunc(\n  sqlite3_context *ctx,\n  int argc,\n  sqlite3_value **argv\n){\n  JsonParse *p;          /* The parse */\n  const char *zPath = 0; /* Path of element to be removed */\n  int i;                 /* Loop counter */\n  u32 rc;                /* Subroutine return code */\n\n  if( argc<1 ) return;\n  p = jsonParseFuncArg(ctx, argv[0], argc>1 ? JSON_EDITABLE : 0);\n  if( p==0 ) return;\n  for(i=1; i<argc; i++){\n    zPath = (const char*)sqlite3_value_text(argv[i]);\n    if( zPath==0 ){\n      goto json_remove_done;\n    }\n    if( zPath[0]!='$' ){\n      goto json_remove_patherror;\n    }\n    if( zPath[1]==0 ){\n      /* json_remove(j,'$') returns NULL */\n      goto json_remove_done;\n    }\n    p->eEdit = JEDIT_DEL;\n    p->delta = 0;\n    rc = jsonLookupStep(p, 0, zPath+1, 0);\n    if( JSON_LOOKUP_ISERROR(rc) ){\n      if( rc==JSON_LOOKUP_NOTFOUND ){\n        continue;  /* No-op */\n      }else if( rc==JSON_LOOKUP_PATHERROR ){\n        jsonBadPathError(ctx, zPath);\n      }else{\n        sqlite3_result_error(ctx, \"malformed JSON\", -1);\n      }\n      goto json_remove_done;\n    }\n  }\n  jsonReturnParse(ctx, p);\n  jsonParseFree(p);\n  return;\n\njson_remove_patherror:\n  jsonBadPathError(ctx, zPath);\n\njson_remove_done:\n  jsonParseFree(p);\n  return;\n}\n"
+        }
+    },
+    "json_array": {
+        "category": "aJsonFunc",
+        "impl_function": "jsonArrayFunc",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/json.c:3879": "static void jsonArrayFunc(\n  sqlite3_context *ctx,\n  int argc,\n  sqlite3_value **argv\n){\n  int i;\n  JsonString jx;\n\n  jsonStringInit(&jx, ctx);\n  jsonAppendChar(&jx, '[');\n  for(i=0; i<argc; i++){\n    jsonAppendSeparator(&jx);\n    jsonAppendSqlValue(&jx, argv[i]);\n  }\n  jsonAppendChar(&jx, ']');\n  jsonReturnString(&jx, 0, 0);\n  sqlite3_result_subtype(ctx, JSON_SUBTYPE);\n}\n"
+        }
+    },
+    "jsonb_array": {
+        "category": "aJsonFunc",
+        "impl_function": "jsonArrayFunc",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/json.c:3879": "static void jsonArrayFunc(\n  sqlite3_context *ctx,\n  int argc,\n  sqlite3_value **argv\n){\n  int i;\n  JsonString jx;\n\n  jsonStringInit(&jx, ctx);\n  jsonAppendChar(&jx, '[');\n  for(i=0; i<argc; i++){\n    jsonAppendSeparator(&jx);\n    jsonAppendSqlValue(&jx, argv[i]);\n  }\n  jsonAppendChar(&jx, ']');\n  jsonReturnString(&jx, 0, 0);\n  sqlite3_result_subtype(ctx, JSON_SUBTYPE);\n}\n"
+        }
+    },
+    "json_array_length": {
+        "category": "aJsonFunc",
+        "impl_function": "jsonArrayLengthFunc",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/json.c:3905": "static void jsonArrayLengthFunc(\n  sqlite3_context *ctx,\n  int argc,\n  sqlite3_value **argv\n){\n  JsonParse *p;          /* The parse */\n  sqlite3_int64 cnt = 0;\n  u32 i;\n  u8 eErr = 0;\n\n  p = jsonParseFuncArg(ctx, argv[0], 0);\n  if( p==0 ) return;\n  if( argc==2 ){\n    const char *zPath = (const char*)sqlite3_value_text(argv[1]);\n    if( zPath==0 ){\n      jsonParseFree(p);\n      return;\n    }\n    i = jsonLookupStep(p, 0, zPath[0]=='$' ? zPath+1 : \"@\", 0);\n    if( JSON_LOOKUP_ISERROR(i) ){\n      if( i==JSON_LOOKUP_NOTFOUND ){\n        /* no-op */\n      }else if( i==JSON_LOOKUP_PATHERROR ){\n        jsonBadPathError(ctx, zPath);\n      }else{\n        sqlite3_result_error(ctx, \"malformed JSON\", -1);\n      }\n      eErr = 1;\n      i = 0;\n    }\n  }else{\n    i = 0;\n  }\n  if( (p->aBlob[i] & 0x0f)==JSONB_ARRAY ){\n    cnt = jsonbArrayCount(p, i);\n  }\n  if( !eErr ) sqlite3_result_int64(ctx, cnt);\n  jsonParseFree(p);\n}\n"
+        }
+    },
+    "json_error_position": {
+        "category": "aJsonFunc",
+        "impl_function": "jsonErrorFunc",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/json.c:4682": "static void jsonErrorFunc(\n  sqlite3_context *ctx,\n  int argc,\n  sqlite3_value **argv\n){\n  i64 iErrPos = 0;       /* Error position to be returned */\n  JsonParse s;\n\n  assert( argc==1 );\n  UNUSED_PARAMETER(argc);\n  memset(&s, 0, sizeof(s));\n  s.db = sqlite3_context_db_handle(ctx);\n  if( jsonArgIsJsonb(argv[0], &s) ){\n    iErrPos = (i64)jsonbValidityCheck(&s, 0, s.nBlob, 1);\n  }else{\n    s.zJson = (char*)sqlite3_value_text(argv[0]);\n    if( s.zJson==0 ) return;  /* NULL input or OOM */\n    s.nJson = sqlite3_value_bytes(argv[0]);\n    if( jsonConvertTextToBlob(&s,0) ){\n      if( s.oom ){\n        iErrPos = -1;\n      }else{\n        /* Convert byte-offset s.iErr into a character offset */\n        u32 k;\n        assert( s.zJson!=0 );  /* Because s.oom is false */\n        for(k=0; k<s.iErr && ALWAYS(s.zJson[k]); k++){\n          if( (s.zJson[k] & 0xc0)!=0x80 ) iErrPos++;\n        }\n        iErrPos++;\n      }\n    }\n  }\n  jsonParseReset(&s);\n  if( iErrPos<0 ){\n    sqlite3_result_error_nomem(ctx);\n  }else{\n    sqlite3_result_int64(ctx, iErrPos);\n  }\n}\n"
+        }
+    },
+    "json_extract": {
+        "category": "aJsonFunc",
+        "impl_function": "jsonExtractFunc",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/json.c:3972": "static void jsonExtractFunc(\n  sqlite3_context *ctx,\n  int argc,\n  sqlite3_value **argv\n){\n  JsonParse *p = 0;      /* The parse */\n  int flags;             /* Flags associated with the function */\n  int i;                 /* Loop counter */\n  JsonString jx;         /* String for array result */\n\n  if( argc<2 ) return;\n  p = jsonParseFuncArg(ctx, argv[0], 0);\n  if( p==0 ) return;\n  flags = SQLITE_PTR_TO_INT(sqlite3_user_data(ctx));\n  jsonStringInit(&jx, ctx);\n  if( argc>2 ){\n    jsonAppendChar(&jx, '[');\n  }\n  for(i=1; i<argc; i++){\n    /* With a single PATH argument */\n    const char *zPath = (const char*)sqlite3_value_text(argv[i]);\n    int nPath;\n    u32 j;\n    if( zPath==0 ) goto json_extract_error;\n    nPath = sqlite3Strlen30(zPath);\n    if( zPath[0]=='$' ){\n      j = jsonLookupStep(p, 0, zPath+1, 0);\n    }else if( (flags & JSON_ABPATH) ){\n      /* The -> and ->> operators accept abbreviated PATH arguments.  This\n      ** is mostly for compatibility with PostgreSQL, but also for\n      ** convenience.\n      **\n      **     NUMBER   ==>  $[NUMBER]     // PG compatible\n      **     LABEL    ==>  $.LABEL       // PG compatible\n      **     [NUMBER] ==>  $[NUMBER]     // Not PG.  Purely for convenience\n      **\n      ** Updated 2024-05-27:  If the NUMBER is negative, then PG counts from\n      ** the right of the array.  Hence for negative NUMBER:\n      **\n      **     NUMBER   ==>  $[#NUMBER]    // PG compatible\n      */\n      jsonStringInit(&jx, ctx);\n      if( sqlite3_value_type(argv[i])==SQLITE_INTEGER ){\n        jsonAppendRawNZ(&jx, \"[\", 1);\n        if( zPath[0]=='-' ) jsonAppendRawNZ(&jx,\"#\",1);\n        jsonAppendRaw(&jx, zPath, nPath);\n        jsonAppendRawNZ(&jx, \"]\", 2);\n      }else if( jsonAllAlphanum(zPath, nPath) ){\n        jsonAppendRawNZ(&jx, \".\", 1);\n        jsonAppendRaw(&jx, zPath, nPath);\n      }else if( zPath[0]=='[' && nPath>=3 && zPath[nPath-1]==']' ){\n        jsonAppendRaw(&jx, zPath, nPath);\n      }else{\n        jsonAppendRawNZ(&jx, \".\\\"\", 2);\n        jsonAppendRaw(&jx, zPath, nPath);\n        jsonAppendRawNZ(&jx, \"\\\"\", 1);\n      }\n      jsonStringTerminate(&jx);\n      j = jsonLookupStep(p, 0, jx.zBuf, 0);\n      jsonStringReset(&jx);\n    }else{\n      jsonBadPathError(ctx, zPath);\n      goto json_extract_error;\n    }\n    if( j<p->nBlob ){\n      if( argc==2 ){\n        if( flags & JSON_JSON ){\n          jsonStringInit(&jx, ctx);\n          jsonTranslateBlobToText(p, j, &jx);\n          jsonReturnString(&jx, 0, 0);\n          jsonStringReset(&jx);\n          assert( (flags & JSON_BLOB)==0 );\n          sqlite3_result_subtype(ctx, JSON_SUBTYPE);\n        }else{\n          jsonReturnFromBlob(p, j, ctx, 0);\n          if( (flags & (JSON_SQL|JSON_BLOB))==0\n           && (p->aBlob[j]&0x0f)>=JSONB_ARRAY\n          ){\n            sqlite3_result_subtype(ctx, JSON_SUBTYPE);\n          }\n        }\n      }else{\n        jsonAppendSeparator(&jx);\n        jsonTranslateBlobToText(p, j, &jx);\n      }\n    }else if( j==JSON_LOOKUP_NOTFOUND ){\n      if( argc==2 ){\n        goto json_extract_error;  /* Return NULL if not found */\n      }else{\n        jsonAppendSeparator(&jx);\n        jsonAppendRawNZ(&jx, \"null\", 4);\n      }\n    }else if( j==JSON_LOOKUP_ERROR ){\n      sqlite3_result_error(ctx, \"malformed JSON\", -1);\n      goto json_extract_error;\n    }else{\n      jsonBadPathError(ctx, zPath);\n      goto json_extract_error;\n    }\n  }\n  if( argc>2 ){\n    jsonAppendChar(&jx, ']');\n    jsonReturnString(&jx, 0, 0);\n    if( (flags & JSON_BLOB)==0 ){\n      sqlite3_result_subtype(ctx, JSON_SUBTYPE);\n    }\n  }\njson_extract_error:\n  jsonStringReset(&jx);\n  jsonParseFree(p);\n  return;\n}\n"
+        }
+    },
+    "jsonb_extract": {
+        "category": "aJsonFunc",
+        "impl_function": "jsonExtractFunc",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/json.c:3972": "static void jsonExtractFunc(\n  sqlite3_context *ctx,\n  int argc,\n  sqlite3_value **argv\n){\n  JsonParse *p = 0;      /* The parse */\n  int flags;             /* Flags associated with the function */\n  int i;                 /* Loop counter */\n  JsonString jx;         /* String for array result */\n\n  if( argc<2 ) return;\n  p = jsonParseFuncArg(ctx, argv[0], 0);\n  if( p==0 ) return;\n  flags = SQLITE_PTR_TO_INT(sqlite3_user_data(ctx));\n  jsonStringInit(&jx, ctx);\n  if( argc>2 ){\n    jsonAppendChar(&jx, '[');\n  }\n  for(i=1; i<argc; i++){\n    /* With a single PATH argument */\n    const char *zPath = (const char*)sqlite3_value_text(argv[i]);\n    int nPath;\n    u32 j;\n    if( zPath==0 ) goto json_extract_error;\n    nPath = sqlite3Strlen30(zPath);\n    if( zPath[0]=='$' ){\n      j = jsonLookupStep(p, 0, zPath+1, 0);\n    }else if( (flags & JSON_ABPATH) ){\n      /* The -> and ->> operators accept abbreviated PATH arguments.  This\n      ** is mostly for compatibility with PostgreSQL, but also for\n      ** convenience.\n      **\n      **     NUMBER   ==>  $[NUMBER]     // PG compatible\n      **     LABEL    ==>  $.LABEL       // PG compatible\n      **     [NUMBER] ==>  $[NUMBER]     // Not PG.  Purely for convenience\n      **\n      ** Updated 2024-05-27:  If the NUMBER is negative, then PG counts from\n      ** the right of the array.  Hence for negative NUMBER:\n      **\n      **     NUMBER   ==>  $[#NUMBER]    // PG compatible\n      */\n      jsonStringInit(&jx, ctx);\n      if( sqlite3_value_type(argv[i])==SQLITE_INTEGER ){\n        jsonAppendRawNZ(&jx, \"[\", 1);\n        if( zPath[0]=='-' ) jsonAppendRawNZ(&jx,\"#\",1);\n        jsonAppendRaw(&jx, zPath, nPath);\n        jsonAppendRawNZ(&jx, \"]\", 2);\n      }else if( jsonAllAlphanum(zPath, nPath) ){\n        jsonAppendRawNZ(&jx, \".\", 1);\n        jsonAppendRaw(&jx, zPath, nPath);\n      }else if( zPath[0]=='[' && nPath>=3 && zPath[nPath-1]==']' ){\n        jsonAppendRaw(&jx, zPath, nPath);\n      }else{\n        jsonAppendRawNZ(&jx, \".\\\"\", 2);\n        jsonAppendRaw(&jx, zPath, nPath);\n        jsonAppendRawNZ(&jx, \"\\\"\", 1);\n      }\n      jsonStringTerminate(&jx);\n      j = jsonLookupStep(p, 0, jx.zBuf, 0);\n      jsonStringReset(&jx);\n    }else{\n      jsonBadPathError(ctx, zPath);\n      goto json_extract_error;\n    }\n    if( j<p->nBlob ){\n      if( argc==2 ){\n        if( flags & JSON_JSON ){\n          jsonStringInit(&jx, ctx);\n          jsonTranslateBlobToText(p, j, &jx);\n          jsonReturnString(&jx, 0, 0);\n          jsonStringReset(&jx);\n          assert( (flags & JSON_BLOB)==0 );\n          sqlite3_result_subtype(ctx, JSON_SUBTYPE);\n        }else{\n          jsonReturnFromBlob(p, j, ctx, 0);\n          if( (flags & (JSON_SQL|JSON_BLOB))==0\n           && (p->aBlob[j]&0x0f)>=JSONB_ARRAY\n          ){\n            sqlite3_result_subtype(ctx, JSON_SUBTYPE);\n          }\n        }\n      }else{\n        jsonAppendSeparator(&jx);\n        jsonTranslateBlobToText(p, j, &jx);\n      }\n    }else if( j==JSON_LOOKUP_NOTFOUND ){\n      if( argc==2 ){\n        goto json_extract_error;  /* Return NULL if not found */\n      }else{\n        jsonAppendSeparator(&jx);\n        jsonAppendRawNZ(&jx, \"null\", 4);\n      }\n    }else if( j==JSON_LOOKUP_ERROR ){\n      sqlite3_result_error(ctx, \"malformed JSON\", -1);\n      goto json_extract_error;\n    }else{\n      jsonBadPathError(ctx, zPath);\n      goto json_extract_error;\n    }\n  }\n  if( argc>2 ){\n    jsonAppendChar(&jx, ']');\n    jsonReturnString(&jx, 0, 0);\n    if( (flags & JSON_BLOB)==0 ){\n      sqlite3_result_subtype(ctx, JSON_SUBTYPE);\n    }\n  }\njson_extract_error:\n  jsonStringReset(&jx);\n  jsonParseFree(p);\n  return;\n}\n"
+        }
+    },
+    "->": {
+        "category": "aJsonFunc",
+        "impl_function": "jsonExtractFunc",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/json.c:3972": "static void jsonExtractFunc(\n  sqlite3_context *ctx,\n  int argc,\n  sqlite3_value **argv\n){\n  JsonParse *p = 0;      /* The parse */\n  int flags;             /* Flags associated with the function */\n  int i;                 /* Loop counter */\n  JsonString jx;         /* String for array result */\n\n  if( argc<2 ) return;\n  p = jsonParseFuncArg(ctx, argv[0], 0);\n  if( p==0 ) return;\n  flags = SQLITE_PTR_TO_INT(sqlite3_user_data(ctx));\n  jsonStringInit(&jx, ctx);\n  if( argc>2 ){\n    jsonAppendChar(&jx, '[');\n  }\n  for(i=1; i<argc; i++){\n    /* With a single PATH argument */\n    const char *zPath = (const char*)sqlite3_value_text(argv[i]);\n    int nPath;\n    u32 j;\n    if( zPath==0 ) goto json_extract_error;\n    nPath = sqlite3Strlen30(zPath);\n    if( zPath[0]=='$' ){\n      j = jsonLookupStep(p, 0, zPath+1, 0);\n    }else if( (flags & JSON_ABPATH) ){\n      /* The -> and ->> operators accept abbreviated PATH arguments.  This\n      ** is mostly for compatibility with PostgreSQL, but also for\n      ** convenience.\n      **\n      **     NUMBER   ==>  $[NUMBER]     // PG compatible\n      **     LABEL    ==>  $.LABEL       // PG compatible\n      **     [NUMBER] ==>  $[NUMBER]     // Not PG.  Purely for convenience\n      **\n      ** Updated 2024-05-27:  If the NUMBER is negative, then PG counts from\n      ** the right of the array.  Hence for negative NUMBER:\n      **\n      **     NUMBER   ==>  $[#NUMBER]    // PG compatible\n      */\n      jsonStringInit(&jx, ctx);\n      if( sqlite3_value_type(argv[i])==SQLITE_INTEGER ){\n        jsonAppendRawNZ(&jx, \"[\", 1);\n        if( zPath[0]=='-' ) jsonAppendRawNZ(&jx,\"#\",1);\n        jsonAppendRaw(&jx, zPath, nPath);\n        jsonAppendRawNZ(&jx, \"]\", 2);\n      }else if( jsonAllAlphanum(zPath, nPath) ){\n        jsonAppendRawNZ(&jx, \".\", 1);\n        jsonAppendRaw(&jx, zPath, nPath);\n      }else if( zPath[0]=='[' && nPath>=3 && zPath[nPath-1]==']' ){\n        jsonAppendRaw(&jx, zPath, nPath);\n      }else{\n        jsonAppendRawNZ(&jx, \".\\\"\", 2);\n        jsonAppendRaw(&jx, zPath, nPath);\n        jsonAppendRawNZ(&jx, \"\\\"\", 1);\n      }\n      jsonStringTerminate(&jx);\n      j = jsonLookupStep(p, 0, jx.zBuf, 0);\n      jsonStringReset(&jx);\n    }else{\n      jsonBadPathError(ctx, zPath);\n      goto json_extract_error;\n    }\n    if( j<p->nBlob ){\n      if( argc==2 ){\n        if( flags & JSON_JSON ){\n          jsonStringInit(&jx, ctx);\n          jsonTranslateBlobToText(p, j, &jx);\n          jsonReturnString(&jx, 0, 0);\n          jsonStringReset(&jx);\n          assert( (flags & JSON_BLOB)==0 );\n          sqlite3_result_subtype(ctx, JSON_SUBTYPE);\n        }else{\n          jsonReturnFromBlob(p, j, ctx, 0);\n          if( (flags & (JSON_SQL|JSON_BLOB))==0\n           && (p->aBlob[j]&0x0f)>=JSONB_ARRAY\n          ){\n            sqlite3_result_subtype(ctx, JSON_SUBTYPE);\n          }\n        }\n      }else{\n        jsonAppendSeparator(&jx);\n        jsonTranslateBlobToText(p, j, &jx);\n      }\n    }else if( j==JSON_LOOKUP_NOTFOUND ){\n      if( argc==2 ){\n        goto json_extract_error;  /* Return NULL if not found */\n      }else{\n        jsonAppendSeparator(&jx);\n        jsonAppendRawNZ(&jx, \"null\", 4);\n      }\n    }else if( j==JSON_LOOKUP_ERROR ){\n      sqlite3_result_error(ctx, \"malformed JSON\", -1);\n      goto json_extract_error;\n    }else{\n      jsonBadPathError(ctx, zPath);\n      goto json_extract_error;\n    }\n  }\n  if( argc>2 ){\n    jsonAppendChar(&jx, ']');\n    jsonReturnString(&jx, 0, 0);\n    if( (flags & JSON_BLOB)==0 ){\n      sqlite3_result_subtype(ctx, JSON_SUBTYPE);\n    }\n  }\njson_extract_error:\n  jsonStringReset(&jx);\n  jsonParseFree(p);\n  return;\n}\n"
+        }
+    },
+    "->>": {
+        "category": "aJsonFunc",
+        "impl_function": "jsonExtractFunc",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/json.c:3972": "static void jsonExtractFunc(\n  sqlite3_context *ctx,\n  int argc,\n  sqlite3_value **argv\n){\n  JsonParse *p = 0;      /* The parse */\n  int flags;             /* Flags associated with the function */\n  int i;                 /* Loop counter */\n  JsonString jx;         /* String for array result */\n\n  if( argc<2 ) return;\n  p = jsonParseFuncArg(ctx, argv[0], 0);\n  if( p==0 ) return;\n  flags = SQLITE_PTR_TO_INT(sqlite3_user_data(ctx));\n  jsonStringInit(&jx, ctx);\n  if( argc>2 ){\n    jsonAppendChar(&jx, '[');\n  }\n  for(i=1; i<argc; i++){\n    /* With a single PATH argument */\n    const char *zPath = (const char*)sqlite3_value_text(argv[i]);\n    int nPath;\n    u32 j;\n    if( zPath==0 ) goto json_extract_error;\n    nPath = sqlite3Strlen30(zPath);\n    if( zPath[0]=='$' ){\n      j = jsonLookupStep(p, 0, zPath+1, 0);\n    }else if( (flags & JSON_ABPATH) ){\n      /* The -> and ->> operators accept abbreviated PATH arguments.  This\n      ** is mostly for compatibility with PostgreSQL, but also for\n      ** convenience.\n      **\n      **     NUMBER   ==>  $[NUMBER]     // PG compatible\n      **     LABEL    ==>  $.LABEL       // PG compatible\n      **     [NUMBER] ==>  $[NUMBER]     // Not PG.  Purely for convenience\n      **\n      ** Updated 2024-05-27:  If the NUMBER is negative, then PG counts from\n      ** the right of the array.  Hence for negative NUMBER:\n      **\n      **     NUMBER   ==>  $[#NUMBER]    // PG compatible\n      */\n      jsonStringInit(&jx, ctx);\n      if( sqlite3_value_type(argv[i])==SQLITE_INTEGER ){\n        jsonAppendRawNZ(&jx, \"[\", 1);\n        if( zPath[0]=='-' ) jsonAppendRawNZ(&jx,\"#\",1);\n        jsonAppendRaw(&jx, zPath, nPath);\n        jsonAppendRawNZ(&jx, \"]\", 2);\n      }else if( jsonAllAlphanum(zPath, nPath) ){\n        jsonAppendRawNZ(&jx, \".\", 1);\n        jsonAppendRaw(&jx, zPath, nPath);\n      }else if( zPath[0]=='[' && nPath>=3 && zPath[nPath-1]==']' ){\n        jsonAppendRaw(&jx, zPath, nPath);\n      }else{\n        jsonAppendRawNZ(&jx, \".\\\"\", 2);\n        jsonAppendRaw(&jx, zPath, nPath);\n        jsonAppendRawNZ(&jx, \"\\\"\", 1);\n      }\n      jsonStringTerminate(&jx);\n      j = jsonLookupStep(p, 0, jx.zBuf, 0);\n      jsonStringReset(&jx);\n    }else{\n      jsonBadPathError(ctx, zPath);\n      goto json_extract_error;\n    }\n    if( j<p->nBlob ){\n      if( argc==2 ){\n        if( flags & JSON_JSON ){\n          jsonStringInit(&jx, ctx);\n          jsonTranslateBlobToText(p, j, &jx);\n          jsonReturnString(&jx, 0, 0);\n          jsonStringReset(&jx);\n          assert( (flags & JSON_BLOB)==0 );\n          sqlite3_result_subtype(ctx, JSON_SUBTYPE);\n        }else{\n          jsonReturnFromBlob(p, j, ctx, 0);\n          if( (flags & (JSON_SQL|JSON_BLOB))==0\n           && (p->aBlob[j]&0x0f)>=JSONB_ARRAY\n          ){\n            sqlite3_result_subtype(ctx, JSON_SUBTYPE);\n          }\n        }\n      }else{\n        jsonAppendSeparator(&jx);\n        jsonTranslateBlobToText(p, j, &jx);\n      }\n    }else if( j==JSON_LOOKUP_NOTFOUND ){\n      if( argc==2 ){\n        goto json_extract_error;  /* Return NULL if not found */\n      }else{\n        jsonAppendSeparator(&jx);\n        jsonAppendRawNZ(&jx, \"null\", 4);\n      }\n    }else if( j==JSON_LOOKUP_ERROR ){\n      sqlite3_result_error(ctx, \"malformed JSON\", -1);\n      goto json_extract_error;\n    }else{\n      jsonBadPathError(ctx, zPath);\n      goto json_extract_error;\n    }\n  }\n  if( argc>2 ){\n    jsonAppendChar(&jx, ']');\n    jsonReturnString(&jx, 0, 0);\n    if( (flags & JSON_BLOB)==0 ){\n      sqlite3_result_subtype(ctx, JSON_SUBTYPE);\n    }\n  }\njson_extract_error:\n  jsonStringReset(&jx);\n  jsonParseFree(p);\n  return;\n}\n"
+        }
+    },
+    "json_insert": {
+        "category": "aJsonFunc",
+        "impl_function": "jsonSetFunc",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/json.c:4448": "static void jsonSetFunc(\n  sqlite3_context *ctx,\n  int argc,\n  sqlite3_value **argv\n){\n\n  int flags = SQLITE_PTR_TO_INT(sqlite3_user_data(ctx));\n  int bIsSet = (flags&JSON_ISSET)!=0;\n\n  if( argc<1 ) return;\n  if( (argc&1)==0 ) {\n    jsonWrongNumArgs(ctx, bIsSet ? \"set\" : \"insert\");\n    return;\n  }\n  jsonInsertIntoBlob(ctx, argc, argv, bIsSet ? JEDIT_SET : JEDIT_INS);\n}\n"
+        }
+    },
+    "jsonb_insert": {
+        "category": "aJsonFunc",
+        "impl_function": "jsonSetFunc",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/json.c:4448": "static void jsonSetFunc(\n  sqlite3_context *ctx,\n  int argc,\n  sqlite3_value **argv\n){\n\n  int flags = SQLITE_PTR_TO_INT(sqlite3_user_data(ctx));\n  int bIsSet = (flags&JSON_ISSET)!=0;\n\n  if( argc<1 ) return;\n  if( (argc&1)==0 ) {\n    jsonWrongNumArgs(ctx, bIsSet ? \"set\" : \"insert\");\n    return;\n  }\n  jsonInsertIntoBlob(ctx, argc, argv, bIsSet ? JEDIT_SET : JEDIT_INS);\n}\n"
+        }
+    },
+    "json_object": {
+        "category": "aJsonFunc",
+        "impl_function": "jsonObjectFunc",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/json.c:4323": "static void jsonObjectFunc(\n  sqlite3_context *ctx,\n  int argc,\n  sqlite3_value **argv\n){\n  int i;\n  JsonString jx;\n  const char *z;\n  u32 n;\n\n  if( argc&1 ){\n    sqlite3_result_error(ctx, \"json_object() requires an even number \"\n                                  \"of arguments\", -1);\n    return;\n  }\n  jsonStringInit(&jx, ctx);\n  jsonAppendChar(&jx, '{');\n  for(i=0; i<argc; i+=2){\n    if( sqlite3_value_type(argv[i])!=SQLITE_TEXT ){\n      sqlite3_result_error(ctx, \"json_object() labels must be TEXT\", -1);\n      jsonStringReset(&jx);\n      return;\n    }\n    jsonAppendSeparator(&jx);\n    z = (const char*)sqlite3_value_text(argv[i]);\n    n = sqlite3_value_bytes(argv[i]);\n    jsonAppendString(&jx, z, n);\n    jsonAppendChar(&jx, ':');\n    jsonAppendSqlValue(&jx, argv[i+1]);\n  }\n  jsonAppendChar(&jx, '}');\n  jsonReturnString(&jx, 0, 0);\n  sqlite3_result_subtype(ctx, JSON_SUBTYPE);\n}\n"
+        }
+    },
+    "jsonb_object": {
+        "category": "aJsonFunc",
+        "impl_function": "jsonObjectFunc",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/json.c:4323": "static void jsonObjectFunc(\n  sqlite3_context *ctx,\n  int argc,\n  sqlite3_value **argv\n){\n  int i;\n  JsonString jx;\n  const char *z;\n  u32 n;\n\n  if( argc&1 ){\n    sqlite3_result_error(ctx, \"json_object() requires an even number \"\n                                  \"of arguments\", -1);\n    return;\n  }\n  jsonStringInit(&jx, ctx);\n  jsonAppendChar(&jx, '{');\n  for(i=0; i<argc; i+=2){\n    if( sqlite3_value_type(argv[i])!=SQLITE_TEXT ){\n      sqlite3_result_error(ctx, \"json_object() labels must be TEXT\", -1);\n      jsonStringReset(&jx);\n      return;\n    }\n    jsonAppendSeparator(&jx);\n    z = (const char*)sqlite3_value_text(argv[i]);\n    n = sqlite3_value_bytes(argv[i]);\n    jsonAppendString(&jx, z, n);\n    jsonAppendChar(&jx, ':');\n    jsonAppendSqlValue(&jx, argv[i+1]);\n  }\n  jsonAppendChar(&jx, '}');\n  jsonReturnString(&jx, 0, 0);\n  sqlite3_result_subtype(ctx, JSON_SUBTYPE);\n}\n"
+        }
+    },
+    "json_patch": {
+        "category": "aJsonFunc",
+        "impl_function": "jsonPatchFunc",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/json.c:4289": "static void jsonPatchFunc(\n  sqlite3_context *ctx,\n  int argc,\n  sqlite3_value **argv\n){\n  JsonParse *pTarget;    /* The TARGET */\n  JsonParse *pPatch;     /* The PATCH */\n  int rc;                /* Result code */\n\n  UNUSED_PARAMETER(argc);\n  assert( argc==2 );\n  pTarget = jsonParseFuncArg(ctx, argv[0], JSON_EDITABLE);\n  if( pTarget==0 ) return;\n  pPatch = jsonParseFuncArg(ctx, argv[1], 0);\n  if( pPatch ){\n    rc = jsonMergePatch(pTarget, 0, pPatch, 0);\n    if( rc==JSON_MERGE_OK ){\n      jsonReturnParse(ctx, pTarget);\n    }else if( rc==JSON_MERGE_OOM ){\n      sqlite3_result_error_nomem(ctx);\n    }else{\n      sqlite3_result_error(ctx, \"malformed JSON\", -1);\n    }\n    jsonParseFree(pPatch);\n  }\n  jsonParseFree(pTarget);\n}\n"
+        }
+    },
+    "jsonb_patch": {
+        "category": "aJsonFunc",
+        "impl_function": "jsonPatchFunc",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/json.c:4289": "static void jsonPatchFunc(\n  sqlite3_context *ctx,\n  int argc,\n  sqlite3_value **argv\n){\n  JsonParse *pTarget;    /* The TARGET */\n  JsonParse *pPatch;     /* The PATCH */\n  int rc;                /* Result code */\n\n  UNUSED_PARAMETER(argc);\n  assert( argc==2 );\n  pTarget = jsonParseFuncArg(ctx, argv[0], JSON_EDITABLE);\n  if( pTarget==0 ) return;\n  pPatch = jsonParseFuncArg(ctx, argv[1], 0);\n  if( pPatch ){\n    rc = jsonMergePatch(pTarget, 0, pPatch, 0);\n    if( rc==JSON_MERGE_OK ){\n      jsonReturnParse(ctx, pTarget);\n    }else if( rc==JSON_MERGE_OOM ){\n      sqlite3_result_error_nomem(ctx);\n    }else{\n      sqlite3_result_error(ctx, \"malformed JSON\", -1);\n    }\n    jsonParseFree(pPatch);\n  }\n  jsonParseFree(pTarget);\n}\n"
+        }
+    },
+    "json_pretty": {
+        "category": "aJsonFunc",
+        "impl_function": "jsonPrettyFunc",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/json.c:4519": "static void jsonPrettyFunc(\n  sqlite3_context *ctx,\n  int argc,\n  sqlite3_value **argv\n){\n  JsonString s;          /* The output string */\n  JsonPretty x;          /* Pretty printing context */\n\n  memset(&x, 0, sizeof(x));\n  x.pParse = jsonParseFuncArg(ctx, argv[0], 0);\n  if( x.pParse==0 ) return;\n  x.pOut = &s;\n  jsonStringInit(&s, ctx);\n  if( argc==1 || (x.zIndent = (const char*)sqlite3_value_text(argv[1]))==0 ){\n    x.zIndent = \"    \";\n    x.szIndent = 4;\n  }else{\n    x.szIndent = (u32)strlen(x.zIndent);\n  }\n  jsonTranslateBlobToPrettyText(&x, 0);\n  jsonReturnString(&s, 0, 0);\n  jsonParseFree(x.pParse);\n}\n"
+        }
+    },
+    "json_quote": {
+        "category": "aJsonFunc",
+        "impl_function": "jsonQuoteFunc",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/json.c:3860": "static void jsonQuoteFunc(\n  sqlite3_context *ctx,\n  int argc,\n  sqlite3_value **argv\n){\n  JsonString jx;\n  UNUSED_PARAMETER(argc);\n\n  jsonStringInit(&jx, ctx);\n  jsonAppendSqlValue(&jx, argv[0]);\n  jsonReturnString(&jx, 0, 0);\n  sqlite3_result_subtype(ctx, JSON_SUBTYPE);\n}\n"
+        }
+    },
+    "json_remove": {
+        "category": "aJsonFunc",
+        "impl_function": "jsonRemoveFunc",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/json.c:4365": "static void jsonRemoveFunc(\n  sqlite3_context *ctx,\n  int argc,\n  sqlite3_value **argv\n){\n  JsonParse *p;          /* The parse */\n  const char *zPath = 0; /* Path of element to be removed */\n  int i;                 /* Loop counter */\n  u32 rc;                /* Subroutine return code */\n\n  if( argc<1 ) return;\n  p = jsonParseFuncArg(ctx, argv[0], argc>1 ? JSON_EDITABLE : 0);\n  if( p==0 ) return;\n  for(i=1; i<argc; i++){\n    zPath = (const char*)sqlite3_value_text(argv[i]);\n    if( zPath==0 ){\n      goto json_remove_done;\n    }\n    if( zPath[0]!='$' ){\n      goto json_remove_patherror;\n    }\n    if( zPath[1]==0 ){\n      /* json_remove(j,'$') returns NULL */\n      goto json_remove_done;\n    }\n    p->eEdit = JEDIT_DEL;\n    p->delta = 0;\n    rc = jsonLookupStep(p, 0, zPath+1, 0);\n    if( JSON_LOOKUP_ISERROR(rc) ){\n      if( rc==JSON_LOOKUP_NOTFOUND ){\n        continue;  /* No-op */\n      }else if( rc==JSON_LOOKUP_PATHERROR ){\n        jsonBadPathError(ctx, zPath);\n      }else{\n        sqlite3_result_error(ctx, \"malformed JSON\", -1);\n      }\n      goto json_remove_done;\n    }\n  }\n  jsonReturnParse(ctx, p);\n  jsonParseFree(p);\n  return;\n\njson_remove_patherror:\n  jsonBadPathError(ctx, zPath);\n\njson_remove_done:\n  jsonParseFree(p);\n  return;\n}\n"
+        }
+    },
+    "jsonb_remove": {
+        "category": "aJsonFunc",
+        "impl_function": "jsonRemoveFunc",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/json.c:4365": "static void jsonRemoveFunc(\n  sqlite3_context *ctx,\n  int argc,\n  sqlite3_value **argv\n){\n  JsonParse *p;          /* The parse */\n  const char *zPath = 0; /* Path of element to be removed */\n  int i;                 /* Loop counter */\n  u32 rc;                /* Subroutine return code */\n\n  if( argc<1 ) return;\n  p = jsonParseFuncArg(ctx, argv[0], argc>1 ? JSON_EDITABLE : 0);\n  if( p==0 ) return;\n  for(i=1; i<argc; i++){\n    zPath = (const char*)sqlite3_value_text(argv[i]);\n    if( zPath==0 ){\n      goto json_remove_done;\n    }\n    if( zPath[0]!='$' ){\n      goto json_remove_patherror;\n    }\n    if( zPath[1]==0 ){\n      /* json_remove(j,'$') returns NULL */\n      goto json_remove_done;\n    }\n    p->eEdit = JEDIT_DEL;\n    p->delta = 0;\n    rc = jsonLookupStep(p, 0, zPath+1, 0);\n    if( JSON_LOOKUP_ISERROR(rc) ){\n      if( rc==JSON_LOOKUP_NOTFOUND ){\n        continue;  /* No-op */\n      }else if( rc==JSON_LOOKUP_PATHERROR ){\n        jsonBadPathError(ctx, zPath);\n      }else{\n        sqlite3_result_error(ctx, \"malformed JSON\", -1);\n      }\n      goto json_remove_done;\n    }\n  }\n  jsonReturnParse(ctx, p);\n  jsonParseFree(p);\n  return;\n\njson_remove_patherror:\n  jsonBadPathError(ctx, zPath);\n\njson_remove_done:\n  jsonParseFree(p);\n  return;\n}\n"
+        }
+    },
+    "json_replace": {
+        "category": "aJsonFunc",
+        "impl_function": "jsonReplaceFunc",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/json.c:4422": "static void jsonReplaceFunc(\n  sqlite3_context *ctx,\n  int argc,\n  sqlite3_value **argv\n){\n  if( argc<1 ) return;\n  if( (argc&1)==0 ) {\n    jsonWrongNumArgs(ctx, \"replace\");\n    return;\n  }\n  jsonInsertIntoBlob(ctx, argc, argv, JEDIT_REPL);\n}\n"
+        }
+    },
+    "jsonb_replace": {
+        "category": "aJsonFunc",
+        "impl_function": "jsonReplaceFunc",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/json.c:4422": "static void jsonReplaceFunc(\n  sqlite3_context *ctx,\n  int argc,\n  sqlite3_value **argv\n){\n  if( argc<1 ) return;\n  if( (argc&1)==0 ) {\n    jsonWrongNumArgs(ctx, \"replace\");\n    return;\n  }\n  jsonInsertIntoBlob(ctx, argc, argv, JEDIT_REPL);\n}\n"
+        }
+    },
+    "json_set": {
+        "category": "aJsonFunc",
+        "impl_function": "jsonSetFunc",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/json.c:4448": "static void jsonSetFunc(\n  sqlite3_context *ctx,\n  int argc,\n  sqlite3_value **argv\n){\n\n  int flags = SQLITE_PTR_TO_INT(sqlite3_user_data(ctx));\n  int bIsSet = (flags&JSON_ISSET)!=0;\n\n  if( argc<1 ) return;\n  if( (argc&1)==0 ) {\n    jsonWrongNumArgs(ctx, bIsSet ? \"set\" : \"insert\");\n    return;\n  }\n  jsonInsertIntoBlob(ctx, argc, argv, bIsSet ? JEDIT_SET : JEDIT_INS);\n}\n"
+        }
+    },
+    "jsonb_set": {
+        "category": "aJsonFunc",
+        "impl_function": "jsonSetFunc",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/json.c:4448": "static void jsonSetFunc(\n  sqlite3_context *ctx,\n  int argc,\n  sqlite3_value **argv\n){\n\n  int flags = SQLITE_PTR_TO_INT(sqlite3_user_data(ctx));\n  int bIsSet = (flags&JSON_ISSET)!=0;\n\n  if( argc<1 ) return;\n  if( (argc&1)==0 ) {\n    jsonWrongNumArgs(ctx, bIsSet ? \"set\" : \"insert\");\n    return;\n  }\n  jsonInsertIntoBlob(ctx, argc, argv, bIsSet ? JEDIT_SET : JEDIT_INS);\n}\n"
+        }
+    },
+    "json_type": {
+        "category": "aJsonFunc",
+        "impl_function": "jsonTypeFunc",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/json.c:4472": "static void jsonTypeFunc(\n  sqlite3_context *ctx,\n  int argc,\n  sqlite3_value **argv\n){\n  JsonParse *p;          /* The parse */\n  const char *zPath = 0;\n  u32 i;\n\n  p = jsonParseFuncArg(ctx, argv[0], 0);\n  if( p==0 ) return;\n  if( argc==2 ){\n    zPath = (const char*)sqlite3_value_text(argv[1]);\n    if( zPath==0 ) goto json_type_done;\n    if( zPath[0]!='$' ){\n      jsonBadPathError(ctx, zPath);\n      goto json_type_done;\n    }\n    i = jsonLookupStep(p, 0, zPath+1, 0);\n    if( JSON_LOOKUP_ISERROR(i) ){\n      if( i==JSON_LOOKUP_NOTFOUND ){\n        /* no-op */\n      }else if( i==JSON_LOOKUP_PATHERROR ){\n        jsonBadPathError(ctx, zPath);\n      }else{\n        sqlite3_result_error(ctx, \"malformed JSON\", -1);\n      }\n      goto json_type_done;\n    }\n  }else{\n    i = 0;\n  }\n  sqlite3_result_text(ctx, jsonbType[p->aBlob[i]&0x0f], -1, SQLITE_STATIC);\njson_type_done:\n  jsonParseFree(p);\n}\n"
+        }
+    },
+    "json_valid": {
+        "category": "aJsonFunc",
+        "impl_function": "jsonValidFunc",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/json.c:4600": "static void jsonValidFunc(\n  sqlite3_context *ctx,\n  int argc,\n  sqlite3_value **argv\n){\n  JsonParse *p;          /* The parse */\n  u8 flags = 1;\n  u8 res = 0;\n  if( argc==2 ){\n    i64 f = sqlite3_value_int64(argv[1]);\n    if( f<1 || f>15 ){\n      sqlite3_result_error(ctx, \"FLAGS parameter to json_valid() must be\"\n                                \" between 1 and 15\", -1);\n      return;\n    }\n    flags = f & 0x0f;\n  }\n  switch( sqlite3_value_type(argv[0]) ){\n    case SQLITE_NULL: {\n#ifdef SQLITE_LEGACY_JSON_VALID\n      /* Incorrect legacy behavior was to return FALSE for a NULL input */\n      sqlite3_result_int(ctx, 0);\n#endif\n      return;\n    }\n    case SQLITE_BLOB: {\n      JsonParse py;\n      memset(&py, 0, sizeof(py));\n      if( jsonArgIsJsonb(argv[0], &py) ){\n        if( flags & 0x04 ){\n          /* Superficial checking only - accomplished by the\n          ** jsonArgIsJsonb() call above. */\n          res = 1;\n        }else if( flags & 0x08 ){\n          /* Strict checking.  Check by translating BLOB->TEXT->BLOB.  If\n          ** no errors occur, call that a \"strict check\". */\n          res = 0==jsonbValidityCheck(&py, 0, py.nBlob, 1);\n        }\n        break;\n      }\n      /* Fall through into interpreting the input as text.  See note\n      ** above at tag-20240123-a. */\n      /* no break */ deliberate_fall_through\n    }\n    default: {\n      JsonParse px;\n      if( (flags & 0x3)==0 ) break;\n      memset(&px, 0, sizeof(px));\n     \n      p = jsonParseFuncArg(ctx, argv[0], JSON_KEEPERROR);\n      if( p ){\n        if( p->oom ){\n          sqlite3_result_error_nomem(ctx);\n        }else if( p->nErr ){\n          /* no-op */\n        }else if( (flags & 0x02)!=0 || p->hasNonstd==0 ){\n          res = 1;\n        }\n        jsonParseFree(p);\n      }else{\n        sqlite3_result_error_nomem(ctx);\n      }\n      break;\n    }\n  }\n  sqlite3_result_int(ctx, res);\n}\n"
+        }
+    },
+    "json_parse": {
+        "category": "aJsonFunc",
+        "impl_function": null,
+        "code": {},
+        "error": "no xFunc"
+    },
+    "json_group_array": {
+        "category": "aJsonFunc",
+        "impl_function": null,
+        "code": {},
+        "error": "no xFunc"
+    },
+    "jsonb_group_array": {
+        "category": "aJsonFunc",
+        "impl_function": null,
+        "code": {},
+        "error": "no xFunc"
+    },
+    "json_group_object": {
+        "category": "aJsonFunc",
+        "impl_function": null,
+        "code": {},
+        "error": "no xFunc"
+    },
+    "jsonb_group_object": {
+        "category": "aJsonFunc",
+        "impl_function": null,
+        "code": {},
+        "error": "no xFunc"
+    },
+    "sqlite_rename_column": {
+        "category": "aAlterTableFuncs",
+        "impl_function": "renameColumnFunc",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/alter.c:1508": "static void renameColumnFunc(\n  sqlite3_context *context,\n  int NotUsed,\n  sqlite3_value **argv\n){\n  sqlite3 *db = sqlite3_context_db_handle(context);\n  RenameCtx sCtx;\n  const char *zSql = (const char*)sqlite3_value_text(argv[0]);\n  const char *zDb = (const char*)sqlite3_value_text(argv[3]);\n  const char *zTable = (const char*)sqlite3_value_text(argv[4]);\n  int iCol = sqlite3_value_int(argv[5]);\n  const char *zNew = (const char*)sqlite3_value_text(argv[6]);\n  int bQuote = sqlite3_value_int(argv[7]);\n  int bTemp = sqlite3_value_int(argv[8]);\n  const char *zOld;\n  int rc;\n  Parse sParse;\n  Walker sWalker;\n  Index *pIdx;\n  int i;\n  Table *pTab;\n#ifndef SQLITE_OMIT_AUTHORIZATION\n  sqlite3_xauth xAuth = db->xAuth;\n#endif\n\n  UNUSED_PARAMETER(NotUsed);\n  if( zSql==0 ) return;\n  if( zTable==0 ) return;\n  if( zNew==0 ) return;\n  if( iCol<0 ) return;\n  sqlite3BtreeEnterAll(db);\n  pTab = sqlite3FindTable(db, zTable, zDb);\n  if( pTab==0 || iCol>=pTab->nCol ){\n    sqlite3BtreeLeaveAll(db);\n    return;\n  }\n  zOld = pTab->aCol[iCol].zCnName;\n  memset(&sCtx, 0, sizeof(sCtx));\n  sCtx.iCol = ((iCol==pTab->iPKey) ? -1 : iCol);\n\n#ifndef SQLITE_OMIT_AUTHORIZATION\n  db->xAuth = 0;\n#endif\n  rc = renameParseSql(&sParse, zDb, db, zSql, bTemp);\n\n  /* Find tokens that need to be replaced. */\n  memset(&sWalker, 0, sizeof(Walker));\n  sWalker.pParse = &sParse;\n  sWalker.xExprCallback = renameColumnExprCb;\n  sWalker.xSelectCallback = renameColumnSelectCb;\n  sWalker.u.pRename = &sCtx;\n\n  sCtx.pTab = pTab;\n  if( rc!=SQLITE_OK ) goto renameColumnFunc_done;\n  if( sParse.pNewTable ){\n    if( IsView(sParse.pNewTable) ){\n      Select *pSelect = sParse.pNewTable->u.view.pSelect;\n      pSelect->selFlags &= ~(u32)SF_View;\n      sParse.rc = SQLITE_OK;\n      sqlite3SelectPrep(&sParse, pSelect, 0);\n      rc = (db->mallocFailed ? SQLITE_NOMEM : sParse.rc);\n      if( rc==SQLITE_OK ){\n        sqlite3WalkSelect(&sWalker, pSelect);\n      }\n      if( rc!=SQLITE_OK ) goto renameColumnFunc_done;\n    }else if( IsOrdinaryTable(sParse.pNewTable) ){\n      /* A regular table */\n      int bFKOnly = sqlite3_stricmp(zTable, sParse.pNewTable->zName);\n      FKey *pFKey;\n      sCtx.pTab = sParse.pNewTable;\n      if( bFKOnly==0 ){\n        if( iCol<sParse.pNewTable->nCol ){\n          renameTokenFind(\n              &sParse, &sCtx, (void*)sParse.pNewTable->aCol[iCol].zCnName\n          );\n        }\n        if( sCtx.iCol<0 ){\n          renameTokenFind(&sParse, &sCtx, (void*)&sParse.pNewTable->iPKey);\n        }\n        sqlite3WalkExprList(&sWalker, sParse.pNewTable->pCheck);\n        for(pIdx=sParse.pNewTable->pIndex; pIdx; pIdx=pIdx->pNext){\n          sqlite3WalkExprList(&sWalker, pIdx->aColExpr);\n        }\n        for(pIdx=sParse.pNewIndex; pIdx; pIdx=pIdx->pNext){\n          sqlite3WalkExprList(&sWalker, pIdx->aColExpr);\n        }\n#ifndef SQLITE_OMIT_GENERATED_COLUMNS\n        for(i=0; i<sParse.pNewTable->nCol; i++){\n          Expr *pExpr = sqlite3ColumnExpr(sParse.pNewTable,\n                                                  &sParse.pNewTable->aCol[i]);\n          sqlite3WalkExpr(&sWalker, pExpr);\n        }\n#endif\n      }\n\n      assert( IsOrdinaryTable(sParse.pNewTable) );\n      for(pFKey=sParse.pNewTable->u.tab.pFKey; pFKey; pFKey=pFKey->pNextFrom){\n        for(i=0; i<pFKey->nCol; i++){\n          if( bFKOnly==0 && pFKey->aCol[i].iFrom==iCol ){\n            renameTokenFind(&sParse, &sCtx, (void*)&pFKey->aCol[i]);\n          }\n          if( 0==sqlite3_stricmp(pFKey->zTo, zTable)\n           && 0==sqlite3_stricmp(pFKey->aCol[i].zCol, zOld)\n          ){\n            renameTokenFind(&sParse, &sCtx, (void*)pFKey->aCol[i].zCol);\n          }\n        }\n      }\n    }\n  }else if( sParse.pNewIndex ){\n    sqlite3WalkExprList(&sWalker, sParse.pNewIndex->aColExpr);\n    sqlite3WalkExpr(&sWalker, sParse.pNewIndex->pPartIdxWhere);\n  }else{\n    /* A trigger */\n    TriggerStep *pStep;\n    rc = renameResolveTrigger(&sParse);\n    if( rc!=SQLITE_OK ) goto renameColumnFunc_done;\n\n    for(pStep=sParse.pNewTrigger->step_list; pStep; pStep=pStep->pNext){\n      if( pStep->zTarget ){\n        Table *pTarget = sqlite3LocateTable(&sParse, 0, pStep->zTarget, zDb);\n        if( pTarget==pTab ){\n          if( pStep->pUpsert ){\n            ExprList *pUpsertSet = pStep->pUpsert->pUpsertSet;\n            renameColumnElistNames(&sParse, &sCtx, pUpsertSet, zOld);\n          }\n          renameColumnIdlistNames(&sParse, &sCtx, pStep->pIdList, zOld);\n          renameColumnElistNames(&sParse, &sCtx, pStep->pExprList, zOld);\n        }\n      }\n    }\n\n\n    /* Find tokens to edit in UPDATE OF clause */\n    if( sParse.pTriggerTab==pTab ){\n      renameColumnIdlistNames(&sParse, &sCtx,sParse.pNewTrigger->pColumns,zOld);\n    }\n\n    /* Find tokens to edit in various expressions and selects */\n    renameWalkTrigger(&sWalker, sParse.pNewTrigger);\n  }\n\n  assert( rc==SQLITE_OK );\n  rc = renameEditSql(context, &sCtx, zSql, zNew, bQuote);\n\nrenameColumnFunc_done:\n  if( rc!=SQLITE_OK ){\n    if( rc==SQLITE_ERROR && sqlite3WritableSchema(db) ){\n      sqlite3_result_value(context, argv[0]);\n    }else if( sParse.zErrMsg ){\n      renameColumnParseError(context, \"\", argv[1], argv[2], &sParse);\n    }else{\n      sqlite3_result_error_code(context, rc);\n    }\n  }\n\n  renameParseCleanup(&sParse);\n  renameTokenFree(db, sCtx.pList);\n#ifndef SQLITE_OMIT_AUTHORIZATION\n  db->xAuth = xAuth;\n#endif\n  sqlite3BtreeLeaveAll(db);\n}\n"
+        }
+    },
+    "sqlite_rename_table": {
+        "category": "aAlterTableFuncs",
+        "impl_function": "renameTableFunc",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/alter.c:1733": "static void renameTableFunc(\n  sqlite3_context *context,\n  int NotUsed,\n  sqlite3_value **argv\n){\n  sqlite3 *db = sqlite3_context_db_handle(context);\n  const char *zDb = (const char*)sqlite3_value_text(argv[0]);\n  const char *zInput = (const char*)sqlite3_value_text(argv[3]);\n  const char *zOld = (const char*)sqlite3_value_text(argv[4]);\n  const char *zNew = (const char*)sqlite3_value_text(argv[5]);\n  int bTemp = sqlite3_value_int(argv[6]);\n  UNUSED_PARAMETER(NotUsed);\n\n  if( zInput && zOld && zNew ){\n    Parse sParse;\n    int rc;\n    int bQuote = 1;\n    RenameCtx sCtx;\n    Walker sWalker;\n\n#ifndef SQLITE_OMIT_AUTHORIZATION\n    sqlite3_xauth xAuth = db->xAuth;\n    db->xAuth = 0;\n#endif\n\n    sqlite3BtreeEnterAll(db);\n\n    memset(&sCtx, 0, sizeof(RenameCtx));\n    sCtx.pTab = sqlite3FindTable(db, zOld, zDb);\n    memset(&sWalker, 0, sizeof(Walker));\n    sWalker.pParse = &sParse;\n    sWalker.xExprCallback = renameTableExprCb;\n    sWalker.xSelectCallback = renameTableSelectCb;\n    sWalker.u.pRename = &sCtx;\n\n    rc = renameParseSql(&sParse, zDb, db, zInput, bTemp);\n\n    if( rc==SQLITE_OK ){\n      int isLegacy = (db->flags & SQLITE_LegacyAlter);\n      if( sParse.pNewTable ){\n        Table *pTab = sParse.pNewTable;\n\n        if( IsView(pTab) ){\n          if( isLegacy==0 ){\n            Select *pSelect = pTab->u.view.pSelect;\n            NameContext sNC;\n            memset(&sNC, 0, sizeof(sNC));\n            sNC.pParse = &sParse;\n\n            assert( pSelect->selFlags & SF_View );\n            pSelect->selFlags &= ~(u32)SF_View;\n            sqlite3SelectPrep(&sParse, pTab->u.view.pSelect, &sNC);\n            if( sParse.nErr ){\n              rc = sParse.rc;\n            }else{\n              sqlite3WalkSelect(&sWalker, pTab->u.view.pSelect);\n            }\n          }\n        }else{\n          /* Modify any FK definitions to point to the new table. */\n#ifndef SQLITE_OMIT_FOREIGN_KEY\n          if( (isLegacy==0 || (db->flags & SQLITE_ForeignKeys))\n           && !IsVirtual(pTab)\n          ){\n            FKey *pFKey;\n            assert( IsOrdinaryTable(pTab) );\n            for(pFKey=pTab->u.tab.pFKey; pFKey; pFKey=pFKey->pNextFrom){\n              if( sqlite3_stricmp(pFKey->zTo, zOld)==0 ){\n                renameTokenFind(&sParse, &sCtx, (void*)pFKey->zTo);\n              }\n            }\n          }\n#endif\n\n          /* If this is the table being altered, fix any table refs in CHECK\n          ** expressions. Also update the name that appears right after the\n          ** \"CREATE [VIRTUAL] TABLE\" bit. */\n          if( sqlite3_stricmp(zOld, pTab->zName)==0 ){\n            sCtx.pTab = pTab;\n            if( isLegacy==0 ){\n              sqlite3WalkExprList(&sWalker, pTab->pCheck);\n            }\n            renameTokenFind(&sParse, &sCtx, pTab->zName);\n          }\n        }\n      }\n\n      else if( sParse.pNewIndex ){\n        renameTokenFind(&sParse, &sCtx, sParse.pNewIndex->zName);\n        if( isLegacy==0 ){\n          sqlite3WalkExpr(&sWalker, sParse.pNewIndex->pPartIdxWhere);\n        }\n      }\n\n#ifndef SQLITE_OMIT_TRIGGER\n      else{\n        Trigger *pTrigger = sParse.pNewTrigger;\n        TriggerStep *pStep;\n        if( 0==sqlite3_stricmp(sParse.pNewTrigger->table, zOld)\n            && sCtx.pTab->pSchema==pTrigger->pTabSchema\n          ){\n          renameTokenFind(&sParse, &sCtx, sParse.pNewTrigger->table);\n        }\n\n        if( isLegacy==0 ){\n          rc = renameResolveTrigger(&sParse);\n          if( rc==SQLITE_OK ){\n            renameWalkTrigger(&sWalker, pTrigger);\n            for(pStep=pTrigger->step_list; pStep; pStep=pStep->pNext){\n              if( pStep->zTarget && 0==sqlite3_stricmp(pStep->zTarget, zOld) ){\n                renameTokenFind(&sParse, &sCtx, pStep->zTarget);\n              }\n              if( pStep->pFrom ){\n                int i;\n                for(i=0; i<pStep->pFrom->nSrc; i++){\n                  SrcItem *pItem = &pStep->pFrom->a[i];\n                  if( 0==sqlite3_stricmp(pItem->zName, zOld) ){\n                    renameTokenFind(&sParse, &sCtx, pItem->zName);\n                  }\n                }\n              }\n            }\n          }\n        }\n      }\n#endif\n    }\n\n    if( rc==SQLITE_OK ){\n      rc = renameEditSql(context, &sCtx, zInput, zNew, bQuote);\n    }\n    if( rc!=SQLITE_OK ){\n      if( rc==SQLITE_ERROR && sqlite3WritableSchema(db) ){\n        sqlite3_result_value(context, argv[3]);\n      }else if( sParse.zErrMsg ){\n        renameColumnParseError(context, \"\", argv[1], argv[2], &sParse);\n      }else{\n        sqlite3_result_error_code(context, rc);\n      }\n    }\n\n    renameParseCleanup(&sParse);\n    renameTokenFree(db, sCtx.pList);\n    sqlite3BtreeLeaveAll(db);\n#ifndef SQLITE_OMIT_AUTHORIZATION\n    db->xAuth = xAuth;\n#endif\n  }\n\n  return;\n}\n"
+        }
+    },
+    "sqlite_rename_test": {
+        "category": "aAlterTableFuncs",
+        "impl_function": "renameTableTest",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/alter.c:2032": "static void renameTableTest(\n  sqlite3_context *context,\n  int NotUsed,\n  sqlite3_value **argv\n){\n  sqlite3 *db = sqlite3_context_db_handle(context);\n  char const *zDb = (const char*)sqlite3_value_text(argv[0]);\n  char const *zInput = (const char*)sqlite3_value_text(argv[1]);\n  int bTemp = sqlite3_value_int(argv[4]);\n  int isLegacy = (db->flags & SQLITE_LegacyAlter);\n  char const *zWhen = (const char*)sqlite3_value_text(argv[5]);\n  int bNoDQS = sqlite3_value_int(argv[6]);\n\n#ifndef SQLITE_OMIT_AUTHORIZATION\n  sqlite3_xauth xAuth = db->xAuth;\n  db->xAuth = 0;\n#endif\n\n  UNUSED_PARAMETER(NotUsed);\n\n  if( zDb && zInput ){\n    int rc;\n    Parse sParse;\n    u64 flags = db->flags;\n    if( bNoDQS ) db->flags &= ~(SQLITE_DqsDML|SQLITE_DqsDDL);\n    rc = renameParseSql(&sParse, zDb, db, zInput, bTemp);\n    db->flags = flags;\n    if( rc==SQLITE_OK ){\n      if( isLegacy==0 && sParse.pNewTable && IsView(sParse.pNewTable) ){\n        NameContext sNC;\n        memset(&sNC, 0, sizeof(sNC));\n        sNC.pParse = &sParse;\n        sqlite3SelectPrep(&sParse, sParse.pNewTable->u.view.pSelect, &sNC);\n        if( sParse.nErr ) rc = sParse.rc;\n      }\n\n      else if( sParse.pNewTrigger ){\n        if( isLegacy==0 ){\n          rc = renameResolveTrigger(&sParse);\n        }\n        if( rc==SQLITE_OK ){\n          int i1 = sqlite3SchemaToIndex(db, sParse.pNewTrigger->pTabSchema);\n          int i2 = sqlite3FindDbName(db, zDb);\n          if( i1==i2 ){\n            /* Handle output case B */\n            sqlite3_result_int(context, 1);\n          }\n        }\n      }\n    }\n\n    if( rc!=SQLITE_OK && zWhen && !sqlite3WritableSchema(db) ){\n      /* Output case A */\n      renameColumnParseError(context, zWhen, argv[2], argv[3],&sParse);\n    }\n    renameParseCleanup(&sParse);\n  }\n\n#ifndef SQLITE_OMIT_AUTHORIZATION\n  db->xAuth = xAuth;\n#endif\n}\n"
+        }
+    },
+    "sqlite_drop_column": {
+        "category": "aAlterTableFuncs",
+        "impl_function": "dropColumnFunc",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/alter.c:2107": "static void dropColumnFunc(\n  sqlite3_context *context,\n  int NotUsed,\n  sqlite3_value **argv\n){\n  sqlite3 *db = sqlite3_context_db_handle(context);\n  int iSchema = sqlite3_value_int(argv[0]);\n  const char *zSql = (const char*)sqlite3_value_text(argv[1]);\n  int iCol = sqlite3_value_int(argv[2]);\n  const char *zDb = db->aDb[iSchema].zDbSName;\n  int rc;\n  Parse sParse;\n  RenameToken *pCol;\n  Table *pTab;\n  const char *zEnd;\n  char *zNew = 0;\n\n#ifndef SQLITE_OMIT_AUTHORIZATION\n  sqlite3_xauth xAuth = db->xAuth;\n  db->xAuth = 0;\n#endif\n\n  UNUSED_PARAMETER(NotUsed);\n  rc = renameParseSql(&sParse, zDb, db, zSql, iSchema==1);\n  if( rc!=SQLITE_OK ) goto drop_column_done;\n  pTab = sParse.pNewTable;\n  if( pTab==0 || pTab->nCol==1 || iCol>=pTab->nCol ){\n    /* This can happen if the sqlite_schema table is corrupt */\n    rc = SQLITE_CORRUPT_BKPT;\n    goto drop_column_done;\n  }\n\n  pCol = renameTokenFind(&sParse, 0, (void*)pTab->aCol[iCol].zCnName);\n  if( iCol<pTab->nCol-1 ){\n    RenameToken *pEnd;\n    pEnd = renameTokenFind(&sParse, 0, (void*)pTab->aCol[iCol+1].zCnName);\n    zEnd = (const char*)pEnd->t.z;\n  }else{\n    assert( IsOrdinaryTable(pTab) );\n    zEnd = (const char*)&zSql[pTab->u.tab.addColOffset];\n    while( ALWAYS(pCol->t.z[0]!=0) && pCol->t.z[0]!=',' ) pCol->t.z--;\n  }\n\n  zNew = sqlite3MPrintf(db, \"%.*s%s\", pCol->t.z-zSql, zSql, zEnd);\n  sqlite3_result_text(context, zNew, -1, SQLITE_TRANSIENT);\n  sqlite3_free(zNew);\n\ndrop_column_done:\n  renameParseCleanup(&sParse);\n#ifndef SQLITE_OMIT_AUTHORIZATION\n  db->xAuth = xAuth;\n#endif\n  if( rc!=SQLITE_OK ){\n    sqlite3_result_error_code(context, rc);\n  }\n}\n"
+        }
+    },
+    "sqlite_rename_quotefix": {
+        "category": "aAlterTableFuncs",
+        "impl_function": "renameQuotefixFunc",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/alter.c:1919": "static void renameQuotefixFunc(\n  sqlite3_context *context,\n  int NotUsed,\n  sqlite3_value **argv\n){\n  sqlite3 *db = sqlite3_context_db_handle(context);\n  char const *zDb = (const char*)sqlite3_value_text(argv[0]);\n  char const *zInput = (const char*)sqlite3_value_text(argv[1]);\n\n#ifndef SQLITE_OMIT_AUTHORIZATION\n  sqlite3_xauth xAuth = db->xAuth;\n  db->xAuth = 0;\n#endif\n\n  sqlite3BtreeEnterAll(db);\n\n  UNUSED_PARAMETER(NotUsed);\n  if( zDb && zInput ){\n    int rc;\n    Parse sParse;\n    rc = renameParseSql(&sParse, zDb, db, zInput, 0);\n\n    if( rc==SQLITE_OK ){\n      RenameCtx sCtx;\n      Walker sWalker;\n\n      /* Walker to find tokens that need to be replaced. */\n      memset(&sCtx, 0, sizeof(RenameCtx));\n      memset(&sWalker, 0, sizeof(Walker));\n      sWalker.pParse = &sParse;\n      sWalker.xExprCallback = renameQuotefixExprCb;\n      sWalker.xSelectCallback = renameColumnSelectCb;\n      sWalker.u.pRename = &sCtx;\n\n      if( sParse.pNewTable ){\n        if( IsView(sParse.pNewTable) ){\n          Select *pSelect = sParse.pNewTable->u.view.pSelect;\n          pSelect->selFlags &= ~(u32)SF_View;\n          sParse.rc = SQLITE_OK;\n          sqlite3SelectPrep(&sParse, pSelect, 0);\n          rc = (db->mallocFailed ? SQLITE_NOMEM : sParse.rc);\n          if( rc==SQLITE_OK ){\n            sqlite3WalkSelect(&sWalker, pSelect);\n          }\n        }else{\n          int i;\n          sqlite3WalkExprList(&sWalker, sParse.pNewTable->pCheck);\n#ifndef SQLITE_OMIT_GENERATED_COLUMNS\n          for(i=0; i<sParse.pNewTable->nCol; i++){\n            sqlite3WalkExpr(&sWalker,\n               sqlite3ColumnExpr(sParse.pNewTable,\n                                         &sParse.pNewTable->aCol[i]));\n          }\n#endif /* SQLITE_OMIT_GENERATED_COLUMNS */\n        }\n      }else if( sParse.pNewIndex ){\n        sqlite3WalkExprList(&sWalker, sParse.pNewIndex->aColExpr);\n        sqlite3WalkExpr(&sWalker, sParse.pNewIndex->pPartIdxWhere);\n      }else{\n#ifndef SQLITE_OMIT_TRIGGER\n        rc = renameResolveTrigger(&sParse);\n        if( rc==SQLITE_OK ){\n          renameWalkTrigger(&sWalker, sParse.pNewTrigger);\n        }\n#endif /* SQLITE_OMIT_TRIGGER */\n      }\n\n      if( rc==SQLITE_OK ){\n        rc = renameEditSql(context, &sCtx, zInput, 0, 0);\n      }\n      renameTokenFree(db, sCtx.pList);\n    }\n    if( rc!=SQLITE_OK ){\n      if( sqlite3WritableSchema(db) && rc==SQLITE_ERROR ){\n        sqlite3_result_value(context, argv[1]);\n      }else{\n        sqlite3_result_error_code(context, rc);\n      }\n    }\n    renameParseCleanup(&sParse);\n  }\n\n#ifndef SQLITE_OMIT_AUTHORIZATION\n  db->xAuth = xAuth;\n#endif\n\n  sqlite3BtreeLeaveAll(db);\n}\n"
+        }
+    },
+    "0": {
+        "category": "aWindowFuncs",
+        "impl_function": null,
+        "code": {},
+        "error": "no xFunc"
+    },
+    "julianday": {
+        "category": "aDateTimeFuncs",
+        "impl_function": "juliandayFunc",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/date.c:1147": "static void juliandayFunc(\n  sqlite3_context *context,\n  int argc,\n  sqlite3_value **argv\n){\n  DateTime x;\n  if( isDate(context, argc, argv, &x)==0 ){\n    computeJD(&x);\n    sqlite3_result_double(context, x.iJD/86400000.0);\n  }\n}\n"
+        }
+    },
+    "unixepoch": {
+        "category": "aDateTimeFuncs",
+        "impl_function": "unixepochFunc",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/date.c:1165": "static void unixepochFunc(\n  sqlite3_context *context,\n  int argc,\n  sqlite3_value **argv\n){\n  DateTime x;\n  if( isDate(context, argc, argv, &x)==0 ){\n    computeJD(&x);\n    if( x.useSubsec ){\n      sqlite3_result_double(context, (x.iJD - 21086676*(i64)10000000)/1000.0);\n    }else{\n      sqlite3_result_int64(context, x.iJD/1000 - 21086676*(i64)10000);\n    }\n  }\n}\n"
+        }
+    },
+    "date": {
+        "category": "aDateTimeFuncs",
+        "impl_function": "dateFunc",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/date.c:1288": "static void dateFunc(\n  sqlite3_context *context,\n  int argc,\n  sqlite3_value **argv\n){\n  DateTime x;\n  if( isDate(context, argc, argv, &x)==0 ){\n    int Y;\n    char zBuf[16];\n    computeYMD(&x);\n    Y = x.Y;\n    if( Y<0 ) Y = -Y;\n    zBuf[1] = '0' + (Y/1000)%10;\n    zBuf[2] = '0' + (Y/100)%10;\n    zBuf[3] = '0' + (Y/10)%10;\n    zBuf[4] = '0' + (Y)%10;\n    zBuf[5] = '-';\n    zBuf[6] = '0' + (x.M/10)%10;\n    zBuf[7] = '0' + (x.M)%10;\n    zBuf[8] = '-';\n    zBuf[9] = '0' + (x.D/10)%10;\n    zBuf[10] = '0' + (x.D)%10;\n    zBuf[11] = 0;\n    if( x.Y<0 ){\n      zBuf[0] = '-';\n      sqlite3_result_text(context, zBuf, 11, SQLITE_TRANSIENT);\n    }else{\n      sqlite3_result_text(context, &zBuf[1], 10, SQLITE_TRANSIENT);\n    }\n  }\n}\n"
+        }
+    },
+    "time": {
+        "category": "aDateTimeFuncs",
+        "impl_function": "timeFunc",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/date.c:1246": "static void timeFunc(\n  sqlite3_context *context,\n  int argc,\n  sqlite3_value **argv\n){\n  DateTime x;\n  if( isDate(context, argc, argv, &x)==0 ){\n    int s, n;\n    char zBuf[16];\n    computeHMS(&x);\n    zBuf[0] = '0' + (x.h/10)%10;\n    zBuf[1] = '0' + (x.h)%10;\n    zBuf[2] = ':';\n    zBuf[3] = '0' + (x.m/10)%10;\n    zBuf[4] = '0' + (x.m)%10;\n    zBuf[5] = ':';\n    if( x.useSubsec ){\n      s = (int)(1000.0*x.s + 0.5);\n      zBuf[6] = '0' + (s/10000)%10;\n      zBuf[7] = '0' + (s/1000)%10;\n      zBuf[8] = '.';\n      zBuf[9] = '0' + (s/100)%10;\n      zBuf[10] = '0' + (s/10)%10;\n      zBuf[11] = '0' + (s)%10;\n      zBuf[12] = 0;\n      n = 12;\n    }else{\n      s = (int)x.s;\n      zBuf[6] = '0' + (s/10)%10;\n      zBuf[7] = '0' + (s)%10;\n      zBuf[8] = 0;\n      n = 8;\n    }\n    sqlite3_result_text(context, zBuf, n, SQLITE_TRANSIENT);\n  }\n}\n"
+        }
+    },
+    "datetime": {
+        "category": "aDateTimeFuncs",
+        "impl_function": "datetimeFunc",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/date.c:1186": "static void datetimeFunc(\n  sqlite3_context *context,\n  int argc,\n  sqlite3_value **argv\n){\n  DateTime x;\n  if( isDate(context, argc, argv, &x)==0 ){\n    int Y, s, n;\n    char zBuf[32];\n    computeYMD_HMS(&x);\n    Y = x.Y;\n    if( Y<0 ) Y = -Y;\n    zBuf[1] = '0' + (Y/1000)%10;\n    zBuf[2] = '0' + (Y/100)%10;\n    zBuf[3] = '0' + (Y/10)%10;\n    zBuf[4] = '0' + (Y)%10;\n    zBuf[5] = '-';\n    zBuf[6] = '0' + (x.M/10)%10;\n    zBuf[7] = '0' + (x.M)%10;\n    zBuf[8] = '-';\n    zBuf[9] = '0' + (x.D/10)%10;\n    zBuf[10] = '0' + (x.D)%10;\n    zBuf[11] = ' ';\n    zBuf[12] = '0' + (x.h/10)%10;\n    zBuf[13] = '0' + (x.h)%10;\n    zBuf[14] = ':';\n    zBuf[15] = '0' + (x.m/10)%10;\n    zBuf[16] = '0' + (x.m)%10;\n    zBuf[17] = ':';\n    if( x.useSubsec ){\n      s = (int)(1000.0*x.s + 0.5);\n      zBuf[18] = '0' + (s/10000)%10;\n      zBuf[19] = '0' + (s/1000)%10;\n      zBuf[20] = '.';\n      zBuf[21] = '0' + (s/100)%10;\n      zBuf[22] = '0' + (s/10)%10;\n      zBuf[23] = '0' + (s)%10;\n      zBuf[24] = 0;\n      n = 24;\n    }else{\n      s = (int)x.s;\n      zBuf[18] = '0' + (s/10)%10;\n      zBuf[19] = '0' + (s)%10;\n      zBuf[20] = 0;\n      n = 20;\n    }\n    if( x.Y<0 ){\n      zBuf[0] = '-';\n      sqlite3_result_text(context, zBuf, n, SQLITE_TRANSIENT);\n    }else{\n      sqlite3_result_text(context, &zBuf[1], n-1, SQLITE_TRANSIENT);\n    }\n  }\n}\n"
+        }
+    },
+    "strftime": {
+        "category": "aDateTimeFuncs",
+        "impl_function": "strftimeFunc",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/date.c:1400": "static void strftimeFunc(\n  sqlite3_context *context,\n  int argc,\n  sqlite3_value **argv\n){\n  DateTime x;\n  size_t i,j;\n  sqlite3 *db;\n  const char *zFmt;\n  sqlite3_str sRes;\n\n\n  if( argc==0 ) return;\n  zFmt = (const char*)sqlite3_value_text(argv[0]);\n  if( zFmt==0 || isDate(context, argc-1, argv+1, &x) ) return;\n  db = sqlite3_context_db_handle(context);\n  sqlite3StrAccumInit(&sRes, 0, 0, 0, db->aLimit[SQLITE_LIMIT_LENGTH]);\n\n  computeJD(&x);\n  computeYMD_HMS(&x);\n  for(i=j=0; zFmt[i]; i++){\n    char cf;\n    if( zFmt[i]!='%' ) continue;\n    if( j<i ) sqlite3_str_append(&sRes, zFmt+j, (int)(i-j));\n    i++;\n    j = i + 1;\n    cf = zFmt[i];\n    switch( cf ){\n      case 'd':  /* Fall thru */\n      case 'e': {\n        sqlite3_str_appendf(&sRes, cf=='d' ? \"%02d\" : \"%2d\", x.D);\n        break;\n      }\n      case 'f': {  /* Fractional seconds.  (Non-standard) */\n        double s = x.s;\n        if( NEVER(s>59.999) ) s = 59.999;\n        sqlite3_str_appendf(&sRes, \"%06.3f\", s);\n        break;\n      }\n      case 'F': {\n        sqlite3_str_appendf(&sRes, \"%04d-%02d-%02d\", x.Y, x.M, x.D);\n        break;\n      }\n      case 'G': /* Fall thru */\n      case 'g': {\n        DateTime y = x;\n        assert( y.validJD );\n        /* Move y so that it is the Thursday in the same week as x */\n        y.iJD += (3 - daysAfterMonday(&x))*86400000;\n        y.validYMD = 0;\n        computeYMD(&y);\n        if( cf=='g' ){\n          sqlite3_str_appendf(&sRes, \"%02d\", y.Y%100);\n        }else{\n          sqlite3_str_appendf(&sRes, \"%04d\", y.Y);\n        }\n        break;\n      }\n      case 'H':\n      case 'k': {\n        sqlite3_str_appendf(&sRes, cf=='H' ? \"%02d\" : \"%2d\", x.h);\n        break;\n      }\n      case 'I': /* Fall thru */\n      case 'l': {\n        int h = x.h;\n        if( h>12 ) h -= 12;\n        if( h==0 ) h = 12;\n        sqlite3_str_appendf(&sRes, cf=='I' ? \"%02d\" : \"%2d\", h);\n        break;\n      }\n      case 'j': {  /* Day of year.  Jan01==1, Jan02==2, and so forth */\n        sqlite3_str_appendf(&sRes,\"%03d\",daysAfterJan01(&x)+1);\n        break;\n      }\n      case 'J': {  /* Julian day number.  (Non-standard) */\n        sqlite3_str_appendf(&sRes,\"%.16g\",x.iJD/86400000.0);\n        break;\n      }\n      case 'm': {\n        sqlite3_str_appendf(&sRes,\"%02d\",x.M);\n        break;\n      }\n      case 'M': {\n        sqlite3_str_appendf(&sRes,\"%02d\",x.m);\n        break;\n      }\n      case 'p': /* Fall thru */\n      case 'P': {\n        if( x.h>=12 ){\n          sqlite3_str_append(&sRes, cf=='p' ? \"PM\" : \"pm\", 2);\n        }else{\n          sqlite3_str_append(&sRes, cf=='p' ? \"AM\" : \"am\", 2);\n        }\n        break;\n      }\n      case 'R': {\n        sqlite3_str_appendf(&sRes, \"%02d:%02d\", x.h, x.m);\n        break;\n      }\n      case 's': {\n        if( x.useSubsec ){\n          sqlite3_str_appendf(&sRes,\"%.3f\",\n                (x.iJD - 21086676*(i64)10000000)/1000.0);\n        }else{\n          i64 iS = (i64)(x.iJD/1000 - 21086676*(i64)10000);\n          sqlite3_str_appendf(&sRes,\"%lld\",iS);\n        }\n        break;\n      }\n      case 'S': {\n        sqlite3_str_appendf(&sRes,\"%02d\",(int)x.s);\n        break;\n      }\n      case 'T': {\n        sqlite3_str_appendf(&sRes,\"%02d:%02d:%02d\", x.h, x.m, (int)x.s);\n        break;\n      }\n      case 'u':    /* Day of week.  1 to 7.  Monday==1, Sunday==7 */\n      case 'w': {  /* Day of week.  0 to 6.  Sunday==0, Monday==1 */\n        char c = (char)daysAfterSunday(&x) + '0';\n        if( c=='0' && cf=='u' ) c = '7';\n        sqlite3_str_appendchar(&sRes, 1, c);\n        break;\n      }\n      case 'U': {  /* Week num. 00-53. First Sun of the year is week 01 */\n        sqlite3_str_appendf(&sRes,\"%02d\",\n              (daysAfterJan01(&x)-daysAfterSunday(&x)+7)/7);\n        break;\n      }\n      case 'V': {  /* Week num. 01-53. First week with a Thur is week 01 */\n        DateTime y = x;\n        /* Adjust y so that is the Thursday in the same week as x */\n        assert( y.validJD );\n        y.iJD += (3 - daysAfterMonday(&x))*86400000;\n        y.validYMD = 0;\n        computeYMD(&y);\n        sqlite3_str_appendf(&sRes,\"%02d\", daysAfterJan01(&y)/7+1);\n        break;\n      }\n      case 'W': {  /* Week num. 00-53. First Mon of the year is week 01 */\n        sqlite3_str_appendf(&sRes,\"%02d\",\n           (daysAfterJan01(&x)-daysAfterMonday(&x)+7)/7);\n        break;\n      }\n      case 'Y': {\n        sqlite3_str_appendf(&sRes,\"%04d\",x.Y);\n        break;\n      }\n      case '%': {\n        sqlite3_str_appendchar(&sRes, 1, '%');\n        break;\n      }\n      default: {\n        sqlite3_str_reset(&sRes);\n        return;\n      }\n    }\n  }\n  if( j<i ) sqlite3_str_append(&sRes, zFmt+j, (int)(i-j));\n  sqlite3ResultStrAccum(context, &sRes);\n}\n"
+        }
+    },
+    "timediff": {
+        "category": "aDateTimeFuncs",
+        "impl_function": "timediffFunc",
+        "code": {
+            "/home/gg/extract/sqlite/sqlite-src-3500400/src/date.c:1608": "static void timediffFunc(\n  sqlite3_context *context,\n  int NotUsed1,\n  sqlite3_value **argv\n){\n  char sign;\n  int Y, M;\n  DateTime d1, d2;\n  sqlite3_str sRes;\n  UNUSED_PARAMETER(NotUsed1);\n  if( isDate(context, 1, &argv[0], &d1) ) return;\n  if( isDate(context, 1, &argv[1], &d2) ) return;\n  computeYMD_HMS(&d1);\n  computeYMD_HMS(&d2);\n  if( d1.iJD>=d2.iJD ){\n    sign = '+';\n    Y = d1.Y - d2.Y;\n    if( Y ){\n      d2.Y = d1.Y;\n      d2.validJD = 0;\n      computeJD(&d2);\n    }\n    M = d1.M - d2.M;\n    if( M<0 ){\n      Y--;\n      M += 12;\n    }\n    if( M!=0 ){\n      d2.M = d1.M;\n      d2.validJD = 0;\n      computeJD(&d2);\n    }\n    while( d1.iJD<d2.iJD ){\n      M--;\n      if( M<0 ){\n        M = 11;\n        Y--;\n      }\n      d2.M--;\n      if( d2.M<1 ){\n        d2.M = 12;\n        d2.Y--;\n      }\n      d2.validJD = 0;\n      computeJD(&d2);\n    }\n    d1.iJD -= d2.iJD;\n    d1.iJD += (u64)1486995408 * (u64)100000;\n  }else /* d1<d2 */{\n    sign = '-';\n    Y = d2.Y - d1.Y;\n    if( Y ){\n      d2.Y = d1.Y;\n      d2.validJD = 0;\n      computeJD(&d2);\n    }\n    M = d2.M - d1.M;\n    if( M<0 ){\n      Y--;\n      M += 12;\n    }\n    if( M!=0 ){\n      d2.M = d1.M;\n      d2.validJD = 0;\n      computeJD(&d2);\n    }\n    while( d1.iJD>d2.iJD ){\n      M--;\n      if( M<0 ){\n        M = 11;\n        Y--;\n      }\n      d2.M++;\n      if( d2.M>12 ){\n        d2.M = 1;\n        d2.Y++;\n      }\n      d2.validJD = 0;\n      computeJD(&d2);\n    }\n    d1.iJD = d2.iJD - d1.iJD;\n    d1.iJD += (u64)1486995408 * (u64)100000;\n  }\n  clearYMD_HMS_TZ(&d1);\n  computeYMD_HMS(&d1);\n  sqlite3StrAccumInit(&sRes, 0, 0, 0, 100);\n  sqlite3_str_appendf(&sRes, \"%c%04d-%02d-%02d %02d:%02d:%06.3f\",\n       sign, Y, M, d1.D-1, d1.h, d1.m, d1.s);\n  sqlite3ResultStrAccum(context, &sRes);\n}\n"
+        }
+    },
+    "datedebug": {
+        "category": "aDateTimeFuncs",
+        "impl_function": null,
+        "code": {},
+        "error": "no xFunc"
+    },
+    "current_time": {
+        "category": "aDateTimeFuncs",
+        "impl_function": null,
+        "code": {},
+        "error": "no xFunc"
+    },
+    "current_timestamp": {
+        "category": "aDateTimeFuncs",
+        "impl_function": null,
+        "code": {},
+        "error": "no xFunc"
+    },
+    "current_date": {
+        "category": "aDateTimeFuncs",
+        "impl_function": null,
+        "code": {},
+        "error": "no xFunc"
+    }
+}

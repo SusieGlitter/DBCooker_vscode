@@ -1,0 +1,523 @@
+diff --git a/lemon b/lemon
+index e5aa2c0..e66ad9a 100755
+Binary files a/lemon and b/lemon differ
+diff --git a/libsqlite3.51.2.so b/libsqlite3.51.2.so
+deleted file mode 100755
+index 235dc63..0000000
+Binary files a/libsqlite3.51.2.so and /dev/null differ
+diff --git a/libsqlite3.a b/libsqlite3.a
+deleted file mode 100644
+index 0aee1a3..0000000
+Binary files a/libsqlite3.a and /dev/null differ
+diff --git a/libsqlite3.so b/libsqlite3.so
+deleted file mode 100755
+index a46f2d0..0000000
+Binary files a/libsqlite3.so and /dev/null differ
+diff --git a/mkkeywordhash b/mkkeywordhash
+index cf2ddc7..5b41177 100755
+Binary files a/mkkeywordhash and b/mkkeywordhash differ
+diff --git a/mksourceid b/mksourceid
+index b4d68ca..0ab71c2 100755
+Binary files a/mksourceid and b/mksourceid differ
+diff --git a/pkgIndex.tcl b/pkgIndex.tcl
+deleted file mode 100644
+index 2b4461b..0000000
+--- a/pkgIndex.tcl
++++ /dev/null
+@@ -1 +0,0 @@
+-package ifneeded sqlite3 3.51.2 [list load [file join $dir libsqlite3.51.2.so] Sqlite3]
+diff --git a/sqlite3 b/sqlite3
+index d9a53fb..3b014d8 100755
+Binary files a/sqlite3 and b/sqlite3 differ
+diff --git a/sqlite3.c b/sqlite3.c
+index b44fb75..cb991b6 100644
+--- a/sqlite3.c
++++ b/sqlite3.c
+@@ -20,6 +20,7 @@
+ ** The content in this amalgamation comes from Fossil check-in
+ ** b270f8339eb13b504d0b2ba154ebca966b7d with changes in files:
+ **
++**    src/date.c
+ **    
+ */
+ #ifndef SQLITE_AMALGAMATION
+@@ -469,7 +470,7 @@ extern "C" {
+ */
+ #define SQLITE_VERSION        "3.51.2"
+ #define SQLITE_VERSION_NUMBER 3051002
+-#define SQLITE_SOURCE_ID      "2026-01-09 17:27:48 b270f8339eb13b504d0b2ba154ebca966b7dde08e40c3ed7d559749818cb2075"
++#define SQLITE_SOURCE_ID      "2026-01-09 17:27:48 b270f8339eb13b504d0b2ba154ebca966b7dde08e40c3ed7d559749818cbalt1"
+ #define SQLITE_SCM_BRANCH     "branch-3.51"
+ #define SQLITE_SCM_TAGS       "release version-3.51.2"
+ #define SQLITE_SCM_DATETIME   "2026-01-09T17:27:48.405Z"
+@@ -26794,6 +26795,123 @@ static void datedebugFunc(
+ #endif /* !SQLITE_OMIT_DATETIME_FUNCS && SQLITE_DEBUG */
+ 
+ 
++/*
++**    date_trunc( UNIT, TIMESTAMP )
++**
++** Truncate a timestamp to the specified precision.
++** UNIT is a string like 'year', 'month', 'day', 'hour', 'minute', 'second'.
++** TIMESTAMP can be a text string, julian day number, or unix timestamp.
++** Returns the truncated timestamp as a text string in ISO format.
++*/
++static void date_truncFunc(
++  sqlite3_context *context,
++  int argc,
++  sqlite3_value **argv
++){
++  DateTime x;
++  const unsigned char *zUnit;
++  int eType;
++
++  /* Check for NULL inputs */
++  if( sqlite3_value_type(argv[0])==SQLITE_NULL
++   || (argc>1 && sqlite3_value_type(argv[1])==SQLITE_NULL) ){
++    sqlite3_result_null(context);
++    return;
++  }
++
++  /* Get the unit argument */
++  zUnit = sqlite3_value_text(argv[0]);
++  if( zUnit==0 ){
++    sqlite3_result_null(context);
++    return;
++  }
++
++  /* Parse the timestamp */
++  memset(&x, 0, sizeof(x));
++  eType = sqlite3_value_type(argv[1]);
++  if( eType==SQLITE_FLOAT || eType==SQLITE_INTEGER ){
++    setRawDateNumber(&x, sqlite3_value_double(argv[1]));
++  }else{
++    if( parseDateOrTime(context, (char*)zUnit, &x) ){
++      sqlite3_result_error(context, "invalid timestamp", -1);
++      return;
++    }
++  }
++
++  /* Parse modifiers if any */
++  if( argc > 2 ){
++    int i;
++    for(i=2; i<argc; i++){
++      const unsigned char *zMod = sqlite3_value_text(argv[i]);
++      int n = sqlite3_value_bytes(argv[i]);
++      if( zMod==0 ) continue;
++      if( parseModifier(context, (char*)zMod, n, &x, i) ){
++        return;
++      }
++    }
++  }
++
++  computeJD(&x);
++  if( x.isError || !validJulianDay(x.iJD) ){
++    sqlite3_result_error(context, "timestamp out of range", -1);
++    return;
++  }
++
++  /* Truncate based on unit */
++  computeYMD_HMS(&x);
++  x.tz = 0;
++  x.validJD = 0;
++
++  if( sqlite3_strnicmp((char*)zUnit, "year", 4)==0 ){
++    x.M = 1;
++    x.D = 1;
++    x.h = 0;
++    x.m = 0;
++    x.s = 0.0;
++  }else if( sqlite3_strnicmp((char*)zUnit, "month", 5)==0 ){
++    x.D = 1;
++    x.h = 0;
++    x.m = 0;
++    x.s = 0.0;
++  }else if( sqlite3_strnicmp((char*)zUnit, "day", 3)==0 ){
++    x.h = 0;
++    x.m = 0;
++    x.s = 0.0;
++  }else if( sqlite3_strnicmp((char*)zUnit, "hour", 4)==0 ){
++    x.m = 0;
++    x.s = 0.0;
++  }else if( sqlite3_strnicmp((char*)zUnit, "minute", 6)==0 ){
++    x.s = 0.0;
++  }else if( sqlite3_strnicmp((char*)zUnit, "second", 6)==0 ){
++    /* No truncation needed for seconds */
++  }else{
++    sqlite3_result_error(context, "unsupported date_trunc unit", -1);
++    return;
++  }
++
++  /* Reconstruct the timestamp */
++  computeJD(&x);
++  if( x.isError || !validJulianDay(x.iJD) ){
++    sqlite3_result_error(context, "truncation resulted in invalid date", -1);
++    return;
++  }
++
++  /* Output as ISO 8601 string */
++  {
++    char zBuf[30];
++    int Y = x.Y;
++    char sign = '\0';
++    if( Y < 0 ){
++      sign = '-';
++      Y = -Y;
++    }
++    sqlite3_snprintf(sizeof(zBuf), zBuf,
++        "%c%04d-%02d-%02d %02d:%02d:%09.6f",
++        sign, Y, x.M, x.D, x.h, x.m, x.s);
++    sqlite3_result_text(context, zBuf, -1, SQLITE_TRANSIENT);
++  }
++}
++
+ /*
+ ** This function registered all of the above C functions as SQL
+ ** functions.  This should be the only routine in this file with
+@@ -26809,6 +26927,7 @@ SQLITE_PRIVATE void sqlite3RegisterDateTimeFunctions(void){
+     PURE_DATE(datetime,         -1, 0, 0, datetimeFunc  ),
+     PURE_DATE(strftime,         -1, 0, 0, strftimeFunc  ),
+     PURE_DATE(timediff,          2, 0, 0, timediffFunc  ),
++    FUNCTION2(date_trunc,        2, 0, 0, date_truncFunc, 0),
+ #ifdef SQLITE_DEBUG
+     PURE_DATE(datedebug,        -1, 0, 0, datedebugFunc ),
+ #endif
+diff --git a/sqlite3.h b/sqlite3.h
+index 6e975a6..99ed3c6 100644
+--- a/sqlite3.h
++++ b/sqlite3.h
+@@ -148,7 +148,7 @@ extern "C" {
+ */
+ #define SQLITE_VERSION        "3.51.2"
+ #define SQLITE_VERSION_NUMBER 3051002
+-#define SQLITE_SOURCE_ID      "2026-01-09 17:27:48 b270f8339eb13b504d0b2ba154ebca966b7dde08e40c3ed7d559749818cb2075"
++#define SQLITE_SOURCE_ID      "2026-01-09 17:27:48 b270f8339eb13b504d0b2ba154ebca966b7dde08e40c3ed7d559749818cbalt1"
+ #define SQLITE_SCM_BRANCH     "branch-3.51"
+ #define SQLITE_SCM_TAGS       "release version-3.51.2"
+ #define SQLITE_SCM_DATETIME   "2026-01-09T17:27:48.405Z"
+diff --git a/sqlite3.o b/sqlite3.o
+deleted file mode 100644
+index e07ec0b..0000000
+Binary files a/sqlite3.o and /dev/null differ
+diff --git a/src/date.c b/src/date.c
+index 5e7ae6f..64070c8 100755
+--- a/src/date.c
++++ b/src/date.c
+@@ -1791,6 +1791,148 @@ static void datedebugFunc(
+ #endif /* !SQLITE_OMIT_DATETIME_FUNCS && SQLITE_DEBUG */
+ 
+ 
++/*
++**    date_trunc( UNIT, TIMESTRING, MOD, MOD, ...)
++**
++** Truncate a timestamp to the specified precision.
++** UNIT is one of: microsecond, millisecond, second, minute, hour, day, month, year, decade, century, millennium
++** Returns the truncated timestamp as a string in ISO-8601 format.
++*/
++static void dateTruncFunc(
++  sqlite3_context *context,
++  int argc,
++  sqlite3_value **argv
++){
++  DateTime x;
++  const char *zUnit;
++  int nUnit;
++  
++  /* Check for NULL inputs */
++  if( sqlite3_value_type(argv[0])==SQLITE_NULL 
++   || (argc>1 && sqlite3_value_type(argv[1])==SQLITE_NULL) ){
++    return;
++  }
++  
++  /* Get the unit parameter */
++  zUnit = (const char*)sqlite3_value_text(argv[0]);
++  nUnit = sqlite3_value_bytes(argv[0]);
++  if( zUnit==0 ) return;
++  
++  /* Parse the date/time */
++  if( isDate(context, argc-1, argv+1, &x) ) return;
++  
++  /* Truncate based on unit */
++  computeYMD_HMS(&x);
++  x.tz = 0;
++  x.validJD = 0;
++  
++  if( sqlite3_strnicmp(zUnit, "microsecond", nUnit)==0 ){
++    /* No truncation needed - microseconds are already handled in iJD */
++  }else if( sqlite3_strnicmp(zUnit, "millisecond", nUnit)==0 ){
++    /* Truncate to milliseconds - round iJD to nearest millisecond */
++    x.iJD = ((x.iJD + 500)/1000)*1000;
++    x.validJD = 1;
++    clearYMD_HMS_TZ(&x);
++  }else if( sqlite3_strnicmp(zUnit, "second", nUnit)==0 ){
++    x.s = 0.0;
++    x.validJD = 0;
++  }else if( sqlite3_strnicmp(zUnit, "minute", nUnit)==0 ){
++    x.m = 0;
++    x.s = 0.0;
++    x.validJD = 0;
++  }else if( sqlite3_strnicmp(zUnit, "hour", nUnit)==0 ){
++    x.h = 0;
++    x.m = 0;
++    x.s = 0.0;
++    x.validJD = 0;
++  }else if( sqlite3_strnicmp(zUnit, "day", nUnit)==0 ){
++    x.h = 0;
++    x.m = 0;
++    x.s = 0.0;
++    x.validJD = 0;
++  }else if( sqlite3_strnicmp(zUnit, "month", nUnit)==0 ){
++    x.D = 1;
++    x.h = 0;
++    x.m = 0;
++    x.s = 0.0;
++    x.validJD = 0;
++  }else if( sqlite3_strnicmp(zUnit, "year", nUnit)==0 ){
++    x.M = 1;
++    x.D = 1;
++    x.h = 0;
++    x.m = 0;
++    x.s = 0.0;
++    x.validJD = 0;
++  }else if( sqlite3_strnicmp(zUnit, "decade", nUnit)==0 ){
++    x.Y = (x.Y / 10) * 10;
++    x.M = 1;
++    x.D = 1;
++    x.h = 0;
++    x.m = 0;
++    x.s = 0.0;
++    x.validJD = 0;
++  }else if( sqlite3_strnicmp(zUnit, "century", nUnit)==0 ){
++    x.Y = (x.Y / 100) * 100;
++    x.M = 1;
++    x.D = 1;
++    x.h = 0;
++    x.m = 0;
++    x.s = 0.0;
++    x.validJD = 0;
++  }else if( sqlite3_strnicmp(zUnit, "millennium", nUnit)==0 ){
++    x.Y = (x.Y / 1000) * 1000;
++    x.M = 1;
++    x.D = 1;
++    x.h = 0;
++    x.m = 0;
++    x.s = 0.0;
++    x.validJD = 0;
++  }else{
++    /* Invalid unit - return NULL */
++    return;
++  }
++  
++  /* Compute Julian day and format output */
++  computeJD(&x);
++  if( x.isError || !validJulianDay(x.iJD) ) return;
++  
++  /* Output as ISO-8601 string */
++  {
++    int Y, s, n;
++    char zBuf[32];
++    Y = x.Y;
++    if( Y<0 ) Y = -Y;
++    zBuf[1] = '0' + (Y/1000)%10;
++    zBuf[2] = '0' + (Y/100)%10;
++    zBuf[3] = '0' + (Y/10)%10;
++    zBuf[4] = '0' + (Y)%10;
++    zBuf[5] = '-';
++    zBuf[6] = '0' + (x.M/10)%10;
++    zBuf[7] = '0' + (x.M)%10;
++    zBuf[8] = '-';
++    zBuf[9] = '0' + (x.D/10)%10;
++    zBuf[10] = '0' + (x.D)%10;
++    zBuf[11] = ' ';
++    zBuf[12] = '0' + (x.h/10)%10;
++    zBuf[13] = '0' + (x.h)%10;
++    zBuf[14] = ':';
++    zBuf[15] = '0' + (x.m/10)%10;
++    zBuf[16] = '0' + (x.m)%10;
++    zBuf[17] = ':';
++    s = (int)x.s;
++    zBuf[18] = '0' + (s/10)%10;
++    zBuf[19] = '0' + (s)%10;
++    zBuf[20] = 0;
++    n = 19;
++    if( x.Y<0 ){
++      zBuf[0] = '-';
++      sqlite3_result_text(context, zBuf, n, SQLITE_TRANSIENT);
++    }else{
++      sqlite3_result_text(context, &zBuf[1], n-1, SQLITE_TRANSIENT);
++    }
++  }
++}
++
+ /*
+ ** This function registered all of the above C functions as SQL
+ ** functions.  This should be the only routine in this file with
+@@ -1806,6 +1948,7 @@ void sqlite3RegisterDateTimeFunctions(void){
+     PURE_DATE(datetime,         -1, 0, 0, datetimeFunc  ),
+     PURE_DATE(strftime,         -1, 0, 0, strftimeFunc  ),
+     PURE_DATE(timediff,          2, 0, 0, timediffFunc  ),
++    PURE_DATE(date_trunc,       -1, 0, 0, dateTruncFunc ),
+ #ifdef SQLITE_DEBUG
+     PURE_DATE(datedebug,        -1, 0, 0, datedebugFunc ),
+ #endif
+diff --git a/tclsqlite-shell.o b/tclsqlite-shell.o
+deleted file mode 100644
+index 71ed02f..0000000
+Binary files a/tclsqlite-shell.o and /dev/null differ
+diff --git a/tclsqlite.o b/tclsqlite.o
+deleted file mode 100644
+index 09373cf..0000000
+Binary files a/tclsqlite.o and /dev/null differ
+diff --git a/tclsqlite3 b/tclsqlite3
+deleted file mode 100755
+index 83d7f45..0000000
+Binary files a/tclsqlite3 and /dev/null differ
+diff --git a/tsrc/date.c b/tsrc/date.c
+index 5e7ae6f..72d7a8a 100755
+--- a/tsrc/date.c
++++ b/tsrc/date.c
+@@ -1791,6 +1791,123 @@ static void datedebugFunc(
+ #endif /* !SQLITE_OMIT_DATETIME_FUNCS && SQLITE_DEBUG */
+ 
+ 
++/*
++**    date_trunc( UNIT, TIMESTAMP )
++**
++** Truncate a timestamp to the specified precision.
++** UNIT is a string like 'year', 'month', 'day', 'hour', 'minute', 'second'.
++** TIMESTAMP can be a text string, julian day number, or unix timestamp.
++** Returns the truncated timestamp as a text string in ISO format.
++*/
++static void date_truncFunc(
++  sqlite3_context *context,
++  int argc,
++  sqlite3_value **argv
++){
++  DateTime x;
++  const unsigned char *zUnit;
++  int eType;
++  
++  /* Check for NULL inputs */
++  if( sqlite3_value_type(argv[0])==SQLITE_NULL 
++   || (argc>1 && sqlite3_value_type(argv[1])==SQLITE_NULL) ){
++    sqlite3_result_null(context);
++    return;
++  }
++  
++  /* Get the unit argument */
++  zUnit = sqlite3_value_text(argv[0]);
++  if( zUnit==0 ){
++    sqlite3_result_null(context);
++    return;
++  }
++  
++  /* Parse the timestamp */
++  memset(&x, 0, sizeof(x));
++  eType = sqlite3_value_type(argv[1]);
++  if( eType==SQLITE_FLOAT || eType==SQLITE_INTEGER ){
++    setRawDateNumber(&x, sqlite3_value_double(argv[1]));
++  }else{
++    if( parseDateOrTime(context, (char*)zUnit, &x) ){
++      sqlite3_result_error(context, "invalid timestamp", -1);
++      return;
++    }
++  }
++  
++  /* Parse modifiers if any */
++  if( argc > 2 ){
++    int i;
++    for(i=2; i<argc; i++){
++      const unsigned char *zMod = sqlite3_value_text(argv[i]);
++      int n = sqlite3_value_bytes(argv[i]);
++      if( zMod==0 ) continue;
++      if( parseModifier(context, (char*)zMod, n, &x, i) ){
++        return;
++      }
++    }
++  }
++  
++  computeJD(&x);
++  if( x.isError || !validJulianDay(x.iJD) ){
++    sqlite3_result_error(context, "timestamp out of range", -1);
++    return;
++  }
++  
++  /* Truncate based on unit */
++  computeYMD_HMS(&x);
++  x.tz = 0;
++  x.validJD = 0;
++  
++  if( sqlite3_strnicmp((char*)zUnit, "year", 4)==0 ){
++    x.M = 1;
++    x.D = 1;
++    x.h = 0;
++    x.m = 0;
++    x.s = 0.0;
++  }else if( sqlite3_strnicmp((char*)zUnit, "month", 5)==0 ){
++    x.D = 1;
++    x.h = 0;
++    x.m = 0;
++    x.s = 0.0;
++  }else if( sqlite3_strnicmp((char*)zUnit, "day", 3)==0 ){
++    x.h = 0;
++    x.m = 0;
++    x.s = 0.0;
++  }else if( sqlite3_strnicmp((char*)zUnit, "hour", 4)==0 ){
++    x.m = 0;
++    x.s = 0.0;
++  }else if( sqlite3_strnicmp((char*)zUnit, "minute", 6)==0 ){
++    x.s = 0.0;
++  }else if( sqlite3_strnicmp((char*)zUnit, "second", 6)==0 ){
++    /* No truncation needed for seconds */
++  }else{
++    sqlite3_result_error(context, "unsupported date_trunc unit", -1);
++    return;
++  }
++  
++  /* Reconstruct the timestamp */
++  computeJD(&x);
++  if( x.isError || !validJulianDay(x.iJD) ){
++    sqlite3_result_error(context, "truncation resulted in invalid date", -1);
++    return;
++  }
++  
++  /* Output as ISO 8601 string */
++  {
++    char zBuf[30];
++    int Y = x.Y;
++    char sign = '\0';
++    if( Y < 0 ){
++      sign = '-';
++      Y = -Y;
++    }
++    sqlite3_snprintf(sizeof(zBuf), zBuf,
++        "%c%04d-%02d-%02d %02d:%02d:%09.6f",
++        sign, Y, x.M, x.D, x.h, x.m, x.s);
++    sqlite3_result_text(context, zBuf, -1, SQLITE_TRANSIENT);
++  }
++}
++
+ /*
+ ** This function registered all of the above C functions as SQL
+ ** functions.  This should be the only routine in this file with
+@@ -1806,6 +1923,7 @@ void sqlite3RegisterDateTimeFunctions(void){
+     PURE_DATE(datetime,         -1, 0, 0, datetimeFunc  ),
+     PURE_DATE(strftime,         -1, 0, 0, strftimeFunc  ),
+     PURE_DATE(timediff,          2, 0, 0, timediffFunc  ),
++    FUNCTION2(date_trunc,        2, 0, 0, date_truncFunc, 0),
+ #ifdef SQLITE_DEBUG
+     PURE_DATE(datedebug,        -1, 0, 0, datedebugFunc ),
+ #endif
+diff --git a/tsrc/sqlite3.h b/tsrc/sqlite3.h
+index 6e975a6..99ed3c6 100644
+--- a/tsrc/sqlite3.h
++++ b/tsrc/sqlite3.h
+@@ -148,7 +148,7 @@ extern "C" {
+ */
+ #define SQLITE_VERSION        "3.51.2"
+ #define SQLITE_VERSION_NUMBER 3051002
+-#define SQLITE_SOURCE_ID      "2026-01-09 17:27:48 b270f8339eb13b504d0b2ba154ebca966b7dde08e40c3ed7d559749818cb2075"
++#define SQLITE_SOURCE_ID      "2026-01-09 17:27:48 b270f8339eb13b504d0b2ba154ebca966b7dde08e40c3ed7d559749818cbalt1"
+ #define SQLITE_SCM_BRANCH     "branch-3.51"
+ #define SQLITE_SCM_TAGS       "release version-3.51.2"
+ #define SQLITE_SCM_DATETIME   "2026-01-09T17:27:48.405Z"
