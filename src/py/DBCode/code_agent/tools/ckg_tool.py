@@ -78,6 +78,21 @@ class CKGTool(Tool):
         ]
 
     @override
+    def get_summary(self, arguments: ToolCallArguments) -> str:
+        command = str(arguments.get("command", ""))
+        identifier = str(arguments.get("identifier", ""))
+        return f"CKG {command.replace('_', ' ')}: {identifier}"
+
+    # Display helpers
+    @override
+    def get_display_in(self, arguments: ToolCallArguments) -> object:
+        return {k: arguments.get(k) for k in ["command", "identifier"] if k in arguments}
+
+    @override
+    def get_display_out(self, result: str | None, error: str | None = None) -> object:
+        return result or error or ""
+
+    @override
     async def execute(self, arguments: ToolCallArguments) -> ToolExecResult:
         command = str(arguments.get("command")) if "command" in arguments else None
         if command is None:

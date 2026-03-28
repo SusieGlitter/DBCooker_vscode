@@ -18,6 +18,32 @@
   "activationEvents": [],
   "main": "./out/extension.js",
   "contributes": {
+    "configuration": {
+      "title": "DBCooker",
+      "properties": {
+        "dbcooker.baseUrl": {
+          "type": "string",
+          "default": "",
+          "description": "LLM base URL (e.g., https://api.openai.com/v1)."
+        },
+        "dbcooker.apiKey": {
+          "type": "string",
+          "default": "",
+          "description": "LLM API key (stored in VS Code settings)."
+        },
+        "dbcooker.provider": {
+          "type": "string",
+          "default": "openai",
+          "enum": ["openai", "openrouter", "azure", "gemini", "ollama", "others"],
+          "description": "LLM provider identifier."
+        },
+        "dbcooker.model": {
+          "type": "string",
+          "default": "gpt-4o-mini",
+          "description": "Default model name."
+        }
+      }
+    },
     "commands": [
       {
         "command": "pythonBridge.start",
@@ -62,7 +88,10 @@
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src",
-    "test": "vscode-test"
+    "test": "vscode-test",
+    "sanitize-config": "bash ./scripts/sanitize-config.sh",
+    "package:zip": "bash ./scripts/package.sh",
+    "git:install-hooks": "bash -c 'mkdir -p .git/hooks && cp -f scripts/git-hooks/pre-push .git/hooks/pre-push && chmod +x .git/hooks/pre-push'"
   },
   "devDependencies": {
     "@types/vscode": "^1.108.1",

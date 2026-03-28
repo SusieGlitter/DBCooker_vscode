@@ -69,6 +69,21 @@ class DatabaseCompileTool(Tool):
         ]
 
     @override
+    def get_summary(self, arguments: ToolCallArguments) -> str:
+        mode = str(arguments.get("mode", ""))
+        database = str(arguments.get("database", ""))
+        return f"Compiling {database} ({mode})"
+
+    # Display helpers
+    @override
+    def get_display_in(self, arguments: ToolCallArguments) -> object:
+        return {k: arguments.get(k) for k in ["mode", "database"] if k in arguments}
+
+    @override
+    def get_display_out(self, result: str | None, error: str | None = None) -> object:
+        return result or error or ""
+
+    @override
     async def execute(self, arguments: ToolCallArguments) -> ToolExecResult:
         mode = str(arguments["mode"]) if "mode" in arguments else None
         if mode is None or mode not in CompileToolModes:

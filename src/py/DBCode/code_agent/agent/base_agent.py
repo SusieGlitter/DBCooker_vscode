@@ -468,7 +468,10 @@ class BaseAgent(ABC):
         return dependency_processed
 
     def get_inner_specification(self) -> str:
-        func_name = self._task["func_name"]
+        func_name = self._task.get("func_name", "")
+        if not func_name:
+            return ""
+            
         spec_load = self._task["spec_file"][self._task["database"]]
         with open(spec_load, "r") as rf:
             spec_data = json.load(rf)
@@ -494,6 +497,10 @@ class BaseAgent(ABC):
 
     def get_other_specification(self) -> str:
         other_specification = str()
+        func_name = self._task.get("func_name", "")
+        if not func_name:
+            return ""
+            
         source_db = self._task["database"]
         for target_db, file in self._task["spec_file"].items():
             try:
@@ -527,7 +534,11 @@ class BaseAgent(ABC):
         return other_specification
 
     def get_other_dependency(self):
-        category = self._task["category"]
+        func_name = self._task.get("func_name", "")
+        category = self._task.get("category", "")
+        if not func_name or not category:
+            return {}
+            
         spec_load = self._task["spec_file"][self._task["database"]]
         with open(spec_load, "r") as rf:
             spec_data = json.load(rf)

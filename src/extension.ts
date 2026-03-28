@@ -77,6 +77,12 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.window.onDidChangeActiveTextEditor(editor => {
             if (editor) {
                 reapplyDecorations(editor);
+                chatProvider.updateActiveContext(editor);
+            }
+        }),
+        vscode.window.onDidChangeTextEditorSelection(event => {
+            if (event.textEditor === vscode.window.activeTextEditor) {
+                chatProvider.updateActiveContext(event.textEditor);
             }
         }),
         vscode.commands.registerCommand('pythonBridge.showLogs', () => {
@@ -85,6 +91,11 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand('pythonBridge.start', () => {
             vscode.commands.executeCommand('dbcooker.chatView.focus');
             chatProvider.clearChat();
+        }),
+        vscode.workspace.onDidChangeConfiguration(e => {
+            if (e.affectsConfiguration('dbcooker')) {
+                chatProvider.syncYamlConfigFromSettings();
+            }
         })
     );
 }
@@ -104,6 +115,38 @@ class DBCookerChatProvider implements vscode.WebviewViewProvider {
     private _pendingClear = false;
 
     constructor(private readonly _extensionPath: string) {}
+
+    public updateActiveContext(editor: vscode.TextEditor) {
+        const selection = editor.selection;
+        const document = editor.document;
+        const fileName = path.basename(document.fileName);
+        
+        let range = undefined;
+        if (!selection.isEmpty) {
+            range = {
+                start: selection.start.line + 1,
+                end: selection.end.line + 1
+            };
+        } else {
+            range = {
+                start: editor.selection.active.line + 1,
+                end: editor.selection.active.line + 1
+            };
+        }
+
+        this.postToWebview({
+            type: 'activeContextUpdate',
+            file: {
+                name: fileName,
+                path: document.fileName,
+                range: range
+            }
+        });
+    }
+
+    public syncYamlConfigFromSettings() {
+        this._syncYamlConfigFromSettings();
+    }
 
     public clearChat() {
         this._pendingClear = true;
@@ -139,6 +182,7 @@ class DBCookerChatProvider implements vscode.WebviewViewProvider {
         webviewView.webview.onDidReceiveMessage(async (message) => {
             switch (message.type) {
                 case 'executeScript':
+                    await this._syncYamlConfigFromSettings();
                     await this._runPythonScript(message.data);
                     break;
                 case 'stopScript':
@@ -161,6 +205,25 @@ class DBCookerChatProvider implements vscode.WebviewViewProvider {
                         });
                         this._messageBuffer = [];
                     }
+                    // Send default configuration to the webview
+                    this._view?.webview.postMessage({ 
+                        type: 'configUpdate', 
+                        config: {
+                            defaultPrompt: 'Add a built-in function to truncate timestamp to specified precision (e.g. hour, day)',
+                            defaultDatabase: 'PostgreSQL',
+                            defaultDatabasePath: './workspace/source/sqlite',
+                            defaultFuncName: 'date_trunc',
+                            defaultCategory: 'datetime',
+                            defaultDesc: 'Truncate timestamp to specified precision',
+                            defaultTestcases: [
+                                { sql: "SELECT date_trunc('hour', '2001-02-16 20:38:40'::timestamp)", expected: "2001-02-16 20:00:00" },
+                                { sql: "SELECT date_trunc('day', '2023-10-27 15:00:00'::timestamp)", expected: "2023-10-27 00:00:00" }
+                            ]
+                        }
+                    });
+                    // Also send model config for UI
+                    this._view?.webview.postMessage({ type: 'modelConfig', data: this._getSettingsModelConfig() });
+                    
                     // If a process is running, sync the logs to the new webview
                     if (this._currentProcess) {
                         this._logs.forEach(line => {
@@ -175,6 +238,14 @@ class DBCookerChatProvider implements vscode.WebviewViewProvider {
                     }
                     await this._sendHistory();
                     break;
+                case 'requestModelConfig':
+                    this._view?.webview.postMessage({ type: 'modelConfig', data: this._getSettingsModelConfig() });
+                    break;
+                case 'updateModelConfig':
+                    await this._updateSettingsModelConfig(message.data || {});
+                    await this._syncYamlConfigFromSettings();
+                    this._view?.webview.postMessage({ type: 'modelConfig', data: this._getSettingsModelConfig() });
+                    break;
                 case 'confirmDiff':
                     await vscode.commands.executeCommand('cppHelper.confirm', vscode.Uri.file(message.filePath).toString());
                     break;
@@ -182,8 +253,42 @@ class DBCookerChatProvider implements vscode.WebviewViewProvider {
                     await vscode.commands.executeCommand('cppHelper.discard', vscode.Uri.file(message.filePath).toString());
                     break;
                 case 'openFile':
-                    const doc = await vscode.workspace.openTextDocument(vscode.Uri.file(message.filePath));
-                    await vscode.window.showTextDocument(doc, { preview: false });
+                    if (typeof message.filePath === 'string' && fs.existsSync(message.filePath)) {
+                        const doc = await vscode.workspace.openTextDocument(vscode.Uri.file(message.filePath));
+                        await vscode.window.showTextDocument(doc, { preview: false });
+                    } else {
+                        vscode.window.showWarningMessage(`File not found: ${message.filePath}`);
+                    }
+                    break;
+                case 'pickFolder':
+                    const folders = await vscode.window.showOpenDialog({
+                        canSelectFolders: true,
+                        canSelectFiles: false,
+                        canSelectMany: false,
+                        title: 'Select Database Source Folder'
+                    });
+                    if (folders && folders[0]) {
+                        this._view?.webview.postMessage({ type: 'folderPicked', path: folders[0].fsPath });
+                    }
+                    break;
+                case 'addFileContext':
+                    const files = await vscode.window.showOpenDialog({
+                        canSelectFolders: false,
+                        canSelectFiles: true,
+                        canSelectMany: true,
+                        title: 'Select Files for Context'
+                    });
+                    if (files) {
+                        for (const fileUri of files) {
+                            this._view?.webview.postMessage({
+                                type: 'contextAdded',
+                                file: {
+                                    name: path.basename(fileUri.fsPath),
+                                    path: fileUri.fsPath
+                                }
+                            });
+                        }
+                    }
                     break;
             }
         });
@@ -258,6 +363,8 @@ class DBCookerChatProvider implements vscode.WebviewViewProvider {
 
     private async _runPythonScript(inputData: any) {
         try {
+            // Ensure YAML config synced before run
+            await this._syncYamlConfigFromSettings();
             // Use the bundled venv python if available, otherwise fallback to system python
             let pythonPath = 'python';
             const venvPythonPath = path.join(this._extensionPath, 'venv', process.platform === 'win32' ? 'Scripts/python.exe' : 'bin/python');
@@ -273,9 +380,42 @@ class DBCookerChatProvider implements vscode.WebviewViewProvider {
             
             this._logs = []; // Clear current logs
             this._isKilledByUser = false;
-            this._hasInitialBackup = false; // Reset for new run
-            this._lastCompileFolder = '';
-            this._lastBackupFolder = '';
+            this._hasInitialBackup = true; // We'll handle backup/copy manually now
+            
+            // 1. Set backup folder to the user's database path
+            let userDatabasePath = inputData.databasePath || '';
+            if (userDatabasePath && !path.isAbsolute(userDatabasePath)) {
+                // If relative, assume relative to the current workspace root if available
+                const workspaceRoot = vscode.workspace.workspaceFolders?.[0].uri.fsPath;
+                if (workspaceRoot) {
+                    userDatabasePath = path.resolve(workspaceRoot, userDatabasePath);
+                }
+            }
+            this._lastBackupFolder = userDatabasePath;
+            
+            // 2. Set compile folder to a temp workspace within the extension
+            const dbType = (inputData.database || 'sqlite').toLowerCase();
+            this._lastCompileFolder = path.join(this._extensionPath, 'workspace', 'code', `active_${dbType}`);
+            
+            outputChannel.appendLine(`[Extension] Source (Backup): ${this._lastBackupFolder}`);
+            outputChannel.appendLine(`[Extension] Working Copy (Compile): ${this._lastCompileFolder}`);
+
+            // 3. Prepare the compile folder (copy from backup)
+            try {
+                if (fs.existsSync(this._lastBackupFolder)) {
+                    if (fs.existsSync(this._lastCompileFolder)) {
+                        fs.rmSync(this._lastCompileFolder, { recursive: true, force: true });
+                    }
+                    fs.mkdirSync(path.dirname(this._lastCompileFolder), { recursive: true });
+                    // Use cp -r to preserve permissions and structure
+                    cp.execSync(`cp -r "${this._lastBackupFolder}" "${this._lastCompileFolder}"`);
+                    outputChannel.appendLine(`[Extension] Prepared working copy: ${this._lastBackupFolder} -> ${this._lastCompileFolder}`);
+                } else {
+                    outputChannel.appendLine(`[WARNING] Database Path not found: ${this._lastBackupFolder}`);
+                }
+            } catch (e) {
+                outputChannel.appendLine(`[ERROR] Failed to prepare working copy: ${e}`);
+            }
 
             const currentLogGroup = {
                 timestamp: new Date().toLocaleString(),
@@ -285,7 +425,13 @@ class DBCookerChatProvider implements vscode.WebviewViewProvider {
             };
 
             const pythonProcess = cp.spawn(pythonPath, [scriptPath], {
-                env: { ...process.env, COLUMNS: '300', EXTENSION_PATH: this._extensionPath },
+                env: { 
+                    ...process.env, 
+                    COLUMNS: '300', 
+                    EXTENSION_PATH: this._extensionPath,
+                    OVERRIDE_COMPILE_FOLDER: this._lastCompileFolder,
+                    OVERRIDE_BACKUP_FOLDER: this._lastBackupFolder
+                },
                 cwd: path.join(this._extensionPath, 'src', 'py', 'DBCode')
             });
             this._currentProcess = pythonProcess;
@@ -306,6 +452,9 @@ class DBCookerChatProvider implements vscode.WebviewViewProvider {
                     const line = stdoutBuffer.substring(0, nIndex);
                     stdoutBuffer = stdoutBuffer.substring(nIndex + 1);
                     
+                    // Remove ANSI escape codes (e.g. from Rich console) for internal path matching
+                    const cleanLine = line.replace(/\x1B\[[0-9;]*[mK]/g, '').trim();
+
                     // 脚本的标准输出（包含 Rich 表格）全部发往日志区
                     this._view?.webview.postMessage({ type: 'logUpdate', message: line });
                     
@@ -313,27 +462,42 @@ class DBCookerChatProvider implements vscode.WebviewViewProvider {
                     currentLogGroup.messages.push(line);
                     saveHistoryDebounced();
 
-                    const compileMatch = line.match(/['"]?compile_folder['"]?\s*[:=]\s*(?:['"]([^'"]+)['"]|([^\s,}]+))/);
-                    const backupMatch = line.match(/['"]?backup_folder['"]?\s*[:=]\s*(?:['"]([^'"]+)['"]|([^\s,}]+))/);
+                    const compileMatch = cleanLine.match(/^DETECTED_COMPILE_FOLDER:(.+)$/i) || cleanLine.match(/['"]?compile_folder['"]?\s*[:=]\s*(?:['"]([^'"]+)['"]|([^\s,}│]+))/);
+                    const backupMatch = cleanLine.match(/^DETECTED_BACKUP_FOLDER:(.+)$/i) || cleanLine.match(/['"]?backup_folder['"]?\s*[:=]\s*(?:['"]([^'"]+)['"]|([^\s,}│]+))/);
                     
                     if (compileMatch) {
-                        this._lastCompileFolder = compileMatch[1] || compileMatch[2];
-                        outputChannel.appendLine(`[${new Date().toLocaleTimeString()}] Detected Compile Folder: ${this._lastCompileFolder}`);
+                        const detected = (compileMatch[1] || compileMatch[2]).trim();
+                        // Only update if it's a real path (longer than 1 char, doesn't look like a border)
+                        if (detected.length > 1 && !['│', '├', '┤', '┐', '└', '┘', '┌', '─'].includes(detected[0])) {
+                            this._lastCompileFolder = detected;
+                            outputChannel.appendLine(`[${new Date().toLocaleTimeString()}] Detected Compile Folder: ${this._lastCompileFolder}`);
+                        }
                     }
                     if (backupMatch) {
-                        this._lastBackupFolder = backupMatch[1] || backupMatch[2];
-                        outputChannel.appendLine(`[${new Date().toLocaleTimeString()}] Detected Backup Folder: ${this._lastBackupFolder}`);
+                        const detected = (backupMatch[1] || backupMatch[2]).trim();
+                        if (detected.length > 1 && !['│', '├', '┤', '┐', '└', '┘', '┌', '─'].includes(detected[0])) {
+                            this._lastBackupFolder = detected;
+                            outputChannel.appendLine(`[${new Date().toLocaleTimeString()}] Detected Backup Folder: ${this._lastBackupFolder}`);
+                        }
                     }
 
                     if (this._lastCompileFolder && this._lastBackupFolder && !this._hasInitialBackup) {
                         try {
-                            if (!fs.existsSync(this._lastBackupFolder)) {
-                                cp.execSync(`rm -rf "${this._lastBackupFolder}" && cp -r "${this._lastCompileFolder}" "${this._lastBackupFolder}"`);
-                                outputChannel.appendLine(`[${new Date().toLocaleTimeString()}] Initial backup created: ${this._lastCompileFolder} -> ${this._lastBackupFolder}`);
-                            } else {
-                                outputChannel.appendLine(`[${new Date().toLocaleTimeString()}] Using existing backup: ${this._lastBackupFolder}`);
+                            // Ensure compile folder exists and is a valid directory
+                            if (fs.existsSync(this._lastCompileFolder) && fs.statSync(this._lastCompileFolder).isDirectory()) {
+                                if (!fs.existsSync(this._lastBackupFolder)) {
+                                    // Ensure parent directory of backup folder exists
+                                    const backupParent = path.dirname(this._lastBackupFolder);
+                                    if (!fs.existsSync(backupParent)) {
+                                        fs.mkdirSync(backupParent, { recursive: true });
+                                    }
+                                    cp.execSync(`rm -rf "${this._lastBackupFolder}" && cp -r "${this._lastCompileFolder}" "${this._lastBackupFolder}"`);
+                                    outputChannel.appendLine(`[${new Date().toLocaleTimeString()}] Initial backup created: ${this._lastCompileFolder} -> ${this._lastBackupFolder}`);
+                                } else {
+                                    outputChannel.appendLine(`[${new Date().toLocaleTimeString()}] Using existing backup: ${this._lastBackupFolder}`);
+                                }
+                                this._hasInitialBackup = true;
                             }
-                            this._hasInitialBackup = true;
                         } catch (e) {
                             outputChannel.appendLine(`[ERROR] Failed to create initial backup: ${e}`);
                         }
@@ -370,6 +534,64 @@ class DBCookerChatProvider implements vscode.WebviewViewProvider {
         }
     }
 
+    private _getSettingsModelConfig() {
+        const config = vscode.workspace.getConfiguration('dbcooker');
+        return {
+            base_url: config.get<string>('baseUrl') || '',
+            api_key: config.get<string>('apiKey') || '',
+            provider: config.get<string>('provider') || 'openai',
+            model: config.get<string>('model') || 'gpt-4o-mini'
+        };
+    }
+
+    private async _updateSettingsModelConfig(data: any) {
+        const config = vscode.workspace.getConfiguration('dbcooker');
+        if (typeof data.base_url === 'string') {
+            await config.update('baseUrl', data.base_url, vscode.ConfigurationTarget.Workspace);
+        }
+        if (typeof data.api_key === 'string') {
+            await config.update('apiKey', data.api_key, vscode.ConfigurationTarget.Workspace);
+        }
+        if (typeof data.provider === 'string') {
+            await config.update('provider', data.provider, vscode.ConfigurationTarget.Workspace);
+        }
+        if (typeof data.model === 'string') {
+            await config.update('model', data.model, vscode.ConfigurationTarget.Workspace);
+        }
+    }
+
+    private async _syncYamlConfigFromSettings() {
+        try {
+            const cfg = this._getSettingsModelConfig();
+            const yamlPath = path.join(this._extensionPath, 'src', 'py', 'DBCode', 'code_config.yaml');
+            let doc: any = {};
+            try {
+                if (fs.existsSync(yamlPath)) {
+                    doc = yaml.load(fs.readFileSync(yamlPath, 'utf8')) || {};
+                }
+            } catch {}
+            if (typeof doc !== 'object' || !doc) doc = {};
+            if (!doc['model_providers']) doc['model_providers'] = {};
+            doc['model_providers']['runtime'] = {
+                base_url: cfg.base_url,
+                api_key: cfg.api_key,
+                provider: cfg.provider
+            };
+            if (!doc['models']) doc['models'] = {};
+            for (const modelName of Object.keys(doc['models'] || {})) {
+                const modelCfg = doc['models'][modelName];
+                if (modelCfg && typeof modelCfg === 'object') {
+                    modelCfg['model_provider'] = 'runtime';
+                    modelCfg['model'] = cfg.model;
+                    doc['models'][modelName] = modelCfg;
+                }
+            }
+            const newText = yaml.dump(doc, { lineWidth: 120 });
+            fs.writeFileSync(yamlPath, newText, 'utf8');
+        } catch (e) {
+            outputChannel.appendLine(`[WARNING] Failed to sync YAML config: ${e}`);
+        }
+    }
     private async _checkForChanges(compileFolder: string, backupFolder: string) {
         try {
             const output = cp.execSync(`diff -rq "${backupFolder}" "${compileFolder}" || true`).toString();

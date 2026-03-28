@@ -30,5 +30,18 @@ class TaskDoneTool(Tool):
         return []
 
     @override
+    def get_summary(self, arguments: ToolCallArguments) -> str:
+        return "Task Completed"
+
+    # Display helpers
+    @override
+    def get_display_in(self, arguments: ToolCallArguments) -> object:
+        return {}
+
+    @override
+    def get_display_out(self, result: str | None, error: str | None = None) -> object:
+        return result or "Task done."
+
+    @override
     async def execute(self, arguments: ToolCallArguments) -> ToolExecResult:
         return ToolExecResult(output="Task done.")

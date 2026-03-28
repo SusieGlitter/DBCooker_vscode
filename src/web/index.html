@@ -32,6 +32,24 @@
             background: var(--vscode-sideBar-background);
             z-index: 10;
         }
+        .header-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .small-btn {
+            padding: 2px 8px;
+            font-size: 0.8em;
+            border: 1px solid var(--vscode-panel-border);
+            background: transparent;
+            color: var(--vscode-textLink-foreground);
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .small-btn:hover {
+            background: rgba(128,128,128,0.05);
+            border-color: var(--vscode-textLink-foreground);
+        }
         .tabs {
             display: flex;
             border-bottom: 1px solid var(--vscode-panel-border);
@@ -57,355 +75,470 @@
             flex-direction: column;
             position: relative;
         }
+        /* Timeline styling */
         .message-list {
             flex: 1;
             overflow-y: auto;
-            padding: 10px;
+            padding: 15px 20px;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 4px; /* Smaller gap between messages */
+            position: relative;
         }
-        /* Modified Files Panel */
-        .modified-files-panel {
-            background: var(--vscode-editor-background);
-            border-top: 2px solid var(--vscode-button-background);
-            max-height: 150px;
-            overflow-y: auto;
-            padding: 8px;
-            z-index: 5;
-            box-shadow: 0 -2px 10px rgba(0,0,0,0.2);
-        }
-        .modified-file-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 6px 10px;
-            border: 1px solid var(--vscode-panel-border);
-            border-radius: 4px;
-            margin-bottom: 6px;
-            font-size: 0.85em;
-            background: var(--vscode-sideBar-background);
-        }
-        .file-path {
-            color: var(--vscode-textLink-foreground);
-            text-decoration: underline;
-            cursor: pointer;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            margin-right: 10px;
-            flex: 1;
-        }
-        .file-path:hover {
-            color: var(--vscode-textLink-activeForeground);
-        }
-        .file-actions {
-            display: flex;
-            gap: 8px;
-            flex-shrink: 0;
-        }
-        .action-link {
-            cursor: pointer;
-            opacity: 0.8;
-            font-weight: bold;
-        }
-        .action-link:hover {
-            opacity: 1;
-            text-decoration: underline;
-        }
-        .action-confirm { color: var(--vscode-gitDecoration-addedResourceForeground); }
-        .action-discard { color: var(--vscode-gitDecoration-deletedResourceForeground); }
         
-        .message {
-            max-width: 90%;
-            padding: 8px 12px;
-            border-radius: 8px;
-            line-height: 1.4;
-            word-wrap: break-word;
-            font-size: 0.95em;
+        /* The vertical line for the timeline */
+        .message-list::before {
+            content: '';
+            position: absolute;
+            left: 26px; /* Center with the status dots */
+            top: 0;
+            bottom: 0;
+            width: 1px;
+            background: var(--vscode-panel-border);
+            opacity: 0.5;
+            z-index: 0;
         }
+
+        .message.agent {
+            align-self: flex-start;
+            background-color: transparent;
+            border: none;
+            white-space: pre-wrap;
+            font-family: var(--vscode-font-family);
+            position: relative;
+            width: 100%;
+            overflow: visible;
+            padding: 0 0 0 35px; /* Offset for timeline */
+            z-index: 1;
+        }
+
         .message.user {
             align-self: flex-end;
             background-color: var(--vscode-button-background);
             color: var(--vscode-button-foreground);
-        }
-        .message.agent {
-            align-self: flex-start;
-            background-color: var(--vscode-editor-background);
-            border: 1px solid var(--vscode-panel-border);
-            white-space: pre-wrap;
-            font-family: var(--vscode-editor-font-family);
+            padding: 12px 16px;
+            border-radius: 12px 12px 2px 12px;
+            max-width: 85%;
+            margin-left: auto;
+            margin-bottom: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            font-size: 1.1em;
             position: relative;
-            width: 100%;
-            overflow: visible;
+            z-index: 2;
         }
-        .diff-actions {
-            margin-top: 8px;
-            padding-top: 8px;
-            border-top: 1px dashed var(--vscode-panel-border);
+        .user-attachments {
+            margin-top: 10px;
             display: flex;
-            gap: 10px;
-            font-size: 0.85em;
+            flex-wrap: wrap;
+            gap: 6px;
         }
-        .diff-link {
-            color: var(--vscode-textLink-foreground);
-            text-decoration: none;
+        .user-attachments .context-chip {
+            cursor: default;
+        }
+        .user-attachments .context-chip.clickable {
             cursor: pointer;
         }
-        .diff-link:hover {
-            text-decoration: underline;
+
+        .message.system {
+            align-self: center;
+            background-color: rgba(128, 128, 128, 0.1);
+            color: var(--vscode-descriptionForeground);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            margin: 8px 0;
+            text-align: center;
         }
-        .input-area {
+
+        /* Status Line - Timeline Dot and Header */
+        .status-line {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 2px 0; /* More compact */
+            transition: opacity 0.2s;
+            margin: 0;
+            position: relative;
+        }
+        
+        .status-line.clickable {
+            cursor: pointer;
+        }
+        
+        .status-line.clickable:hover {
+            opacity: 0.8;
+        }
+        
+        /* The dot on the timeline */
+        .status-dot {
+            position: absolute;
+            left: -13px; /* Center on the timeline line (35px padding - 13px = 22px roughly) */
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #6a6a6a; /* Default grey */
+            z-index: 2;
+            box-shadow: 0 0 0 4px var(--vscode-sideBar-background); /* Mask the line behind */
+        }
+        
+        .state-thinking .status-dot { background: #6a6a6a; }
+        .state-calling_tool .status-dot { background: #d0664d; } /* Accent color from screenshot */
+        .state-completed .status-dot { background: #d0664d; }
+        .state-error .status-dot { background: #f48771; }
+
+        .status-header {
+            display: flex;
+            align-items: flex-start; /* Align top for long summaries */
+            gap: 8px;
+            font-size: 0.95em;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .status-tool-name {
+            font-weight: bold;
+            color: var(--vscode-foreground);
+            white-space: nowrap; /* Tool name stays single line */
+        }
+        
+        .status-description {
+            color: var(--vscode-descriptionForeground);
+            opacity: 0.8;
+            word-break: break-all;
+            white-space: pre-wrap; /* Allow long summaries to wrap */
+            flex: 1;
+        }
+
+        .status-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 12px;
+            height: 12px;
+            font-size: 0.7em;
+            opacity: 0.6;
+        }
+
+        /* Detail Box (IN/OUT) */
+        .status-detail-overlay {
+            margin: 2px 0 6px 0; /* Even more compact */
             padding: 10px;
+            background: rgba(128, 128, 128, 0.05);
+            border: 1px solid var(--vscode-panel-border);
+            border-radius: 6px;
+            font-family: var(--vscode-editor-font-family);
+            font-size: 0.85em;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .io-section {
+            display: flex;
+            gap: 10px;
+        }
+
+        .io-label {
+            font-weight: bold;
+            font-size: 0.8em;
+            color: var(--vscode-descriptionForeground);
+            width: 25px;
+            flex-shrink: 0;
+            text-align: right;
+            padding-top: 2px;
+        }
+
+        .io-content {
+            flex: 1;
+            white-space: pre-wrap;
+            word-break: break-all;
+            color: var(--vscode-editor-foreground);
+        }
+
+        .io-content.in {
+            /* IN: command line style, no border */
+            background: rgba(0, 0, 0, 0.15);
+            padding: 8px 10px;
+            border-radius: 4px;
+            font-family: var(--vscode-editor-font-family);
+            font-size: 1.2em; /* Even larger font size */
+            line-height: 1.5;
+        }
+
+        .io-content.out {
+            /* OUT: command line style, no border, max 3 lines then scroll */
+            background: rgba(0, 0, 0, 0.15);
+            padding: 8px 10px;
+            border-radius: 4px;
+            font-family: var(--vscode-editor-font-family);
+            font-size: 1.2em; /* Even larger font size */
+            line-height: 1.5;
+            max-height: 5em; /* Slightly taller for larger font */
+            overflow-y: auto;
+        }
+
+        .io-content.think {
+            /* THINK section style */
+            background: rgba(0, 0, 0, 0.1);
+            padding: 10px;
+            border-radius: 6px;
+            font-family: var(--vscode-editor-font-family);
+            font-size: 1.2em;
+            line-height: 1.6;
+            color: var(--vscode-descriptionForeground);
+            font-style: italic;
+        }
+
+        /* Remove old styles */
+        .tool-tag, .status-summary, .loading-spinner, .json-header, .json-body, .step-info-row, .step-label, .step-value {
+            /* Keep for legacy if needed, or clean up if we're fully replacing */
+        }
+        
+        .state-thinking { border-left: none; }
+        .state-calling_tool { border-left: none; }
+        .state-reflecting { border-left: none; }
+        .state-completed { border-left: none; }
+        .state-error { border-left: none; }
+
+        /* Context Area Styling */
+        .context-area {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            padding: 4px 8px;
+            background: var(--vscode-sideBar-background);
+            border-top: 1px solid var(--vscode-panel-border);
+        }
+        .context-chip {
+            background: rgba(128, 128, 128, 0.15);
+            border: 1px solid var(--vscode-panel-border);
+            border-radius: 4px;
+            padding: 2px 8px;
+            font-size: 0.85em;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--vscode-descriptionForeground);
+        }
+        .context-chip:hover {
+            background: rgba(128, 128, 128, 0.25);
+        }
+        .context-chip .remove {
+            cursor: pointer;
+            font-weight: bold;
+            opacity: 0.6;
+        }
+        .context-chip .remove:hover {
+            opacity: 1;
+            color: var(--vscode-errorForeground);
+        }
+        .context-chip.active {
+            background: rgba(0, 122, 204, 0.2); /* VS Code blue with transparency */
+            border-color: var(--vscode-focusBorder);
+            color: var(--vscode-foreground);
+        }
+        .context-chip.active:hover {
+            background: rgba(0, 122, 204, 0.3);
+        }
+        .add-context-btn {
+            background: transparent;
+            border: 1px dashed var(--vscode-panel-border);
+            border-radius: 4px;
+            padding: 2px 8px;
+            font-size: 0.85em;
+            cursor: pointer;
+            color: var(--vscode-textLink-foreground);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .add-context-btn:hover {
+            border-color: var(--vscode-textLink-foreground);
+            background: rgba(128, 128, 128, 0.05);
+        }
+        /* Structured modal */
+        .structured-modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+        }
+        .structured-modal-card {
+            width: 520px;
+            max-width: 90vw;
+            background: var(--vscode-editor-background);
+            color: var(--vscode-foreground);
+            border: 1px solid var(--vscode-panel-border);
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+            padding: 12px;
+        }
+        .structured-modal-header {
+            font-weight: bold;
+            margin-bottom: 8px;
+            border-bottom: 1px solid var(--vscode-panel-border);
+            padding-bottom: 6px;
+        }
+        .structured-modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        .file-link {
+            color: var(--vscode-textLink-foreground);
+            cursor: pointer;
+            word-break: break-all;
+            text-decoration: underline;
+            text-underline-offset: 2px;
+        }
+        .file-link:hover {
+            opacity: 0.85;
+        }
+
+        /* Input area styling */
+        .input-area {
+            padding: 12px;
             border-top: 1px solid var(--vscode-panel-border);
             background: var(--vscode-sideBar-background);
             flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .main-input-wrapper {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+        .main-input-wrapper textarea {
+            flex: 1;
+            min-height: 60px;
+            max-height: 200px;
+            resize: vertical;
+            font-size: 1.3em; /* Larger font size */
+            padding: 10px;
+            border: 1px solid var(--vscode-input-border);
+            border-radius: 6px;
+            background: var(--vscode-input-background);
+            color: var(--vscode-input-foreground);
+            font-family: inherit;
+            line-height: 1.5;
+        }
+        .main-input-wrapper textarea:focus {
+            outline: 1px solid var(--vscode-focusBorder);
+            border-color: var(--vscode-focusBorder);
+        }
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .structured-toggle {
+            font-size: 0.9em;
+            cursor: pointer;
+            color: var(--vscode-textLink-foreground);
+            text-decoration: underline;
+            opacity: 0.8;
+        }
+        .structured-toggle:hover {
+            opacity: 1;
+        }
+        .structured-form-overlay {
+            background: var(--vscode-editor-background);
+            border: 1px solid var(--vscode-panel-border);
+            border-radius: 6px;
+            padding: 12px;
+            margin-top: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         }
         .requirement-form {
             display: flex;
             flex-direction: column;
-            gap: 8px;
-            max-height: 250px;
+            gap: 10px;
+            max-height: 300px;
             overflow-y: auto;
-            padding-bottom: 5px;
-            margin-bottom: 8px;
         }
         .form-group {
             display: flex;
             flex-direction: column;
-            gap: 4px;
+            gap: 6px;
         }
         .form-group label {
-            font-size: 0.8em;
-            opacity: 0.8;
+            font-size: 0.85em;
             font-weight: bold;
+            opacity: 0.7;
         }
-        input, select, textarea {
+        input, select {
             width: 100%;
             background-color: var(--vscode-input-background);
             color: var(--vscode-input-foreground);
             border: 1px solid var(--vscode-input-border);
-            padding: 6px;
+            padding: 8px;
             border-radius: 4px;
-            font-family: inherit;
-            font-size: 0.9em;
+            font-size: 1em;
         }
         .testcase-item {
             display: flex;
             flex-direction: column;
-            gap: 4px;
-            padding: 6px;
+            gap: 6px;
+            padding: 8px;
             border: 1px solid var(--vscode-panel-border);
             border-radius: 4px;
-            margin-bottom: 4px;
+            background: rgba(128, 128, 128, 0.05);
             position: relative;
         }
         .remove-btn {
             position: absolute;
-            top: 2px;
-            right: 2px;
-            padding: 2px 6px;
-            font-size: 0.7em;
+            top: 4px;
+            right: 4px;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             background: var(--vscode-errorForeground);
             color: white;
             border: none;
             border-radius: 2px;
             cursor: pointer;
-        }
-        .controls {
-            display: flex;
-            gap: 8px;
-            justify-content: flex-end;
+            font-size: 14px;
         }
         button {
             background-color: var(--vscode-button-background);
             color: var(--vscode-button-foreground);
             border: none;
-            padding: 6px 12px;
+            padding: 8px 16px;
             cursor: pointer;
-            border-radius: 2px;
-            font-size: 0.9em;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.95em;
         }
         button:hover {
             background-color: var(--vscode-button-hoverBackground);
-        }
-        button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
         }
         button.secondary {
             background-color: var(--vscode-button-secondaryBackground);
             color: var(--vscode-button-secondaryForeground);
         }
-        .history-list {
-            flex: 1;
-            overflow-y: auto;
-            padding: 10px;
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
-        .history-item {
-            padding: 10px;
-            border: 1px solid var(--vscode-panel-border);
-            border-radius: 4px;
-            margin-bottom: 8px;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        .history-item:hover {
-            background: var(--vscode-list-hoverBackground);
-        }
-        .history-item.active {
-            border-color: var(--vscode-button-background);
-            background: var(--vscode-list-activeSelectionBackground);
-        }
-        .history-meta {
-            font-size: 0.8em;
-            opacity: 0.7;
-            margin-bottom: 4px;
-        }
-        .history-title {
-            font-weight: bold;
-            font-size: 0.9em;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .resizer:hover {
-            background: var(--vscode-button-background) !important;
-        }
-        /* JSON 卡片美化，参考 rich.table 风格 */
-        .json-card {
-            border: 1px solid var(--vscode-panel-border);
-            border-radius: 4px;
-            margin: 8px 0;
-            background: var(--vscode-editor-background);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .json-header {
-            padding: 6px 10px;
-            background: var(--vscode-button-background);
-            color: var(--vscode-button-foreground);
-            font-weight: bold;
-            font-size: 0.9em;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .json-body {
-            padding: 0;
-        }
-        .step-info-row {
-            display: flex;
-            border-bottom: 1px solid var(--vscode-panel-border);
-            font-size: 0.9em;
-        }
-        .step-info-row:last-child { border-bottom: none; }
-        .step-label {
-            width: 100px;
-            padding: 6px 10px;
-            background: rgba(128, 128, 128, 0.1);
-            font-weight: bold;
-            flex-shrink: 0;
-            border-right: 1px solid var(--vscode-panel-border);
-        }
-        .step-value {
-            padding: 6px 10px;
-            flex: 1;
-            word-break: break-all;
-        }
-        
-        /* 折叠详情样式 */
-        details {
-            border-top: 1px solid var(--vscode-panel-border);
-            margin-top: 5px;
-        }
-        summary {
-            padding: 4px 10px;
-            font-size: 0.85em;
-            cursor: pointer;
-            opacity: 0.8;
-            outline: none;
-            background: rgba(128, 128, 128, 0.05);
-            font-weight: bold;
-        }
-        summary:hover {
-            opacity: 1;
-            background: rgba(128, 128, 128, 0.1);
-            color: var(--vscode-textLink-foreground);
-        }
-        
-        .inner-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.85em;
-            background: var(--vscode-sideBar-background);
-            table-layout: fixed;
-        }
-        .inner-table td {
-            padding: 4px 8px;
-            border: 1px solid var(--vscode-panel-border);
-            word-wrap: break-word;
-            overflow-x: auto;
-        }
-        
-        .expandable-details {
-            max-height: 15em; /* Approximately 10 lines */
-            overflow: hidden;
-            position: relative;
-            transition: max-height 0.3s ease-out;
-        }
-        .expandable-details.expanded {
-            max-height: none;
-        }
-        .expand-btn {
-            background: none;
-            color: var(--vscode-textLink-foreground);
-            border: none;
-            padding: 2px 0;
-            font-size: 0.85em;
-            cursor: pointer;
-            margin-top: 4px;
-            display: block;
-            width: fit-content;
-            opacity: 0.8;
-            text-decoration: underline;
-        }
-        .expand-btn:hover {
-            opacity: 1;
-            color: var(--vscode-textLink-activeForeground);
-        }
-        .horizontal-scroll {
-            overflow-x: auto;
-            max-width: 100%;
-        }
-        .tool-name-header {
-            background: var(--vscode-badge-background);
-            color: var(--vscode-badge-foreground);
-            font-weight: bold;
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-size: 0.9em;
-        }
-        .log-info { color: var(--vscode-debugConsole-infoForeground); }
-        .log-error { color: var(--vscode-errorForeground); font-weight: bold; }
-        /* 5 种状态的颜色定义 */
-        .state-thinking { border-left: 4px solid #3794ff; }
-        .state-calling_tool { border-left: 4px solid #cca700; }
-        .state-reflecting { border-left: 4px solid #b267e6; }
-        .state-completed { border-left: 4px solid #89d185; }
-        .state-error { border-left: 4px solid #f48771; }
-
-        .json-header.thinking { background: #3794ff; }
-        .json-header.calling_tool { background: #cca700; }
-        .json-header.reflecting { background: #b267e6; }
-        .json-header.completed { background: #89d185; }
-        .json-header.error { background: #f48771; }
     </style>
 </head>
 <body>
     <div id="app">
         <div class="header">
             <span>DBCooker</span>
-            <button class="secondary" style="padding: 2px 8px; font-size: 0.8em;" @click="clearChat" :disabled="isRunning">Clear Chat</button>
+            <div class="header-actions">
+                <button class="small-btn" @click="openModelConfig">Model</button>
+                <button class="small-btn" @click="showLogs">Logs</button>
+                <button class="secondary" style="padding: 2px 8px; font-size: 0.8em;" @click="clearChat" :disabled="isRunning">Clear</button>
+            </div>
         </div>
 
         <div class="tabs">
@@ -417,6 +550,19 @@
             <div class="message-list" ref="messageList">
                 <div v-for="(msg, index) in messages" :key="index" v-if="shouldShowMessage(msg)" :class="['message', msg.role]">
                     <div v-if="msg.role === 'system'">{{ msg.content }}</div>
+                    <div v-else-if="msg.role === 'user'">
+                        <div class="user-prompt-text">{{ msg.content.prompt }}</div>
+                        <div v-if="msg.content.hasStructured" class="user-structured-details">
+                            <div class="user-attachments">
+                                <div class="context-chip clickable" @click="openTaskPreview(msg.content.taskDetails, msg.content.taskLabel)" :title="msg.content.taskLabel">
+                                    <span>{{ msg.content.taskLabel }}</span>
+                                </div>
+                                <div v-for="(ctx, i) in (msg.content.contextFiles || [])" :key="i" class="context-chip clickable" :title="ctx.path" @click="openFile(ctx.path)">
+                                    <span>{{ ctx.name }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <div v-else>
                         <!-- JSON 渲染逻辑 -->
                         <div v-if="isJson(msg.content)">
@@ -433,63 +579,108 @@
                                         </div>
                                     </details>
                                 </div>
-                                <!-- Step Category (参考原始 generate_agent_step_table 格式) -->
-                                <div v-else-if="item.category === 'step'" class="json-card" :class="'state-' + item.data.state">
-                                    <div class="json-header" :class="item.data.state">
-                                        <span>{{ item.data.emoji }} STEP {{ item.data.step_number }}</span>
-                                        <span style="text-transform: uppercase; font-size: 0.8em;">{{ item.data.state.replace('_', ' ') }}</span>
+                                <!-- Step Category - Codex Style -->
+                                <div v-else-if="item.category === 'step'" :class="['state-' + item.data.state]">
+                                    <!-- Status Line -->
+                                    <div :class="['status-line', { clickable: !!item.data.content }]" 
+                                         @click="item.data.content && toggleStepExpand(item.id)">
+                                        <div class="status-dot"></div>
+                                        <div class="status-header">
+                                            <!-- Tool Name / Status -->
+                                            <span class="status-tool-name">
+                                                <span v-if="item.data.state === 'thinking'">Thinking</span>
+                                                <span v-else-if="item.data.tools && item.data.tools.length">{{ item.data.tools[0].name }}</span>
+                                                <span v-else>{{ capitalize(item.data.state) }}</span>
+                                            </span>
+                                            <!-- Description -->
+                                            <span class="status-description">
+                                                <span v-if="item.data.state === 'thinking'">{{ item.data.summary || '...' }}</span>
+                                                <span v-else-if="item.data.tools && item.data.tools.length">
+                                                    {{ item.data.tools[0].summary || (item.data.tools[0].args ? JSON.stringify(item.data.tools[0].args).substring(0, 50) + '...' : '') }}
+                                                </span>
+                                            </span>
+                                            <!-- Chevron - Only show if there is content to expand -->
+                                            <span v-if="item.data.content" class="status-icon">
+                                                {{ expandedSteps.has(item.id) ? '▼' : '▶' }}
+                                            </span>
+                                        </div>
                                     </div>
-                                    <div class="json-body">
-                                        <!-- 核心信息：状态与工具摘要 -->
-                                        <div class="step-info-row">
-                                            <div class="step-label">Status</div>
-                                            <div class="step-value" :style="{color: item.data.color}">{{ item.data.state.toUpperCase() }}</div>
-                                        </div>
-                                        <div v-if="item.data.tools && item.data.tools.length" class="step-info-row">
-                                            <div class="step-label">Tools</div>
-                                            <div class="step-value">
-                                                <span v-for="t in item.data.tools" class="tool-name-header" style="margin-right: 5px;">{{ t.name }}</span>
-                                            </div>
-                                        </div>
 
-                                        <!-- Show all details with folding and scrolling -->
-                                        <div style="padding: 0; border-top: 1px solid var(--vscode-panel-border);">
-                                            <!-- LLM Response / Thought - Always visible if exists -->
-                                            <div v-if="item.data.content" style="padding: 8px;">
-                                                <div style="font-weight: bold; font-size: 0.85em; margin-bottom: 2px; opacity: 0.7;">💬 LLM Response</div>
-                                                <div class="horizontal-scroll" style="font-size: 0.9em; padding: 5px; background: rgba(128,128,128,0.05); border-radius: 4px;">{{ item.data.content }}</div>
-                                            </div>
+                                    <!-- THINK section - Hidden by default, toggled by clicking summary -->
+                                    <div class="status-detail-overlay" v-show="expandedSteps.has(item.id)" v-if="item.data.content">
+                                        <div class="io-section">
+                                            <div class="io-label">THINK</div>
+                                            <div class="io-content think" v-text="item.data.content"></div>
+                                        </div>
+                                    </div>
 
-                                            <!-- Tool Details Table - Native Folding -->
-                                            <div v-if="item.data.tools && item.data.tools.length">
-                                                <details>
-                                                    <summary>🔧 Tool Executions</summary>
-                                                    <div class="horizontal-scroll" style="padding: 8px;">
-                                                        <table class="inner-table">
-                                                            <tr v-for="tool in item.data.tools">
-                                                                <td style="width: 30%; font-weight: bold;">{{ tool.name }}</td>
-                                                                <td>
-                                                                    <div style="color: #89d185; font-family: var(--vscode-editor-font-family); font-size: 0.9em;">Args: {{ JSON.stringify(tool.args) }}</div>
-                                                                    <div v-if="tool.result" style="margin-top: 4px; border-top: 1px solid var(--vscode-panel-border); padding-top: 2px; opacity: 0.9;">
-                                                                        Result: {{ tool.result }}
+                                    <!-- Tool Call Details (IN/OUT) - Always visible by default -->
+                                    <div class="status-detail-overlay" v-if="item.data.tools && item.data.tools.length">
+                                        <template v-for="(tool, tIndex) in item.data.tools" :key="tool.name + '-' + tIndex">
+                                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                                                <!-- IN: Tool Arguments -->
+                                                <div class="io-section">
+                                                    <div class="io-label">IN</div>
+                                                    <div class="io-content in">
+                                                        <!-- Prefer tool-provided display_in -->
+                                                        <template v-if="tool.display_in !== undefined && tool.display_in !== null">
+                                                            <template v-if="typeof tool.display_in === 'string'">
+                                                                <div style="color: var(--vscode-debugConsole-infoForeground); font-weight: bold;" v-text="tool.display_in"></div>
+                                                            </template>
+                                                            <template v-else>
+                                                                <div v-for="(val, key) in tool.display_in" :key="key" style="display: flex; gap: 8px; margin-bottom: 2px;">
+                                                                    <span style="opacity: 0.6; min-width: 80px;">{{ key }}:</span>
+                                                                    <span v-if="isFilePath(val)" class="file-link" @click="openFile(val)">{{ val }}</span>
+                                                                    <span v-else style="color: var(--vscode-descriptionForeground);">{{ val }}</span>
+                                                                </div>
+                                                                <!-- Show more/less toggle for remaining args -->
+                                                                <template v-if="Object.keys(otherArgs(tool)).length">
+                                                                    <div style="margin-top: 2px;">
+                                                                        <span class="action-link" style="cursor: pointer; color: var(--vscode-descriptionForeground);" @click="toggleToolArgs(item.id + ':' + tIndex)">
+                                                                            {{ isToolExpanded(item.id + ':' + tIndex) ? 'Show less' : 'Show more' }}
+                                                                        </span>
                                                                     </div>
-                                                                </td>
-                                                            </tr>
-                                                        </table>
+                                                                    <div v-if="isToolExpanded(item.id + ':' + tIndex)" style="margin-top: 2px;">
+                                                                        <div v-for="(val, key) in otherArgs(tool)" :key="'extra-' + key" style="display: flex; gap: 8px; margin-bottom: 2px;">
+                                                                            <span style="opacity: 0.6; min-width: 80px;">{{ key }}:</span>
+                                                                            <span v-if="isFilePath(val)" class="file-link" @click="openFile(val)">{{ val }}</span>
+                                                                            <span v-else style="color: var(--vscode-descriptionForeground);">{{ val }}</span>
+                                                                        </div>
+                                                                    </div>
+                                                                </template>
+                                                            </template>
+                                                        </template>
+                                                        <template v-else-if="tool.name === 'bash'">
+                                                            <div style="color: var(--vscode-descriptionForeground); font-weight: 600;">$ {{ tool.args.command }}</div>
+                                                        </template>
+                                                        <template v-else-if="tool.name === 'edit_tool' || tool.name === 'json_edit_tool' || tool.name === 'ckg_tool' || tool.name === 'understand_tool'">
+                                                            <div style="display: flex; gap: 8px; align-items: baseline;">
+                                                                <span style="color: #ce9178; font-weight: bold; text-transform: uppercase; font-size: 0.9em;">{{ tool.args.command || tool.args.operation }}</span>
+                                                                <span v-if="isFilePath(tool.args.path || tool.args.file_path)" class="file-link" @click="openFile(tool.args.path || tool.args.file_path)">{{ tool.args.path || tool.args.file_path }}</span>
+                                                                <span v-else style="color: var(--vscode-textLink-foreground); word-break: break-all;">{{ tool.args.path || tool.args.file_path || tool.args.identifier }}</span>
+                                                            </div>
+                                                            <div v-if="tool.args.old_str" style="margin-top: 4px; opacity: 0.7; font-size: 0.9em; border-left: 2px solid #f48771; padding-left: 6px;">
+                                                                - {{ tool.args.old_str.substring(0, 100) }}{{ tool.args.old_str.length > 100 ? '...' : '' }}
+                                                            </div>
+                                                            <div v-if="tool.args.new_str" style="margin-top: 2px; opacity: 0.7; font-size: 0.9em; border-left: 2px solid #89d185; padding-left: 6px;">
+                                                                + {{ tool.args.new_str.substring(0, 100) }}{{ tool.args.new_str.length > 100 ? '...' : '' }}
+                                                            </div>
+                                                        </template>
+                                                        <template v-else>
+                                                            <div v-for="(val, key) in tool.args" :key="key" style="display: flex; gap: 8px; margin-bottom: 2px;">
+                                                                <span style="opacity: 0.6; min-width: 60px;">{{ key }}:</span>
+                                                                <span style="color: var(--vscode-debugConsole-infoForeground);">{{ val }}</span>
+                                                            </div>
+                                                        </template>
                                                     </div>
-                                                </details>
+                                                </div>
+                                                <!-- OUT: Tool Result -->
+                                                <div v-if="tool.result || tool.display_out" class="io-section">
+                                                    <div class="io-label">OUT</div>
+                                                    <div class="io-content out" v-text="tool.display_out || tool.result"></div>
+                                                </div>
                                             </div>
-
-                                            <!-- Reflection & Error -->
-                                            <div v-if="item.data.reflection" style="padding: 8px; border-top: 1px solid var(--vscode-panel-border);">
-                                                <span style="font-weight: bold; font-size: 0.85em; opacity: 0.7;">💭 Reflection:</span>
-                                                <span style="font-style: italic; font-size: 0.9em;">{{ item.data.reflection }}</span>
-                                            </div>
-                                            <div v-if="item.data.error" style="padding: 8px; color: var(--vscode-errorForeground); border-top: 1px solid var(--vscode-panel-border);">
-                                                <span style="font-weight: bold; font-size: 0.85em;">❌ Error:</span>
-                                                <span style="font-size: 0.9em;">{{ item.data.error }}</span>
-                                            </div>
-                                        </div>
+                                        </template>
                                     </div>
                                 </div>
                                 <!-- Log Category -->
@@ -523,53 +714,185 @@
                 </div>
             </div>
 
+            <!-- Context Selection Area -->
+            <div class="context-area">
+                <!-- Manually Added Context (Displayed First) -->
+                <div v-for="(ctx, index) in contextFiles" :key="index" class="context-chip" :title="ctx.path">
+                    <span>{{ ctx.name }}</span>
+                    <span v-if="ctx.range" style="opacity: 0.5; font-size: 0.8em;">L{{ctx.range.start}}-{{ctx.range.end}}</span>
+                    <span class="remove" @click="removeContext(index)">×</span>
+                </div>
+
+                <!-- Structured Task Attachment (single) -->
+                <div v-if="structuredAttachment" class="context-chip clickable" :title="structuredAttachment.label" @click="openTaskPreview(structuredAttachment.details, structuredAttachment.label)">
+                    <span>{{ structuredAttachment.label }}</span>
+                    <span class="remove" @click.stop="removeStructuredAttachment">×</span>
+                </div>
+
+                <!-- Active Editor Context (Real-time) -->
+                <div v-if="activeContext" class="context-chip active" :title="'Active: ' + activeContext.path">
+                    <span style="font-size: 0.8em; opacity: 0.8; margin-right: 4px;">[Active]</span>
+                    <span>{{ activeContext.name }}</span>
+                    <span v-if="activeContext.range" style="opacity: 0.7; font-size: 0.8em;">L{{activeContext.range.start}}-{{activeContext.range.end}}</span>
+                </div>
+
+                <button class="add-context-btn" @click="addFileContext" title="Add file from workspace">
+                    <span>+</span> File
+                </button>
+                <button class="add-context-btn" @click="openStructuredModal" title="Add structured task details">
+                    <span>+</span> Task
+                </button>
+            </div>
+
+            <!-- Structured Task Modal -->
+            <div v-if="showStructuredModal" class="structured-modal-backdrop">
+                <div class="structured-modal-card">
+                    <div class="structured-modal-header">Structured Task Details</div>
+                    <div class="requirement-form">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                            <div class="form-group">
+                                <label>Database Type</label>
+                                <select v-model="taskDraft.database" :disabled="isRunning">
+                                    <option>PostgreSQL</option>
+                                    <option>SQLite</option>
+                                    <option>DuckDB</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Category</label>
+                                <input v-model="taskDraft.category" placeholder="e.g. Query" :disabled="isRunning">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Source Code Path (Backup)</label>
+                            <div style="display: flex; gap: 4px;">
+                                <input v-model="taskDraft.databasePath" placeholder="./workspace/source/sqlite" :disabled="isRunning" style="flex: 1;">
+                                <button class="secondary" @click="pickFolder" :disabled="isRunning" style="width: auto; padding: 0 8px; font-size: 0.8em;">Pick</button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Target Function Name</label>
+                            <input v-model="taskDraft.funcName" placeholder="e.g. get_users" :disabled="isRunning">
+                        </div>
+                        <div class="form-group">
+                            <label>Description</label>
+                            <textarea v-model="taskDraft.desc" rows="2" placeholder="Short description" :disabled="isRunning"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Unit Test Cases ({{ taskDraft.testcases.length }})</label>
+                            <div v-for="(t, i) in taskDraft.testcases" :key="i" class="testcase-item">
+                                <button class="remove-btn" @click="removeDraftTestcase(i)" v-if="!isRunning">×</button>
+                                <textarea v-model="t.sql" rows="1" placeholder="SQL Input" :disabled="isRunning"></textarea>
+                                <textarea v-model="t.expected" rows="1" placeholder="Expected Output" :disabled="isRunning"></textarea>
+                            </div>
+                            <button class="secondary" @click="addDraftTestcase" style="padding: 4px; font-size: 0.8em;" :disabled="isRunning">+ Add Testcase</button>
+                        </div>
+                    </div>
+                    <div class="structured-modal-actions">
+                        <button class="secondary" @click="closeStructuredModal">Cancel</button>
+                        <button @click="addStructuredAttachment" :disabled="isRunning">Add</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Task Preview Modal (Read-only) -->
+            <div v-if="showTaskPreviewModal" class="structured-modal-backdrop">
+                <div class="structured-modal-card">
+                    <div class="structured-modal-header">{{ taskPreviewLabel || 'Task Details' }}</div>
+                    <div class="requirement-form">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                            <div class="form-group">
+                                <label>Database Type</label>
+                                <select v-model="taskPreview.database" disabled>
+                                    <option>PostgreSQL</option>
+                                    <option>SQLite</option>
+                                    <option>DuckDB</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Category</label>
+                                <input v-model="taskPreview.category" disabled>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Source Code Path (Backup)</label>
+                            <input v-model="taskPreview.databasePath" disabled>
+                        </div>
+                        <div class="form-group">
+                            <label>Target Function Name</label>
+                            <input v-model="taskPreview.funcName" disabled>
+                        </div>
+                        <div class="form-group">
+                            <label>Description</label>
+                            <textarea v-model="taskPreview.desc" rows="2" disabled></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Unit Test Cases ({{ (taskPreview.testcases || []).length }})</label>
+                            <div v-for="(t, i) in (taskPreview.testcases || [])" :key="i" class="testcase-item">
+                                <textarea v-model="t.sql" rows="1" disabled></textarea>
+                                <textarea v-model="t.expected" rows="1" disabled></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="structured-modal-actions">
+                        <button class="secondary" @click="closeTaskPreview">Close</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Model Config Modal -->
+            <div v-if="showModelModal" class="structured-modal-backdrop">
+                <div class="structured-modal-card">
+                    <div class="structured-modal-header">Model Settings</div>
+                    <div class="requirement-form">
+                        <div class="form-group">
+                            <label>Base URL</label>
+                            <input v-model="modelForm.base_url" placeholder="https://api.openai.com/v1">
+                        </div>
+                        <div class="form-group">
+                            <label>API Key</label>
+                            <input v-model="modelForm.api_key" placeholder="sk-..." type="password">
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                            <div class="form-group">
+                                <label>Provider</label>
+                                <select v-model="modelForm.provider">
+                                    <option value="openai">openai</option>
+                                    <option value="openrouter">openrouter</option>
+                                    <option value="azure">azure</option>
+                                    <option value="gemini">gemini</option>
+                                    <option value="ollama">ollama</option>
+                                    <option value="others">others</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Model</label>
+                                <input v-model="modelForm.model" placeholder="gpt-4o-mini">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="structured-modal-actions">
+                        <button class="secondary" @click="closeModelConfig">Cancel</button>
+                        <button @click="saveModelConfig">Save</button>
+                    </div>
+                </div>
+            </div>
+
             <div class="input-area">
-                <div class="requirement-form">
-                    <div class="form-group">
-                        <label>Requirement Description</label>
-                        <textarea v-model="input.desc" rows="2" placeholder="Describe your changes..." :disabled="isRunning" @input="saveState"></textarea>
-                    </div>
-                    
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                        <div class="form-group">
-                            <label>Database</label>
-                            <select v-model="input.database" :disabled="isRunning" @change="saveState">
-                                <option>PostgreSQL</option>
-                                <option>SQLite</option>
-                                <option>DuckDB</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Category</label>
-                            <input v-model="input.category" placeholder="e.g. Query" :disabled="isRunning" @input="saveState">
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Database Path</label>
-                        <input v-model="input.databasePath" placeholder="/path/to/db" :disabled="isRunning" @input="saveState">
-                    </div>
-
-                    <div class="form-group">
-                        <label>Function Name</label>
-                        <input v-model="input.funcName" placeholder="e.g. get_users" :disabled="isRunning" @input="saveState">
-                    </div>
-
-                    <div class="form-group">
-                        <label>Testcases ({{ input.testcases.length }})</label>
-                        <div v-for="(t, i) in input.testcases" :key="i" class="testcase-item">
-                            <button class="remove-btn" @click="removeTestcase(i)" v-if="!isRunning">×</button>
-                            <textarea v-model="t.sql" rows="1" placeholder="SQL Input" :disabled="isRunning" @input="saveState"></textarea>
-                            <textarea v-model="t.expected" rows="1" placeholder="Expected Output" :disabled="isRunning" @input="saveState"></textarea>
-                        </div>
-                        <button class="secondary" @click="addTestcase" style="padding: 4px; font-size: 0.8em;" :disabled="isRunning">+ Add Testcase</button>
+                <!-- Main Natural Language Input -->
+                <div class="main-input-wrapper">
+                    <textarea v-model="input.prompt" 
+                              placeholder="Type your message or database requirement..." 
+                              :disabled="isRunning" 
+                              @keydown.enter.exact.prevent="sendMessage"
+                              @input="saveState"></textarea>
+                    <div class="controls">
+                        <button v-if="isRunning" @click="stopPipeline" class="secondary">Stop</button>
+                        <button v-else @click="sendMessage" :disabled="!input.prompt.trim()">Send</button>
                     </div>
                 </div>
 
-                <div class="controls">
-                    <button v-if="isRunning" @click="stopPipeline" class="secondary">Stop</button>
-                    <button v-else @click="sendMessage" :disabled="!input.desc.trim()">Run Pipeline</button>
-                </div>
+                <!-- Structured form moved to modal; toggle removed -->
             </div>
         </div>
 
@@ -625,17 +948,16 @@
             el: '#app',
             data: {
                 activeTab: previousState.activeTab || 'chat',
-                input: (previousState.input && previousState.input.desc) ? previousState.input : {
-                    requirement: 'Extract year from date string',
+                showStructuredForm: false,
+                defaultConfig: {}, // Will be populated from extension
+                input: (previousState.input && previousState.input.prompt) ? previousState.input : {
+                    prompt: '',
                     database: 'SQLite',
-                    databasePath: 'sample.db',
-                    funcName: 'strftime',
-                    category: 'Date/Time',
-                    desc: 'Extract year from a date string using strftime',
-                    testcases: [
-                        { sql: "SELECT strftime('%Y', '2023-10-27')", expected: "2023" },
-                        { sql: "SELECT strftime('%m', '2023-10-27')", expected: "10" }
-                    ]
+                    databasePath: './workspace/source/sqlite',
+                    funcName: '',
+                    category: 'datetime',
+                    desc: '',
+                    testcases: []
                 },
                 messages: previousState.messages || [
                     { role: 'agent', content: 'Hello! How can I help you with your database code today?' }
@@ -646,9 +968,139 @@
                 selectedHistoryItem: null,
                 currentLogs: [],
                 logHeight: 200,
-                isResizing: false
+                isResizing: false,
+                expandedSteps: new Set(),
+                expandedToolArgs: new Set(),
+                contextFiles: previousState.contextFiles || [],
+                activeContext: null,
+                showStructuredModal: false,
+                structuredAttachment: null,
+                showModelModal: false,
+                modelForm: { base_url: '', api_key: '', provider: 'openai', model: 'gpt-4o-mini' },
+                taskDraft: { database: 'SQLite', databasePath: '', funcName: '', category: '', desc: '', testcases: [] },
+                showTaskPreviewModal: false,
+                taskPreviewLabel: '',
+                taskPreview: { database: '', databasePath: '', funcName: '', category: '', desc: '', testcases: [] }
             },
             methods: {
+                addFileContext() {
+                    vscode.postMessage({ type: 'addFileContext' });
+                },
+                openModelConfig() {
+                    vscode.postMessage({ type: 'requestModelConfig' });
+                    this.showModelModal = true;
+                },
+                closeModelConfig() {
+                    this.showModelModal = false;
+                },
+                saveModelConfig() {
+                    vscode.postMessage({ type: 'updateModelConfig', data: this.modelForm });
+                    this.showModelModal = false;
+                },
+                otherArgs(tool) {
+                    try {
+                        const displayed = (tool.display_in && typeof tool.display_in === 'object') ? Object.keys(tool.display_in) : [];
+                        const allArgs = tool.args || {};
+                        const extra = {};
+                        for (const k of Object.keys(allArgs)) {
+                            if (!displayed.includes(k)) extra[k] = allArgs[k];
+                        }
+                        return extra;
+                    } catch (e) {
+                        return {};
+                    }
+                },
+                isFilePath(val) {
+                    if (typeof val !== 'string') return false;
+                    if (val.startsWith('file://')) return true;
+                    if (val.startsWith('/')) return true;
+                    if (/^[A-Za-z]:\\/.test(val)) return true;
+                    return false;
+                },
+                isToolExpanded(key) {
+                    return this.expandedToolArgs.has(key);
+                },
+                toggleToolArgs(key) {
+                    if (this.expandedToolArgs.has(key)) this.expandedToolArgs.delete(key);
+                    else this.expandedToolArgs.add(key);
+                    this.$forceUpdate();
+                },
+                openStructuredModal() {
+                    const base = (this.structuredAttachment && this.structuredAttachment.details) ? this.structuredAttachment.details : this.input;
+                    this.taskDraft = {
+                        database: base.database || 'SQLite',
+                        databasePath: base.databasePath || '',
+                        funcName: base.funcName || '',
+                        category: base.category || '',
+                        desc: base.desc || '',
+                        testcases: Array.isArray(base.testcases) ? JSON.parse(JSON.stringify(base.testcases)) : []
+                    };
+                    this.showStructuredModal = true;
+                },
+                closeStructuredModal() {
+                    this.showStructuredModal = false;
+                },
+                addStructuredAttachment() {
+                    const labelBase = this.taskDraft.funcName ? `Task: ${this.taskDraft.funcName}` : (this.taskDraft.category ? `Task: ${this.taskDraft.category}` : 'Task Details');
+                    const details = JSON.parse(JSON.stringify(this.taskDraft));
+                    this.structuredAttachment = { label: labelBase, details: details };
+                    this.showStructuredModal = false;
+                    this.saveState();
+                },
+                addDraftTestcase() {
+                    this.taskDraft.testcases.push({ sql: '', expected: '' });
+                },
+                removeDraftTestcase(index) {
+                    this.taskDraft.testcases.splice(index, 1);
+                },
+                removeStructuredAttachment() {
+                    this.structuredAttachment = null;
+                    this.saveState();
+                },
+                openTaskPreview(details, label) {
+                    const safe = details || {};
+                    this.taskPreviewLabel = label || 'Task Details';
+                    this.taskPreview = {
+                        database: safe.database || '',
+                        databasePath: safe.databasePath || '',
+                        funcName: safe.funcName || '',
+                        category: safe.category || '',
+                        desc: safe.desc || '',
+                        testcases: Array.isArray(safe.testcases) ? JSON.parse(JSON.stringify(safe.testcases)) : []
+                    };
+                    this.showTaskPreviewModal = true;
+                },
+                closeTaskPreview() {
+                    this.showTaskPreviewModal = false;
+                },
+                removeContext(index) {
+                    this.contextFiles.splice(index, 1);
+                    this.saveState();
+                },
+                toggleStepExpand(stepId) {
+                    if (this.expandedSteps.has(stepId)) {
+                        this.expandedSteps.delete(stepId);
+                    } else {
+                        this.expandedSteps.add(stepId);
+                    }
+                    this.$forceUpdate();
+                },
+                resetDefaults() {
+                    // Use the stored default configuration
+                    this.input = {
+                        prompt: this.defaultConfig.defaultPrompt || 'Add a built-in function to truncate timestamp to specified precision (e.g. hour, day)',
+                        database: this.defaultConfig.defaultDatabase || 'PostgreSQL',
+                        databasePath: this.defaultConfig.defaultDatabasePath || './workspace/source/sqlite',
+                        funcName: this.defaultConfig.defaultFuncName || 'date_trunc',
+                        category: this.defaultConfig.defaultCategory || 'datetime',
+                        desc: this.defaultConfig.defaultDesc || 'Truncate timestamp to specified precision',
+                        testcases: this.defaultConfig.defaultTestcases || [
+                            { sql: "SELECT date_trunc('hour', '2001-02-16 20:38:40'::timestamp)", expected: "2001-02-16 20:00:00" },
+                            { sql: "SELECT date_trunc('day', '2023-10-27 15:00:00'::timestamp)", expected: "2023-10-27 00:00:00" }
+                        ]
+                    };
+                    this.saveState();
+                },
                 startResize(e) {
                     this.isResizing = true;
                     document.addEventListener('mousemove', this.doResize);
@@ -676,7 +1128,7 @@
                     return trimmed.startsWith('{') && trimmed.endsWith('}');
                 },
                 shouldShowItem(item) {
-                    if (item.category === 'task') return true;
+                    if (item.category === 'task') return false; // Hide task details from agent
                     if (item.category === 'log') return true;
                     if (item.category === 'step') {
                         return (item.data.state === 'completed' || 
@@ -736,7 +1188,8 @@
                         activeTab: this.activeTab,
                         input: this.input,
                         messages: this.messages,
-                        modifiedFiles: this.modifiedFiles
+                        modifiedFiles: this.modifiedFiles,
+                        contextFiles: this.contextFiles
                     });
                 },
                 setTab(tab) {
@@ -750,6 +1203,10 @@
                 removeTestcase(index) {
                     this.input.testcases.splice(index, 1);
                     this.saveState();
+                },
+                capitalize(str) {
+                    if (!str) return '';
+                    return str.charAt(0).toUpperCase() + str.slice(1).replace(/_/g, ' ');
                 },
                 formatMessage(content) {
                     // Simple escaping. Newlines handled by white-space: pre-wrap
@@ -765,24 +1222,69 @@
                     this.scrollToBottom(true);
                 },
                 sendMessage() {
-                    if (!this.input.desc.trim() || this.isRunning) return;
+                    if (!this.input.prompt.trim() || this.isRunning) return;
                     
                     // Clear history when starting new pipeline
                     this.clearChat();
                     
-                    const content = this.input.desc.trim();
-                    const userMsg = `Requirement: ${this.input.desc}\nDatabase: ${this.input.database}\nFunction: ${this.input.funcName}`;
-                    this.messages.push({ role: 'user', content: userMsg });
+                    const prompt = this.input.prompt.trim();
+                    
+                    // Combine manual context and active context
+                    const allContext = [...this.contextFiles];
+                    if (this.activeContext) {
+                        // Avoid duplicates if active context is already pinned
+                        const alreadyPinned = allContext.some(f => f.path === this.activeContext.path && 
+                            JSON.stringify(f.range) === JSON.stringify(this.activeContext.range));
+                        if (!alreadyPinned) {
+                            allContext.push(this.activeContext);
+                        }
+                    }
+
+                    const taskDetails = this.structuredAttachment ? this.structuredAttachment.details : null;
+                    const taskLabel = this.structuredAttachment ? this.structuredAttachment.label : '';
+
+                    // Store the message as an object to handle structured data display
+                    this.messages.push({ 
+                        role: 'user', 
+                        content: {
+                            prompt: prompt,
+                            hasStructured: !!this.structuredAttachment,
+                            taskLabel: taskLabel,
+                            taskDetails: taskDetails,
+                            database: taskDetails ? taskDetails.database : this.input.database,
+                            databasePath: taskDetails ? taskDetails.databasePath : this.input.databasePath,
+                            category: taskDetails ? taskDetails.category : this.input.category,
+                            desc: taskDetails ? taskDetails.desc : this.input.desc,
+                            funcName: taskDetails ? taskDetails.funcName : this.input.funcName,
+                            testcases: taskDetails ? (taskDetails.testcases || []) : [...this.input.testcases],
+                            contextFiles: allContext
+                        }
+                    });
                     this.isRunning = true;
                     this.currentLogs = []; // Clear logs for new run
                     this.saveState();
                     
-                    // Sync legacy requirement field
-                    this.input.requirement = this.input.desc;
+                    // Prepare data for backend
+                    const dataToSend = JSON.parse(JSON.stringify(this.input));
+                    // Add all context files to the request
+                    dataToSend.contextFiles = allContext;
+
+                    if (this.structuredAttachment && this.structuredAttachment.details) {
+                        dataToSend.database = this.structuredAttachment.details.database;
+                        dataToSend.databasePath = this.structuredAttachment.details.databasePath;
+                        dataToSend.funcName = this.structuredAttachment.details.funcName;
+                        dataToSend.category = this.structuredAttachment.details.category;
+                        dataToSend.desc = this.structuredAttachment.details.desc;
+                        dataToSend.testcases = this.structuredAttachment.details.testcases || [];
+                    } else {
+                        // If no structured attachment, clear structured fields to signal pure NL
+                        dataToSend.funcName = '';
+                        dataToSend.testcases = [];
+                    }
 
                     vscode.postMessage({
                         type: 'executeScript',
-                        data: JSON.parse(JSON.stringify(this.input))
+                        data: dataToSend
                     });
                     
                     this.scrollToBottom(true);
@@ -814,6 +1316,9 @@
                 openFile(filePath) {
                     vscode.postMessage({ type: 'openFile', filePath });
                 },
+                pickFolder() {
+                    vscode.postMessage({ type: 'pickFolder' });
+                },
                 scrollToBottom(force = false) {
                     const container = this.$refs.messageList;
                     if (!container) return;
@@ -835,6 +1340,43 @@
                 window.addEventListener('message', event => {
                     const message = event.data;
                     switch (message.type) {
+                        case 'activeContextUpdate':
+                            this.activeContext = message.file;
+                            break;
+                        case 'modelConfig':
+                            if (message.data) {
+                                this.modelForm = Object.assign({ base_url: '', api_key: '', provider: 'openai', model: 'gpt-4o-mini' }, message.data);
+                            }
+                            break;
+                        case 'contextAdded':
+                            if (message.file) {
+                                const exists = this.contextFiles.some(f => f.path === message.file.path &&
+                                    JSON.stringify(f.range) === JSON.stringify(message.file.range));
+                                if (!exists) {
+                                    this.contextFiles.push(message.file);
+                                    this.saveState();
+                                }
+                            }
+                            break;
+                        case 'configUpdate':
+                            // Store default configuration when received
+                            if (message.config) {
+                                this.defaultConfig = message.config;
+                                // Only update if input hasn't been customized yet (empty state)
+                                if (!this.input.prompt && !this.input.funcName) {
+                                    this.input.prompt = message.config.defaultPrompt || 'Add a built-in function to truncate timestamp to specified precision (e.g. hour, day)';
+                                    this.input.database = message.config.defaultDatabase || 'PostgreSQL';
+                                    this.input.databasePath = message.config.defaultDatabasePath || './workspace/source/sqlite';
+                                    this.input.funcName = message.config.defaultFuncName || 'date_trunc';
+                                    this.input.category = message.config.defaultCategory || 'datetime';
+                                    this.input.desc = message.config.defaultDesc || 'Truncate timestamp to specified precision';
+                                    this.input.testcases = message.config.defaultTestcases || [
+                                        { sql: "SELECT date_trunc('hour', '2001-02-16 20:38:40'::timestamp)", expected: "2001-02-16 20:00:00" },
+                                        { sql: "SELECT date_trunc('day', '2023-10-27 15:00:00'::timestamp)", expected: "2023-10-27 00:00:00" }
+                                    ];
+                                }
+                            }
+                            break;
                         case 'agentReply':
                             // Replacement logic for steps with same step_number
                             const raw = message.message.trim();
@@ -863,13 +1405,19 @@
                                             const existingIndex = this.messages.findIndex(m => {
                                                 if (m.role !== 'agent' || !this.isJson(m.content)) return false;
                                                 try {
-                                                    const p = JSON.parse(m.content.trim());
+                                                    const contentStr = m.content.trim();
+                                                    // Handle case where multiple JSON objects might be in one message string
+                                                    const firstJson = contentStr.split('\n')[0];
+                                                    const p = JSON.parse(firstJson);
                                                     return p.category === 'step' && p.data && p.data.step_number === parsed.data.step_number;
                                                 } catch (e) { return false; }
                                             });
 
                                             if (existingIndex !== -1) {
-                                                const oldMsg = JSON.parse(this.messages[existingIndex].content);
+                                                const oldContent = this.messages[existingIndex].content.trim();
+                                                const firstJson = oldContent.split('\n')[0];
+                                                const oldMsg = JSON.parse(firstJson);
+                                                
                                                 // Inherit content (LLM Response) if new message doesn't have it
                                                 if (!parsed.data.content && oldMsg.data && oldMsg.data.content) {
                                                     parsed.data.content = oldMsg.data.content;
@@ -916,6 +1464,10 @@
                             break;
                         case 'clearChat':
                             this.clearChat();
+                            break;
+                        case 'folderPicked':
+                            this.input.databasePath = message.path;
+                            this.saveState();
                             break;
                     }
                 });

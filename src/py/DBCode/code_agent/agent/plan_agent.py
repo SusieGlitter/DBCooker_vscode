@@ -288,7 +288,9 @@ class PlanAgent(BaseAgent):
             plan_str += f"<candidate_plan{no + 1}>\n"
             for file, content in plan.items():
                 plan_str += f"<absolute_file_path>\n\t{file}\n</absolute_file_path>\n"
-                plan_str += f"<plan_content>\n{dedent(content).strip()}\n</plan_content>\n"
+                # Ensure content is a string before calling dedent
+                content_str = content if isinstance(content, str) else str(content)
+                plan_str += f"<plan_content>\n{dedent(content_str).strip()}\n</plan_content>\n"
             plan_str += f"</candidate_plan{no + 1}>\n"
 
         return plan_str.strip()

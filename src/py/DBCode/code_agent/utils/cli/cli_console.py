@@ -104,19 +104,67 @@ class CLIConsole(ABC):
         """推送 Agent 状态数据。"""
         color, emoji = AGENT_STATE_INFO.get(agent_step.state, ("white", "❓"))
         
-        # 1. 建立 call_id 到 result 的映射
-        tool_results_map = {}
+        # 1. 建立 call_id 到 result / error 的映射
+        tool_results_map: dict[str, str] = {}
+        tool_errors_map: dict[str, str] = {}
         for res in (agent_step.tool_results or []):
             if res.call_id:
                 tool_results_map[res.call_id] = str(res.result or "")
+                if res.error:
+                    tool_errors_map[res.call_id] = str(res.error)
 
         # 2. 构造包含 result 的工具数据
         tools_data = []
+        from code_agent.tools import tools_registry
+        
         for call in (agent_step.tool_calls or []):
+            summary = ""
+            display_in = None
+            display_out = None
+            # Try to get summary and display info from tool class
+            tool_class = tools_registry.get(call.name)
+            if tool_class:
+                try:
+                    # Create a temporary instance to get summary
+                    # Note: get_summary should be static-like or not depend on complex init
+                    temp_tool = tool_class()
+                    summary = temp_tool.get_summary(call.arguments)
+                    # Display-IN from tool
+                    try:
+                        display_in = temp_tool.get_display_in(call.arguments)
+                    except Exception:
+                        display_in = None
+                    # Display-OUT from tool using result / error
+                    try:
+                        display_out = temp_tool.get_display_out(
+                            tool_results_map.get(call.call_id, None),
+                            tool_errors_map.get(call.call_id, None)
+                        )
+                    except Exception:
+                        display_out = None
+                except Exception:
+                    # Fallback to arguments if summary fails
+                    summary = ""
+            
+            # If no summary from tool, use fallback logic
+            if not summary:
+                if call.name == "bash":
+                    cmd = call.arguments.get("command", "")
+                    summary = cmd[:40] + "..." if len(cmd) > 40 else cmd
+                elif "path" in call.arguments:
+                    path = str(call.arguments.get("path", ""))
+                    summary = f"{call.name}: {path.split('/')[-1]}"
+                else:
+                    # Final fallback: just the tool name or first few args
+                    summary = f"Calling {call.name}"
+            
             tools_data.append({
                 "name": call.name,
                 "args": call.arguments,
-                "result": tool_results_map.get(call.call_id, "") # 关键：添加 result 字段
+                "result": tool_results_map.get(call.call_id, ""),
+                "summary": summary,
+                "display_in": display_in,
+                "display_out": display_out
             })
 
         step_data = {
@@ -125,6 +173,7 @@ class CLIConsole(ABC):
             "color": color,
             "emoji": emoji,
             "content": agent_step.llm_response.content if agent_step.llm_response else "",
+            "summary": agent_step.llm_response.content[:50] + "..." if agent_step.llm_response and agent_step.llm_response.content else "",
             "tools": tools_data,
             "reflection": agent_step.reflection if hasattr(agent_step, 'reflection') else "",
             "error": agent_step.error if hasattr(agent_step, 'error') else ""

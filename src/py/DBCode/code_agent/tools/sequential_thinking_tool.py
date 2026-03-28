@@ -147,7 +147,7 @@ You should:
             ToolParameter(
                 name="needs_more_thoughts",
                 type="boolean",
-                description="If more thoughts are needed",
+                description="If reaching end but realizing more thoughts needed",
             ),
         ]
 
@@ -159,6 +159,22 @@ You should:
     @override
     def get_model_provider(self) -> str | None:
         return self._model_provider
+
+    @override
+    def get_summary(self, arguments: ToolCallArguments) -> str:
+        thought_number = arguments.get("thought_number", "?")
+        total_thoughts = arguments.get("total_thoughts", "?")
+        return f"Thought {thought_number}/{total_thoughts}"
+
+    # Display helpers
+    @override
+    def get_display_in(self, arguments: ToolCallArguments) -> object:
+        # Only show the thought content by default for a clean UI.
+        return {"thought": arguments.get("thought", "")}
+
+    @override
+    def get_display_out(self, result: str | None, error: str | None = None) -> object:
+        return result or error or ""
 
     def _validate_thought_data(self, arguments: ToolCallArguments) -> ThoughtData:
         """Validate the input arguments and return a ThoughtData object."""

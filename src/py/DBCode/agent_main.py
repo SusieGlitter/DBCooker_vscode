@@ -115,20 +115,30 @@ def main():
         print("Invalid JSON input")
         return
 
-    func_name = req.get("funcName", "unknown_func")
-    description = req.get("desc", "")
+    func_name = req.get("funcName", "")
+    prompt = req.get("prompt", "")
     category = req.get("category", "")
     
     testcases = req.get("testcases", [])
+    context_files = req.get("contextFiles", [])
+    
     example_lines = []
     for tc in testcases:
         example_lines.append(f"SQL: {tc.get('sql', '')}\nExpected: {tc.get('expected', '')}")
     example = "\n\n".join(example_lines)
 
+    context_lines = []
+    for cf in context_files:
+        context_lines.append(f"- File: {cf.get('path', '')}")
+    context_info = "\n".join(context_lines)
+
     req_db = req.get("database", "").lower()
     current_db = req_db if req_db else database
 
     model_name = MODEL_NAME
+
+    # Use func_name if available, otherwise use a generic name based on timestamp
+    task_id = func_name if func_name else f"chat_{datetime.now().strftime('%H%M%S')}"
 
     result_folder = os.path.join(dbcode_root, f"results/{current_db}/{agent_type}_{model_name.split('/')[-1]}")
     result_load = f"{result_folder}/{current_db}_{agent_type}_{model_name.split('/')[-1]}_results.json"
@@ -140,30 +150,63 @@ def main():
             result_data = json.load(rf)
 
     origin_code = dict()
-    prepare_directory(origin_code)
+    # prepare_directory(origin_code)
+
+    # Explicitly print folders for extension detection using unique markers
+    print(f"DETECTED_COMPILE_FOLDER:{compile_folder}")
+    print(f"DETECTED_BACKUP_FOLDER:{backup_folder}")
 
     file_path = "\n".join(origin_code.keys())
-    task = {
-        "database": current_db, "db_name": db_name, "directory": compile_folder,
-        "func_name": func_name, "category": category, "description": description,
-        "example": example, "file_path": file_path,
-        "compile_folder": compile_folder, "result_folder": result_folder,
-        "backup_folder": backup_folder, "origin_code": origin_code,
-        "spec_file": {
-            "postgresql": os.path.join(dbcode_root, "data/benchmark/postgresql/postgresql_functions_with_testcase_code_understand.json"),
-            "sqlite": os.path.join(dbcode_root, "data/benchmark/sqlite/sqlite_functions_with_testcase_code_understand.json"),
-            "duckdb": os.path.join(dbcode_root, "data/benchmark/duckdb/duckdb_functions_with_testcase_code_understand.json"),
+    
+    # Construct the final task string/object
+    if func_name:
+        # Prepare directory only in structured mode
+        prepare_directory(origin_code)
+        
+        description = prompt
+        if context_info:
+            description = f"{prompt}\n\nAdditional Context:\n{context_info}"
+            
+        # Structured mode: combine prompt with task details
+        task = {
+            "database": current_db, "db_name": db_name, "directory": compile_folder,
+            "func_name": func_name, "category": category, "description": description,
+            "example": example, "file_path": file_path,
+            "compile_folder": compile_folder, "result_folder": result_folder,
+            "backup_folder": backup_folder, "origin_code": origin_code,
+            "spec_file": {
+                "postgresql": os.path.join(dbcode_root, "data/benchmark/postgresql/postgresql_functions_with_testcase_code_understand.json"),
+                "sqlite": os.path.join(dbcode_root, "data/benchmark/sqlite/sqlite_functions_with_testcase_code_understand.json"),
+                "duckdb": os.path.join(dbcode_root, "data/benchmark/duckdb/duckdb_functions_with_testcase_code_understand.json"),
+            }
         }
-    }
+    else:
+        # Pure natural language mode
+        task_description = f"User Request: {prompt}\n\nContext:\n- Working Directory: {compile_folder}\n- Database Type: {current_db}\n- Available Files: {file_path}"
+        if context_info:
+            task_description += f"\n\nAdditional Context:\n{context_info}"
+            
+        task = {
+            "database": current_db, "db_name": db_name, "directory": compile_folder,
+            "func_name": "", "category": "General", "description": task_description,
+            "example": "", "file_path": file_path,
+            "compile_folder": compile_folder, "result_folder": result_folder,
+            "backup_folder": backup_folder, "origin_code": origin_code,
+            "spec_file": {
+                "postgresql": os.path.join(dbcode_root, "data/benchmark/postgresql/postgresql_functions_with_testcase_code_understand.json"),
+                "sqlite": os.path.join(dbcode_root, "data/benchmark/sqlite/sqlite_functions_with_testcase_code_understand.json"),
+                "duckdb": os.path.join(dbcode_root, "data/benchmark/duckdb/duckdb_functions_with_testcase_code_understand.json"),
+            }
+        }
 
     config_file = os.path.join(dbcode_root, "code_config.yaml")
     console_type = "simple"
     must_patch = True
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    patch_path = (f"{result_folder}/{func_name}/"
-                    f"{current_db}_{agent_type}_{model_name.split('/')[-1]}_{func_name}_{timestamp}_patch.txt")
-    trajectory_file = (f"{result_folder}/{func_name}/"
-                        f"{current_db}_{agent_type}_{model_name.split('/')[-1]}_{func_name}_{timestamp}_trajectory.json")
+    patch_path = (f"{result_folder}/{task_id}/"
+                    f"{current_db}_{agent_type}_{model_name.split('/')[-1]}_{task_id}_{timestamp}_patch.txt")
+    trajectory_file = (f"{result_folder}/{task_id}/"
+                        f"{current_db}_{agent_type}_{model_name.split('/')[-1]}_{task_id}_{timestamp}_trajectory.json")
     
     if not os.path.exists(os.path.dirname(patch_path)):
         os.makedirs(os.path.dirname(patch_path))
@@ -174,9 +217,9 @@ def main():
 
     gen_code, file_changes = "", []
     if is_success:
-        gen_code, file_changes = get_git_diff(compile_folder, f"{result_folder}/{func_name}")
+        gen_code, file_changes = get_git_diff(compile_folder, f"{result_folder}/{task_id}")
     
-    result_data[func_name] = {
+    result_data[task_id] = {
         "prompt": user_prompt, "origin_code": origin_code,
         "is_success": is_success, "execution_time": execution_time, "response": response,
         "gen_code": gen_code, "file_changes": file_changes

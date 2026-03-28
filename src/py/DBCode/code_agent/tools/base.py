@@ -112,6 +112,27 @@ class Tool(ABC):
         """Get the tool parameters."""
         pass
 
+    def get_summary(self, arguments: ToolCallArguments) -> str:
+        """Get a brief summary of the tool call for display."""
+        return ""
+
+    # UI display helpers for webview
+    def get_display_in(self, arguments: ToolCallArguments) -> object:
+        """Return a concise, UI-friendly representation for IN section.
+        Default: return arguments unchanged.
+        """
+        return arguments
+
+    def get_display_out(self, result: str | None, error: str | None = None) -> object:
+        """Return a concise, UI-friendly representation for OUT section.
+        Default: prefer result text, otherwise error text.
+        """
+        if result:
+            return result
+        if error:
+            return error
+        return ""
+
     @abstractmethod
     async def execute(self, arguments: ToolCallArguments) -> ToolExecResult:
         """Execute the tool with given parameters."""

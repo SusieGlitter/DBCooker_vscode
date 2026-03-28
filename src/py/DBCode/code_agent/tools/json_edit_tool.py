@@ -90,6 +90,33 @@ JSONPath syntax supported:
         ]
 
     @override
+    def get_summary(self, arguments: ToolCallArguments) -> str:
+        operation = str(arguments.get("operation", ""))
+        file_path = str(arguments.get("file_path", ""))
+        filename = file_path.split("/")[-1] if file_path else ""
+        return f"JSON {operation.title()} on {filename}"
+
+    # Display helpers
+    @override
+    def get_display_in(self, arguments: ToolCallArguments) -> object:
+        data: dict[str, object] = {}
+        op = arguments.get("operation")
+        if op is not None:
+            data["operation"] = op
+        fp = arguments.get("file_path")
+        if fp:
+            data["file_path"] = fp
+        if arguments.get("json_path"):
+            data["json_path"] = arguments.get("json_path")
+        if "value" in arguments:
+            data["value"] = arguments.get("value")
+        return data if data else arguments
+
+    @override
+    def get_display_out(self, result: str | None, error: str | None = None) -> object:
+        return result or error or ""
+
+    @override
     async def execute(self, arguments: ToolCallArguments) -> ToolExecResult:
         """Execute the JSON edit operation."""
         try:

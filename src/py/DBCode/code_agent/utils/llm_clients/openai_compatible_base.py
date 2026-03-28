@@ -5,10 +5,23 @@
 
 import json
 import pickle
+import logging
 from abc import ABC, abstractmethod
 from typing import override
 
 import openai
+
+
+def _safe_json_parse(json_string: str) -> dict:
+    """
+    Safely parse JSON string, returning an empty dict if parsing fails.
+    This prevents crashes when LLM returns malformed JSON.
+    """
+    try:
+        return json.loads(json_string)
+    except json.JSONDecodeError as e:
+        logging.warning(f"Failed to parse JSON arguments: {e}. JSON string: {json_string[:200]}...")
+        return {}
 from openai.types.chat import (
     ChatCompletion,
     ChatCompletionAssistantMessageParam,
@@ -160,7 +173,7 @@ class OpenAICompatibleClient(BaseLLMClient):
                         name=tool_call.function.name,
                         call_id=tool_call.id,
                         arguments=(
-                            json.loads(tool_call.function.arguments)
+                            _safe_json_parse(tool_call.function.arguments)
                             if tool_call.function.arguments
                             else {}
                         ),

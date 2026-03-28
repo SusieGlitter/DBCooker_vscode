@@ -62,11 +62,11 @@ model_providers:
     provider: doubao
   doubao:
     base_url: https://dashscope.aliyuncs.com/compatible-mode/v1
-    api_key: sk-9d35b7001a044a5f92580aee4461170b
+    api_key: __API_KEY__
     provider: doubao
   openai:
     base_url: https://dashscope.aliyuncs.com/compatible-mode/v1
-    api_key: sk-9d35b7001a044a5f92580aee4461170b
+    api_key: __API_KEY__
     provider: doubao
   local:
     base_url: 

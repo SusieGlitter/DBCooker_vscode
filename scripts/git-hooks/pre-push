@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# Git pre-push hook: scrub secrets before pushing
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+"$REPO_ROOT/scripts/sanitize-config.sh"
+
+# Ensure the sanitized file is staged (optional)
+git add "$REPO_ROOT/src/py/DBCode/code_config.yaml" >/dev/null 2>&1 || true
+
+exit 0
+

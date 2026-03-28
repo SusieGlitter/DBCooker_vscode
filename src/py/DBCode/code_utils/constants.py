@@ -44,8 +44,14 @@ if_dep = False
 if_cache = True
 
 # Use paths within the workspace directory
-backup_folder = os.path.join(workspace_dir, "source", database)
-compile_folder = os.path.join(workspace_dir, "code", f"{agent_type}_{database}{port[database]}")
+backup_folder = os.environ.get('OVERRIDE_BACKUP_FOLDER')
+if not backup_folder:
+    backup_folder = os.path.join(workspace_dir, "source", database)
+
+compile_folder = os.environ.get('OVERRIDE_COMPILE_FOLDER')
+if not compile_folder:
+    compile_folder = os.path.join(workspace_dir, "code", f"{agent_type}_{database}{port[database]}")
+
 install_folder = os.path.join(workspace_dir, "db", f"{agent_type}_{database}{port[database]}")
 data_folder = os.path.join(install_folder, f"{database}_data")
 

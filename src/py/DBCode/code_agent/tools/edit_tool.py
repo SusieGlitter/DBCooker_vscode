@@ -98,6 +98,43 @@ Notes for using the `str_replace` command:
         ]
 
     @override
+    def get_summary(self, arguments: ToolCallArguments) -> str:
+        command = str(arguments.get("command", ""))
+        path = str(arguments.get("path", ""))
+        filename = path.split("/")[-1] if path else ""
+        if command == "view":
+            return f"Viewing {filename}"
+        elif command == "create":
+            return f"Creating {filename}"
+        elif command == "str_replace":
+            return f"Editing {filename}"
+        elif command == "insert":
+            return f"Inserting into {filename}"
+        return f"{command} {filename}".strip()
+
+    # Display helpers
+    @override
+    def get_display_in(self, arguments: ToolCallArguments) -> object:
+        data: dict[str, object] = {}
+        cmd = arguments.get("command")
+        if cmd is not None:
+            data["command"] = cmd
+        path = arguments.get("path")
+        if path:
+            data["path"] = path
+        if arguments.get("old_str"):
+            data["old_str"] = arguments.get("old_str")
+        if arguments.get("new_str"):
+            data["new_str"] = arguments.get("new_str")
+        if arguments.get("view_range"):
+            data["view_range"] = arguments.get("view_range")
+        return data if data else arguments
+
+    @override
+    def get_display_out(self, result: str | None, error: str | None = None) -> object:
+        return result or error or ""
+
+    @override
     async def execute(self, arguments: ToolCallArguments) -> ToolExecResult:
         """Execute the str_replace_editor tool."""
         command = str(arguments["command"]) if "command" in arguments else None

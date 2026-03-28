@@ -199,6 +199,22 @@ class BashTool(Tool):
         ]
 
     @override
+    def get_summary(self, arguments: ToolCallArguments) -> str:
+        command = str(arguments.get("command", ""))
+        return command[:40] + "..." if len(command) > 40 else command
+
+    # Display helpers
+    @override
+    def get_display_in(self, arguments: ToolCallArguments) -> object:
+        cmd = str(arguments.get("command", ""))
+        return {"command": cmd}
+
+    @override
+    def get_display_out(self, result: str | None, error: str | None = None) -> object:
+        # For bash, return raw text; webview will render monospaced
+        return result or error or ""
+
+    @override
     async def execute(self, arguments: ToolCallArguments) -> ToolExecResult:
         if arguments.get("restart"):
             if self._session:

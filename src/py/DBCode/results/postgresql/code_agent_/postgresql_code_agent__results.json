@@ -7,26 +7,115 @@
                 "sqlite": "SQLite",
                 "duckdb": "DuckDB"
             },
-            "directory": "/data/qikang/code/code_agent_sqlite5532",
+            "directory": "/storage/qikang/program/vscode/demo/workspace/code/active_postgresql",
             "func_name": "date_trunc",
-            "category": "Date/Time",
-            "description": "Truncate timestamp to specified precision",
+            "category": "datetime",
+            "description": "Add a built-in function to truncate timestamp to specified precision (e.g. hour, day)",
             "example": "SQL: SELECT date_trunc('hour', '2001-02-16 20:38:40'::timestamp)\nExpected: 2001-02-16 20:00:00\n\nSQL: SELECT date_trunc('day', '2023-10-27 15:00:00'::timestamp)\nExpected: 2023-10-27 00:00:00",
             "file_path": "",
-            "compile_folder": "/data/qikang/code/code_agent_sqlite5532",
-            "result_folder": "/data/qikang/program/DBCode/results/postgresql/code_agent_",
-            "backup_folder": "/data/qikang/source/sqlite",
+            "compile_folder": "/storage/qikang/program/vscode/demo/workspace/code/active_postgresql",
+            "result_folder": "/storage/qikang/program/vscode/demo/src/py/DBCode/results/postgresql/code_agent_",
+            "backup_folder": "/home/qikang/program/vscode/demo/workspace/source/sqlite/workspace/source/sqlite",
             "origin_code": {},
             "spec_file": {
-                "postgresql": "/data/qikang/program/DBCode/data/benchmark/postgresql/postgresql_functions_with_testcase_code_understand.json",
-                "sqlite": "/data/qikang/program/DBCode/data/benchmark/sqlite/sqlite_functions_with_testcase_code_understand.json",
-                "duckdb": "/data/qikang/program/DBCode/data/benchmark/duckdb/duckdb_functions_with_testcase_code_understand.json"
+                "postgresql": "/storage/qikang/program/vscode/demo/src/py/DBCode/data/benchmark/postgresql/postgresql_functions_with_testcase_code_understand.json",
+                "sqlite": "/storage/qikang/program/vscode/demo/src/py/DBCode/data/benchmark/sqlite/sqlite_functions_with_testcase_code_understand.json",
+                "duckdb": "/storage/qikang/program/vscode/demo/src/py/DBCode/data/benchmark/duckdb/duckdb_functions_with_testcase_code_understand.json"
             }
         },
         "origin_code": {},
         "is_success": false,
-        "execution_time": 3.6429061889648438,
-        "response": null,
+        "execution_time": 442.13912653923035,
+        "response": "Task execution exceeded maximum steps without completion.",
+        "gen_code": "",
+        "file_changes": []
+    },
+    "chat_182419": {
+        "prompt": "User Request: Add a built-in function to truncate timestamp to specified precision (e.g. hour, day)\n\nContext:\n- Working Directory: /storage/qikang/program/vscode/demo/workspace/code/active_postgresql\n- Database Type: postgresql\n- Available Files: ",
+        "origin_code": {},
+        "is_success": false,
+        "execution_time": 0.0,
+        "response": "",
+        "gen_code": "",
+        "file_changes": []
+    },
+    "chat_185544": {
+        "prompt": "User Request: Add a built-in function to truncate timestamp to specified precision (e.g. hour, day)\n\nContext:\n- Working Directory: /storage/qikang/program/vscode/demo/workspace/code/active_postgresql\n- Database Type: postgresql\n- Available Files: ",
+        "origin_code": {},
+        "is_success": false,
+        "execution_time": 0.0,
+        "response": "",
+        "gen_code": "",
+        "file_changes": []
+    },
+    "chat_185551": {
+        "prompt": "User Request: Add a built-in function to truncate timestamp to specified precision (e.g. hour, day)\n\nContext:\n- Working Directory: /storage/qikang/program/vscode/demo/workspace/code/active_postgresql\n- Database Type: postgresql\n- Available Files: ",
+        "origin_code": {},
+        "is_success": false,
+        "execution_time": 0.0,
+        "response": "",
+        "gen_code": "",
+        "file_changes": []
+    },
+    "chat_190003": {
+        "prompt": {
+            "database": "postgresql",
+            "db_name": {
+                "postgresql": "PostgreSQL",
+                "sqlite": "SQLite",
+                "duckdb": "DuckDB"
+            },
+            "directory": "/storage/qikang/program/vscode/demo/workspace/code/active_postgresql",
+            "func_name": "",
+            "category": "General",
+            "description": "User Request: Add a built-in function to truncate timestamp to specified precision (e.g. hour, day)\n\nContext:\n- Working Directory: /storage/qikang/program/vscode/demo/workspace/code/active_postgresql\n- Database Type: postgresql\n- Available Files: ",
+            "example": "",
+            "file_path": "",
+            "compile_folder": "/storage/qikang/program/vscode/demo/workspace/code/active_postgresql",
+            "result_folder": "/storage/qikang/program/vscode/demo/src/py/DBCode/results/postgresql/code_agent_",
+            "backup_folder": "/home/qikang/program/vscode/demo/workspace/source/sqlite/workspace/source/sqlite",
+            "origin_code": {},
+            "spec_file": {
+                "postgresql": "/storage/qikang/program/vscode/demo/src/py/DBCode/data/benchmark/postgresql/postgresql_functions_with_testcase_code_understand.json",
+                "sqlite": "/storage/qikang/program/vscode/demo/src/py/DBCode/data/benchmark/sqlite/sqlite_functions_with_testcase_code_understand.json",
+                "duckdb": "/storage/qikang/program/vscode/demo/src/py/DBCode/data/benchmark/duckdb/duckdb_functions_with_testcase_code_understand.json"
+            }
+        },
+        "origin_code": {},
+        "is_success": false,
+        "execution_time": 0.0,
+        "response": "",
+        "gen_code": "",
+        "file_changes": []
+    },
+    "chat_190404": {
+        "prompt": {
+            "database": "postgresql",
+            "db_name": {
+                "postgresql": "PostgreSQL",
+                "sqlite": "SQLite",
+                "duckdb": "DuckDB"
+            },
+            "directory": "/storage/qikang/program/vscode/demo/workspace/code/active_postgresql",
+            "func_name": "",
+            "category": "General",
+            "description": "User Request: Add a built-in function to truncate timestamp to specified precision (e.g. hour, day)\n\nContext:\n- Working Directory: /storage/qikang/program/vscode/demo/workspace/code/active_postgresql\n- Database Type: postgresql\n- Available Files: ",
+            "example": "",
+            "file_path": "",
+            "compile_folder": "/storage/qikang/program/vscode/demo/workspace/code/active_postgresql",
+            "result_folder": "/storage/qikang/program/vscode/demo/src/py/DBCode/results/postgresql/code_agent_",
+            "backup_folder": "/home/qikang/program/vscode/demo/workspace/source/sqlite/workspace/source/sqlite",
+            "origin_code": {},
+            "spec_file": {
+                "postgresql": "/storage/qikang/program/vscode/demo/src/py/DBCode/data/benchmark/postgresql/postgresql_functions_with_testcase_code_understand.json",
+                "sqlite": "/storage/qikang/program/vscode/demo/src/py/DBCode/data/benchmark/sqlite/sqlite_functions_with_testcase_code_understand.json",
+                "duckdb": "/storage/qikang/program/vscode/demo/src/py/DBCode/data/benchmark/duckdb/duckdb_functions_with_testcase_code_understand.json"
+            }
+        },
+        "origin_code": {},
+        "is_success": false,
+        "execution_time": 373.7538766860962,
+        "response": "Task execution exceeded maximum steps without completion.",
         "gen_code": "",
         "file_changes": []
     }
