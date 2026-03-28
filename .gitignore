@@ -5,3 +5,9 @@ node_modules
 *.vsix
 workspace
 log
+src/py/DBCode/results
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
